@@ -1,6 +1,6 @@
 # Apex Change Control POC
 
-A decision-first supplier-change workspace for a fictional specialty-additives manufacturer. It is a focused Vercel Solutions Architect take-home: one supplier change, three representative product-region records, two required human reviews, one routed outcome, and a safe missing-evidence curveball.
+A decision-first supplier-change workspace for a fictional specialty-additives manufacturer. 
 
 ## What it proves
 
