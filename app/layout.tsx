@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import "./munzing.css";
 
 export const metadata: Metadata = {
-  title: "Apex Change Control | SCC-2026-041",
-  description: "Supplier change decision workspace POC",
+  title: "Apex | Supplier change control",
+  description: "A decision workspace for evidence-led supplier change review.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
