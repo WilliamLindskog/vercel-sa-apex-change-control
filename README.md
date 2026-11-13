@@ -4,7 +4,7 @@ A decision-first supplier-change workspace for a fictional specialty-additives m
 
 ## What it proves
 
-- **Apex systems stay outside Vercel.** The app reads a fixed, server-side fixture that represents the supplier update, product master, qualification, and regulatory systems. It does not replace those systems or expose their credentials to the browser.
+- **Apex systems stay outside Vercel.** The assessment function fetches a revision-pinned JSON register from GitHub over HTTPS that represents the supplier update, product master, qualification, and regulatory systems. It does not replace those systems or expose their credentials to the browser.
 - **AI assists but never approves.** `POST /api/assessment` uses AI SDK and AI Gateway when `AI_GATEWAY_API_KEY` is configured. Its output is constrained by a Zod schema and every material conclusion carries fixture evidence IDs. Without a key, or if a provider call fails, the public POC returns the same schema-validated fixture assessment and labels that state clearly.
 - **Human review is durable.** Quality and Regulatory Affairs reviews each start a Vercel Workflow. The workflow ID is shown in the app; the Product Change Lead route cannot become final until both reviews are recorded.
 - **The safe failure path is visible.** “Simulate missing EU record” removes the EU qualification fixture, resets the reviews, makes the EMEA record uncertain, and prevents approval or routing until Regulatory recovers the evidence.
@@ -29,7 +29,7 @@ npm run dev
 
 Open `http://localhost:3000`. Click **Run assessment**, record both reviews, then inspect the routed outcome. Click **Simulate missing EU record** to demonstrate the curveball.
 
-To use the live model path locally, set `AI_GATEWAY_API_KEY` in `.env.local`. The deployed Vercel project can use its workload identity or the same environment variable. No model key is bundled to the client.
+To use the live model path locally, set `AI_GATEWAY_API_KEY` in `.env.local`. The deployed project uses the same environment variable to enable live inference. No model key is bundled to the client.
 
 ## Validation
 
@@ -54,7 +54,9 @@ Validated locally:
 
 ## Trade-offs and known limits
 
-- The system of record is an in-memory fixture by design. This proves the boundary without adding an integration or a credential-management surface.
+- The external register serves a pinned synthetic snapshot. This proves the boundary without adding an integration or a credential-management surface.
 - The fixture fallback lets reviewers use the public demo without a model key. It is deliberately labeled and should be replaced by a configured AI Gateway model in a real pilot.
 - Review state is displayed in client state for the guided POC, while the audit event is sent through a durable Vercel Workflow. A production implementation would read the case and review state back from Apex’s durable source of record.
 - The POC makes no unvalidated claim about cycle-time, cost, or quality improvement. A pilot should baseline documented-decision time, review wait time, assessment rework, and late customer notifications.
+
+[Customer architecture, pilot gates and walkthrough](CUSTOMER-BRIEF.md)
