@@ -415,5 +415,5 @@ a.case-title-link:hover strong { text-decoration: underline; }
 @media(max-width:750px){.signin-hero{min-height:410px}.hero-copy{padding:28px}.hero-copy h2{max-width:none}.plate{margin:12px 28px 20px}}
 
 /* Keep employee entry and the case register in the same landscape as the company journal. */
-.signin-hero { background-image:url('/journal/4084699.jpg'); }
-.register-head { background-image:linear-gradient(90deg,#153723ed,#193d30ac 56%,transparent),url('/journal/18992321.jpg'); }
+.signin-hero { background-image:url('/journal/37845017.webp'); }
+.register-head { background-image:linear-gradient(90deg,#153723ed,#193d30ac 56%,transparent),url('/journal/31831100.webp'); }

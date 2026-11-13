@@ -3,13 +3,13 @@ import { ApexMark } from "@/app/ui/apex-mark";
 import { users } from "@/lib/users";
 import "./heritage.css";
 
-export const metadata = { title: "Inside Apex" };
+export const metadata = { title: "Made at Apex." };
 
 const chapters = [
-  { id: "news", label: "News", image: 4084699, credit: "Johannes Plenio", title: "Inside Apex", text: "This week at Apex, our Cleveland and Rotterdam teams are bringing supplier notices, qualification records and review decisions into one shared case file." },
-  { id: "history", label: "History", image: 31853326, credit: "Matheus Bertelli", title: "From earth to colour", text: "Our story began in 1828 with mineral pigments. A dependable colour depended on the material, the hand at the bench and a record of what worked. That knowledge still travels with every formulation." },
-  { id: "culture", label: "Culture", image: 18992322, credit: "Daniel Torobekov", title: "The next pair of hands", text: "A colleague picking up a sample should know where it came from, what changed and what still needs a trial. Leaving a clear record is one way we take care of each other across shifts and time zones." },
-  { id: "team", label: "Team", image: 18992321, credit: "Daniel Torobekov", title: "Across the Atlantic", text: "Meet the colleagues guiding supplier changes from the first notice to a regional decision." },
+  { id: "news", label: "News", image: 37845017, credit: "K", title: "Made at Apex.", text: "A supplier is changing the binder in one of our coatings. Quality in Cleveland and Regulatory Affairs in Rotterdam are tracing what that means for each product and customer." },
+  { id: "history", label: "History", image: 19446112, credit: "Alfo Medeiros", title: "From earth to colour", text: "Our story began in 1828 with mineral pigments. A dependable colour depended on the material, the hand at the bench and a record of what worked. That knowledge still travels with every formulation." },
+  { id: "culture", label: "Culture", image: 31831100, credit: "Yusuf Çelik", title: "The next pair of hands", text: "A colleague picking up a sample should know where it came from, what changed and what still needs a trial. Leaving a clear record is one way we take care of each other across shifts and time zones." },
+  { id: "team", label: "Team", image: 9090362, credit: "Alexandr Ivanov", title: "Across the Atlantic", text: "Meet the colleagues guiding supplier changes from the first notice to a regional decision." },
 ];
 
 export default function Home() {
@@ -19,7 +19,7 @@ export default function Home() {
       <Link className="workspace-link" href="/cases">Workspace ↗</Link>
     </header>
     {chapters.map((chapter, i) => <section id={chapter.id} key={chapter.id} className="chapter" aria-labelledby={chapter.id+"-title"}>
-      <div className="scene"><img src={`/journal/${chapter.image}.jpg`} alt="" loading={i ? "lazy" : "eager"} fetchPriority={i ? "auto" : "high"} /></div>
+      <div className="scene"><img src={`/journal/${chapter.image}.webp`} alt="" loading={i ? "lazy" : "eager"} fetchPriority={i ? "auto" : "high"} /></div>
       <div className="chapter-inner"><div className="story">
         <p className="kicker">{chapter.label}<span/> {i === 0 ? "November 2026" : i === 1 ? "Est. 1828" : i === 2 ? "Working at Apex" : "Cleveland & Rotterdam"}</p>
         {i === 0 ? <h1 id="news-title">{chapter.title}</h1> : <h2 id={chapter.id+"-title"}>{chapter.title}</h2>}
