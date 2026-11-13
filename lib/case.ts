@@ -1,3 +1,4 @@
+import snapshot from "../fixtures/apex-evidence.json";
 import { z } from "zod";
 
 export const evidenceSchema = z.object({
@@ -48,15 +49,7 @@ export const supplierChange = {
   materialImpact: "Replacement formulation has a revised stabilizer package. No performance equivalency claim has been accepted by Apex.",
 };
 
-export const evidence: Evidence[] = [
-  { id: "SUP-01", source: "Supplier change notice | 12 Nov 2026", detail: "X-17 production ends 28 Feb 2027; X-17R is the proposed replacement.", type: "supplier" },
-  { id: "SUP-02", source: "Supplier technical statement | Rev. 2", detail: "X-17R contains a revised stabilizer package; equivalency is not certified.", type: "supplier" },
-  { id: "QLF-US-14", source: "US qualification record | QLF-US-14", detail: "AeroShield 420 coating is qualified for Binder X-17 only.", type: "qualification" },
-  { id: "QLF-EU-03", source: "EU qualification record | QLF-EU-03", detail: "AeroShield 420 is qualified for EMEA customers with Binder X-17 only.", type: "qualification" },
-  { id: "REG-EU-07", source: "EU customer notification matrix | REG-EU-07", detail: "Formula changes for EMEA coating customers require Regulatory notification review.", type: "regulatory" },
-  { id: "PRD-420", source: "Product master | AeroShield 420", detail: "Protective coating sold in US and EMEA.", type: "product" },
-  { id: "PRD-88", source: "Product master | FlexAdd 88", detail: "US plastic additive does not use Binder X-17.", type: "product" },
-];
+export const evidence = evidenceSchema.array().parse(snapshot);
 
 // The curveball removes the EU qualification record, as if the system of record could not return it.
 export const evidenceFor = (missingEuQualification = false) =>
