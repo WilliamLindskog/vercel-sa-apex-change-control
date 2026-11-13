@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { ApexMark } from "./apex-mark";
 
 const scenes = [
-  { label: "News", title: "Made at Apex.", image: 31887450, alt: "Sunlit copper-coloured cliffs above pines in Bryce Canyon" },
-  { label: "History", title: "Since 1828.", image: 19446112, alt: "Natural layers of deep red sandstone" },
+  { label: "News", title: "Made at Apex.", image: 27892708, alt: "Sunlit sandstone cut by deep, branching seams" },
+  { label: "History", title: "Since 1828.", image: 40847428, alt: "The Colorado River winding through red canyon walls at sunrise" },
   { label: "Culture", title: "Material knowledge.", image: 31831100, alt: "Fine mineral bands running through fractured stone" },
 ];
 
@@ -27,13 +27,23 @@ export function MaterialJourney() {
       const position = Math.max(0, Math.min(scenes.length - 1, (y - stops[0].offsetTop) / stride));
       const index = Math.floor(position);
       const part = position - index;
-      const blend = Math.min(1, Math.max(0, (part - 0.48) / 0.52));
+      const isFocusDissolve = index === 0;
+      const start = isFocusDissolve ? .27 : .37;
+      const blend = Math.min(1, Math.max(0, (part - start) / (1 - start)));
       const eased = blend * blend * (3 - 2 * blend);
       layers.forEach((layer, i) => {
-        layer.style.opacity = String(i === index ? 1 : i === index + 1 ? (motion.matches ? Number(eased >= .5) : eased) : 0);
-        const local = Math.min(1, Math.max(-1, position - i));
-        layer.style.transform = motion.matches ? "none" : `scale(${1.11 + local * .10})`;
+        const entering = i === index + 1;
+        layer.style.opacity = String(i === index ? 1 : entering ? eased : 0);
+        // Resolve each plate to the same resting crop from either scroll direction.
+        const softness = Math.sin(Math.PI * eased);
+        const blur = motion.matches ? 0 : softness * (isFocusDissolve ? 3.5 : 1.2);
+        layer.style.filter = blur > .02 ? `blur(${blur}px)` : "none";
+        const shift = isFocusDissolve ? 0 : (entering ? 1 - eased : -eased) * 2.5;
+        const zoom = 1.055 + (isFocusDissolve && !entering ? .045 * eased : 0);
+        layer.style.transform = motion.matches ? "none" : `translateX(${shift}%) scale(${zoom})`;
+
       });
+      root.style.setProperty("--caption-opacity", String(Math.min(1, Math.abs(2 * eased - 1) * 1.8)));
       setActive(Math.min(scenes.length - 1, index + Number(eased >= .5)));
     }
     function queue() { if (!frame) frame = requestAnimationFrame(paint); }
