@@ -1,8 +1,21 @@
-// Apex logomark: a stylised apex over a baseline, drawn in the current text colour.
-export function ApexMark({ size = 28 }: { size?: number }) {
+// Apex logo: a peak built from three layers of warm strata (the "solid ground" the company stands on),
+// paired with an "Apex" wordmark set in the soft serif.
+const bands = [
+  { points: "14,3 17.45,9.3 10.55,9.3", fill: "#f4b54f" },
+  { points: "9.78,10.7 18.22,10.7 21.28,16.3 6.72,16.3", fill: "#e08a34" },
+  { points: "5.95,17.7 22.05,17.7 25.5,24 2.5,24", fill: "#b85a26" },
+];
+
+export function ApexMark({ size = 28, mono = false }: { size?: number; mono?: boolean }) {
   return <svg className="apex-mark" width={size} height={size} viewBox="0 0 28 28" aria-hidden="true">
-    <rect width="28" height="28" rx="9" fill="currentColor" />
-    <path d="M7 20.5 14 7l7 13.5" fill="none" stroke="var(--mark-ink, #fff)" strokeWidth="2.4" strokeLinejoin="round" />
-    <path d="M10.2 16h7.6" stroke="var(--mark-ink, #fff)" strokeWidth="2.4" />
+    {bands.map(band => <polygon key={band.points} points={band.points} fill={mono ? "currentColor" : band.fill} stroke={mono ? "currentColor" : band.fill} strokeWidth="1.4" strokeLinejoin="round" />)}
   </svg>;
+}
+
+export function ApexLogo({ size = 28, label }: { size?: number; label?: string }) {
+  return <span className="apex-logo" style={{ "--logo-size": `${size}px` } as React.CSSProperties}>
+    <ApexMark size={size} />
+    <span className="apex-wordmark">Apex</span>
+    {label && <span className="apex-logo-label">{label}</span>}
+  </span>;
 }

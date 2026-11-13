@@ -25,7 +25,7 @@ export function SignInMenu({ accounts, next, error }: { accounts: User[]; next: 
     <button className="signin-trigger" aria-expanded={open} aria-controls="signin-panel" onClick={() => setOpen(!open)}>Sign in</button>
     {open && <div className="signin-panel" id="signin-panel" role="dialog" aria-labelledby="signin-title">
       <h2 id="signin-title">Sign in</h2>
-      <button type="button" className="sso" disabled aria-describedby="sso-note"><ApexMark size={18} />Continue with Apex SSO</button>
+      <button type="button" className="sso" disabled aria-describedby="sso-note"><ApexMark size={18} mono />Continue with Apex SSO</button>
       <p className="sso-note" id="sso-note">Single sign-on is off in this demo.</p>
       {error && <p className="form-error" role="alert">That account isn't in the directory. Choose one below.</p>}
       {showDemo

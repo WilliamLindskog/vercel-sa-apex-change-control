@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ApexMark } from "@/app/ui/apex-mark";
+import { ApexLogo } from "@/app/ui/apex-mark";
 import { AccountMenu } from "@/app/ui/account-menu";
 import { SidebarNav } from "@/app/ui/sidebar-nav";
 import { cases } from "@/lib/cases";
@@ -12,7 +12,7 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
 
   return <div className="app">
     <aside className="sidebar">
-      <Link href="/cases" className="sidebar-brand"><ApexMark size={26} /><span><strong>Apex Additives</strong><span>Change Control</span></span></Link>
+      <Link href="/cases" className="sidebar-brand" aria-label="Apex Change Control, all cases"><ApexLogo size={26} label="Change Control" /></Link>
       <SidebarNav openCases={open.map(item => ({ id: item.id, title: item.material }))} />
       <AccountMenu user={user} accounts={users} />
     </aside>
