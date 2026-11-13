@@ -12,3 +12,4 @@ tsconfig.tsbuildinfo
 .claude/
 # Separate prototype with its own git repo; not part of this app
 work/
+/.next-alt

@@ -2,94 +2,109 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { switchAccount } from "@/app/actions";
-import type { Assessment, ProductRecord } from "@/lib/case";
-import { evidence, records, supplierChange } from "@/lib/case";
+import type { Scenario } from "@/lib/apex-systems";
+import type { CaseState, Disposition, Finding } from "@/lib/case";
+import { marketLabel, supplierChange, supplierDocuments } from "@/lib/case";
 import type { ReviewRole, User } from "@/lib/users";
 
-type Review = { note: string; signedBy?: string; signedAt?: string; workflowRunId?: string };
-type AssessmentResponse = { assessment: Assessment; runId: string; mode: "ai-gateway" | "validated-fixture" | "safe-fallback"; latencyMs: number; model: string };
-type Status = ProductRecord["status"];
-type CaseState = "unassessed" | "review" | "ready" | "routed" | "blocked";
+type View = "unassessed" | "review" | "ready" | "routed" | "blocked";
+type Command = { type: "assess" } | { type: "sign"; role: ReviewRole; note: string } | { type: "route" } | { type: "scenario"; scenario: Scenario };
 
-const statusLabel: Record<Status, string> = { qualified: "Qualified", requalification_required: "Requalification required", unaffected: "Unaffected", uncertain: "Evidence missing" };
-const modeLabel = { "ai-gateway": "AI Gateway", "validated-fixture": "Validated fixture", "safe-fallback": "Safe fallback" };
-const stateLabel: Record<CaseState, string> = { unassessed: "Not assessed", review: "In review", ready: "Ready to route", routed: "Routed", blocked: "Blocked" };
-const defaultNotes = (missingEu: boolean): Record<ReviewRole, string> => ({
+const statusLabel: Record<Disposition, string> = { qualified: "Qualified", requalification_required: "Requalification required", unaffected: "Unaffected", uncertain: "Evidence missing" };
+const viewLabel: Record<View, string> = { unassessed: "Not assessed", review: "In review", ready: "Ready to route", routed: "Routed", blocked: "Blocked" };
+const scenarioLabel: Record<Scenario, string> = { normal: "All systems normal", "missing-eu-qualification": "EU record missing", "qms-outage": "Quality system down" };
+const defaultNotes: Record<ReviewRole, string> = {
   Quality: "Requalification required for AeroShield 420 before X-17R is used.",
-  "Regulatory Affairs": missingEu ? "EU qualification record is missing. Recover or verify it before any EMEA decision." : "EMEA customer notification required under REG-EU-07.",
-});
+  "Regulatory Affairs": "Customer notices required: 90 days for EMEA (REG-EU-07), 60 days for the US (REG-US-02).",
+};
 const time = (iso: string) => new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 // Days left until the current material runs out: the deadline the whole case is working against.
 const daysUntil = (date: string) => Math.max(0, Math.ceil((new Date(date).getTime() - Date.now()) / 86_400_000));
 
+// The case lives in a durable workflow on the server. This hook reads its latest snapshot and, after each
+// action, polls until the workflow has published a newer version.
+function useCase(caseId: string) {
+  const [state, setState] = useState<CaseState | null>(null);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const latest = useRef<CaseState | null>(null);
+
+  const load = useCallback(async () => {
+    const response = await fetch(`/api/cases/${caseId}`, { cache: "no-store" });
+    if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error ?? "The case could not be loaded.");
+    const next: CaseState = await response.json();
+    latest.current = next;
+    setState(next);
+    return next;
+  }, [caseId]);
+
+  useEffect(() => { load().catch(reason => setError(reason.message)); }, [load]);
+
+  const send = useCallback(async (command: Command) => {
+    setBusy(true); setError("");
+    const before = latest.current;
+    try {
+      const response = await fetch(`/api/cases/${caseId}/commands`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(command) });
+      if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error ?? "That action didn't go through. Try again.");
+      // Wait for the workflow to apply it: a newer version, or a new run after a scenario change.
+      for (let i = 0; i < 180; i++) {
+        await new Promise(resolve => setTimeout(resolve, i < 10 ? 300 : 700));
+        const next = await load();
+        const moved = !before || next.runId !== before.runId || next.version > before.version;
+        if (moved && !next.assessing) {
+          const last = next.log.at(-1)?.text ?? "";
+          if (last.startsWith("Rejected: ")) setError(`Not accepted: ${last.slice(10)}.`);
+          break;
+        }
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "That action didn't go through. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }, [caseId, load]);
+
+  return { state, error, busy, send };
+}
+
 export function CaseWorkspace({ user, directory }: { user: User; directory: User[] }) {
   const router = useRouter();
   const [switching, startSwitch] = useTransition();
-  const [missingEu, setMissingEu] = useState(false);
-  const [assessment, setAssessment] = useState<AssessmentResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [reviews, setReviews] = useState<Record<ReviewRole, Review>>(() => {
-    const notes = defaultNotes(false);
-    return { Quality: { note: notes.Quality }, "Regulatory Affairs": { note: notes["Regulatory Affairs"] } };
-  });
-  const [routedAt, setRoutedAt] = useState<string | null>(null);
+  const { state, error, busy, send } = useCase(supplierChange.id);
+  const [notes, setNotes] = useState(defaultNotes);
   const [highlight, setHighlight] = useState<string | null>(null);
 
-  const currentRecords = useMemo(() => records(missingEu), [missingEu]);
   const person = (role: User["role"]) => directory.find(entry => entry.role === role)!;
   const lead = person("Product Change Lead");
-  const regulatoryOwner = person("Regulatory Affairs");
-  const quality = reviews.Quality, regulatory = reviews["Regulatory Affairs"];
-  const reviewsDone = Boolean(quality.signedAt && regulatory.signedAt);
+  const run = state?.assessment ?? null;
+  const findings = run?.assessment.findings ?? [];
+  const uncertain = findings.filter(f => f.disposition === "uncertain");
+  const quality = state?.signOffs.Quality ?? null;
+  const regulatory = state?.signOffs["Regulatory Affairs"] ?? null;
+  const assessing = Boolean(state?.assessing) || (busy && !run);
 
-  // One derived state drives the badge, the decision panel and the hand-off line, so they can't disagree.
-  const state: CaseState = missingEu ? "blocked" : !assessment ? "unassessed" : routedAt ? "routed" : reviewsDone ? "ready" : "review";
-  const findings = new Map(assessment?.assessment.affected.map(item => [item.recordId, item]));
+  // One derived view drives the badge, the decision panel and the hand-off line, so they can't disagree.
+  const view: View = !run ? "unassessed" : uncertain.length ? "blocked" : state?.routed ? "routed" : quality && regulatory ? "ready" : "review";
+  const blocker = run?.assessment.openQuestions[0];
+  const blockerOwner = blocker ? person(blocker.owner) : lead;
 
   const rawSteps: { label: string; detail: string; done: boolean; blocked?: boolean; person?: User }[] = [
     { label: "Notice received", detail: supplierChange.received, done: true },
-    { label: "Assessment", detail: assessment ? modeLabel[assessment.mode] : lead.name, done: Boolean(assessment), person: lead },
-    { label: "Quality", detail: person("Quality").name, done: Boolean(quality.signedAt), person: person("Quality") },
-    { label: "Regulatory", detail: regulatoryOwner.name, done: Boolean(regulatory.signedAt), blocked: missingEu, person: regulatoryOwner },
-    { label: "Plan routed", detail: lead.name, done: Boolean(routedAt), person: lead },
+    { label: "Assessment", detail: run ? (run.mode === "ai-gateway" ? "AI, checked by policy" : "Policy rules") : lead.name, done: Boolean(run), person: lead },
+    { label: "Quality", detail: person("Quality").name, done: Boolean(quality), person: person("Quality") },
+    { label: "Regulatory", detail: person("Regulatory Affairs").name, done: Boolean(regulatory), blocked: uncertain.length > 0, person: person("Regulatory Affairs") },
+    { label: "Plan routed", detail: lead.name, done: Boolean(state?.routed), person: lead },
   ];
   const firstOpen = rawSteps.findIndex(step => !step.done);
   const steps = rawSteps.map((step, index) => ({ ...step, current: index === firstOpen }));
 
+  const sources = run?.sources ?? supplierDocuments;
   function cite(id: string) {
     setHighlight(id);
     document.getElementById(`source-${id}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
-
-  async function runAssessment() {
-    setLoading(true); setError("");
-    try {
-      const response = await fetch("/api/assessment", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ missingEuQualification: missingEu }) });
-      if (!response.ok) throw new Error("The assessment didn't complete. Run it again; if it keeps failing, check the AI Gateway status in the run record.");
-      setAssessment(await response.json());
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "The assessment didn't complete. Run it again."); }
-    finally { setLoading(false); }
-  }
-
-  async function signOff(role: ReviewRole) {
-    setError("");
-    try {
-      const response = await fetch("/api/reviews", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ role, decision: reviews[role].note }) });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error ?? "The sign-off wasn't recorded. Try again.");
-      setReviews(current => ({ ...current, [role]: { ...current[role], signedBy: result.reviewer, signedAt: result.recordedAt, workflowRunId: result.workflowRunId } }));
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "The sign-off wasn't recorded. Try again."); }
-  }
-
-  function setScenario(next: boolean) {
-    setMissingEu(next); setAssessment(null); setRoutedAt(null); setError(""); setHighlight(null);
-    const notes = defaultNotes(next);
-    setReviews({ Quality: { note: notes.Quality }, "Regulatory Affairs": { note: notes["Regulatory Affairs"] } });
-  }
-
   const switchTo = (target: User) => startSwitch(async () => { await switchAccount(target.id); router.refresh(); });
 
   return <>
@@ -97,8 +112,10 @@ export function CaseWorkspace({ user, directory }: { user: User; directory: User
       <nav className="breadcrumb" aria-label="Breadcrumb"><Link href="/cases">Cases</Link><span aria-hidden="true">/</span><span aria-current="page">{supplierChange.id}</span></nav>
       <div className="topbar-tools">
         <label className="scenario">
-          <span>Missing EU record</span>
-          <button role="switch" aria-checked={missingEu} className="switch" onClick={() => setScenario(!missingEu)}><span className="visually-hidden">Simulate a missing EU qualification record</span></button>
+          <span>Demo scenario</span>
+          <select value={state?.scenario ?? "normal"} disabled={busy || !state} onChange={event => send({ type: "scenario", scenario: event.target.value as Scenario })}>
+            {(Object.keys(scenarioLabel) as Scenario[]).map(key => <option key={key} value={key}>{scenarioLabel[key]}</option>)}
+          </select>
         </label>
         <span className="env-badge">Demo data</span>
       </div>
@@ -111,7 +128,7 @@ export function CaseWorkspace({ user, directory }: { user: User; directory: User
             <p className="eyebrow">{supplierChange.id} · {supplierChange.supplier}</p>
             <h1>{supplierChange.title}</h1>
           </div>
-          <span className={`badge badge-lg badge-${state}`}>{stateLabel[state]}</span>
+          <span className={`badge badge-lg badge-${view}`}>{viewLabel[view]}</span>
         </div>
 
         {/* The change itself, compressed to one line: what is going away, what replaces it, and the proof. */}
@@ -138,71 +155,62 @@ export function CaseWorkspace({ user, directory }: { user: User; directory: User
 
       <div className="case-layout">
         <div className="case-main">
-          {/* Decision first: the answer the Product Change Lead needs sits at the top, and every other section is supporting evidence. */}
-          <section className={`decision decision-${state}`} aria-labelledby="decision-h" aria-busy={loading}>
+          {/* Decision first: the answer the Product Change Lead needs sits at the top; everything else is supporting evidence. */}
+          <section className={`decision decision-${view}`} aria-labelledby="decision-h" aria-busy={assessing}>
             <div className="decision-top">
               <p className="eyebrow">Decision</p>
-              {assessment && <span className="decision-mode">{modeLabel[assessment.mode]} · {assessment.latencyMs} ms</span>}
+              {run && <span className="decision-mode">{run.mode === "ai-gateway" ? "AI Gateway" : "Policy rules"} · {run.latencyMs} ms</span>}
             </div>
 
-            {loading ? <div className="decision-loading" role="status">
-              <h2 id="decision-h">Reading {evidence.length} Apex records…</h2>
+            {!state ? <div className="decision-loading" role="status"><h2 id="decision-h">Opening the case…</h2><span className="skeleton" /><span className="skeleton short" /></div>
+            : assessing ? <div className="decision-loading" role="status">
+              <h2 id="decision-h">Checking SAP, the quality system and regulatory rules…</h2>
               <span className="skeleton" /><span className="skeleton short" />
-            </div> : !assessment ? <div className="decision-empty">
+            </div> : !run ? <div className="decision-empty">
               <div>
-                <h2 id="decision-h">{missingEu ? "An EU record is missing" : "No assessment yet"}</h2>
-                <p>Check each product and region against the records on file. Every finding cites a source, and missing records are flagged rather than guessed.</p>
+                <h2 id="decision-h">No assessment yet</h2>
+                <p>Purchasing flagged {supplierChange.candidates.length} products. The assessment checks each one against SAP, the quality system and regional notice rules, and cites every record it uses.</p>
               </div>
-              <button className="btn btn-primary" onClick={runAssessment}>Run assessment</button>
+              <button className="btn btn-primary" onClick={() => send({ type: "assess" })} disabled={busy}>Run assessment</button>
             </div> : <>
-              <h2 id="decision-h">{missingEu ? "EMEA use can't be approved yet" : "X-17R needs requalification before use"}</h2>
-              <p className="decision-summary">{assessment.assessment.summary}</p>
+              <h2 id="decision-h">{uncertain.length ? `${uncertain.map(f => `${f.product} (${marketLabel(f.market)})`).join(", ")} can't be decided yet` : "X-17R needs requalification before use"}</h2>
+              <p className="decision-summary">{run.assessment.summary}</p>
 
-              {assessment.assessment.uncertainties.map(item => {
-                // An open question closes when its owner signs off; a missing record never closes this way.
-                const closedBy = !missingEu && item.owner === "Regulatory Affairs" ? regulatory : undefined;
-                return closedBy?.signedAt
-                  ? <div className="open-question is-resolved" key={item.recordId}><strong>Resolved · {closedBy.signedBy}, {time(closedBy.signedAt)}</strong><p>{closedBy.note}</p></div>
-                  : <div className="open-question" key={item.recordId}><strong>Open question · {item.owner}</strong><p>{item.detail}</p></div>;
-              })}
+              {run.assessment.openQuestions.map(item => <div className="open-question" key={`${item.finishedGood}-${item.owner}`}><strong>Open question · {item.owner}</strong><p>{item.detail}</p></div>)}
 
               <div className="next-action">
                 <div>
                   <p className="eyebrow">Next action</p>
-                  {state === "blocked" && <p><strong>{regulatoryOwner.name}</strong> recovers or verifies the EU qualification record. Nothing can be routed until then.</p>}
-                  {state === "review" && <p>Quality and Regulatory Affairs sign off, then the plan goes to <strong>{lead.name}</strong>.</p>}
-                  {state === "ready" && <p>Route the requalification and customer-notification plan for AeroShield 420 to <strong>{lead.name}</strong>.</p>}
-                  {state === "routed" && routedAt && <p>Plan routed to <strong>{lead.name}</strong> at {time(routedAt)}. {user.id === lead.id ? "It's in your queue." : `${lead.name} owns the next step.`}</p>}
+                  {view === "blocked" && <p><strong>{blockerOwner.name}</strong> resolves the open question. Nothing can be routed until then.</p>}
+                  {view === "review" && <p>Quality and Regulatory Affairs sign off, then the plan goes to <strong>{lead.name}</strong>.</p>}
+                  {view === "ready" && <p>Route the requalification and customer-notice plan to <strong>{lead.name}</strong>.</p>}
+                  {view === "routed" && state.routed && <p>Plan routed to <strong>{state.routed.to}</strong> at {time(state.routed.at)}. {user.id === lead.id ? "It's in your queue." : `${lead.name} owns the next step.`}</p>}
                 </div>
-                {state === "ready"
-                  ? <button className="btn btn-primary" onClick={() => setRoutedAt(new Date().toISOString())}>Route plan to {lead.name}</button>
-                  : <Owner user={state === "blocked" ? regulatoryOwner : lead} />}
+                {view === "ready"
+                  ? <button className="btn btn-primary" onClick={() => send({ type: "route" })} disabled={busy}>Route plan to {lead.name}</button>
+                  : <Owner user={view === "blocked" ? blockerOwner : lead} />}
               </div>
 
               <div className="decision-foot">
-                <button className="btn btn-quiet" onClick={runAssessment}>Run again</button>
-                <p>The assessment cites sources. It can't approve or route a change.</p>
+                <button className="btn btn-quiet" onClick={() => send({ type: "assess" })} disabled={busy || Boolean(state.routed)}>Run again</button>
+                <p>The assessment cites Apex records. It can't approve or route a change.</p>
               </div>
             </>}
           </section>
 
           <section className="block" aria-labelledby="impact-h">
-            <div className="block-head"><h2 id="impact-h">Impact by product and region</h2><span className="block-meta">{currentRecords.length} records{assessment ? " · assessed" : ""}</span></div>
+            <div className="block-head"><h2 id="impact-h">Impact by product and market</h2><span className="block-meta">{run ? `${findings.length} products checked` : `${supplierChange.candidates.length} flagged by Purchasing`}</span></div>
             <div className="table-wrap">
               <table className="impact-table">
-                <thead><tr><th scope="col">Product and region</th><th scope="col">Status</th><th scope="col">{assessment ? "Assessment" : "Record on file"}</th><th scope="col">Sources</th></tr></thead>
+                <thead><tr><th scope="col">Product and market</th><th scope="col">Status</th><th scope="col">Finding</th><th scope="col">Sources</th></tr></thead>
                 <tbody>
-                  {currentRecords.map(record => {
-                    // Once assessed, the row shows the model's cited rationale; before that, the record as stored.
-                    const finding = findings.get(record.id);
-                    const status = finding?.disposition ?? record.status;
-                    return <tr key={record.id} className={status === "uncertain" ? "is-uncertain" : status === "unaffected" ? "is-quiet" : undefined}>
-                      <td><strong>{record.product}</strong><span className="cell-sub">{record.region}<span className="record-id">{record.id}</span></span></td>
-                      <td><StatusBadge status={status} /></td>
-                      <td className="cell-text">{finding?.rationale ?? record.detail}</td>
-                      <td><Cite ids={finding?.evidenceIds ?? record.evidenceIds} onCite={cite} /></td>
-                    </tr>;
-                  })}
+                  {run ? findings.map(f => <FindingRow key={f.finishedGood} finding={f} onCite={cite} />)
+                    : supplierChange.candidates.map(id => <tr key={id} className="is-quiet">
+                      <td><strong>{id}</strong><span className="cell-sub">Flagged by Purchasing</span></td>
+                      <td><span className="badge badge-neutral">Not checked</span></td>
+                      <td className="cell-text">Not yet checked against SAP and the quality system.</td>
+                      <td />
+                    </tr>)}
                 </tbody>
               </table>
             </div>
@@ -211,16 +219,18 @@ export function CaseWorkspace({ user, directory }: { user: User; directory: User
           <section className="block" aria-labelledby="review-h">
             <div className="block-head"><h2 id="review-h">Sign-offs</h2><span className="block-meta">Both required before routing</span></div>
             <div className="signoffs">
-              {(["Quality", "Regulatory Affairs"] as const).map(role => <SignOff key={role}
+              {(["Quality", "Regulatory Affairs"] as const).map(role => <SignOffCard key={role}
                 role={role}
-                scope={role === "Quality" ? "Technical scope and requalification plan" : "Regional qualification and customer notification"}
+                scope={role === "Quality" ? "Technical scope and requalification plan" : "Regional qualification and customer notices"}
                 assignee={person(role)}
                 user={user}
-                review={reviews[role]}
-                waitingOn={!assessment ? "Waiting for the evidence assessment." : role === "Regulatory Affairs" && missingEu ? "Blocked until the EU qualification record is recovered." : null}
+                signed={state?.signOffs[role] ?? null}
+                note={notes[role]}
+                waitingOn={!run ? "Waiting for the assessment." : role === "Regulatory Affairs" && uncertain.length ? "Blocked until the missing record is resolved." : null}
+                busy={busy}
                 switching={switching}
-                onNote={note => setReviews(current => ({ ...current, [role]: { ...current[role], note } }))}
-                onSign={() => signOff(role)}
+                onNote={note => setNotes(current => ({ ...current, [role]: note }))}
+                onSign={() => send({ type: "sign", role, note: notes[role] })}
                 onSwitch={() => switchTo(person(role))} />)}
             </div>
           </section>
@@ -228,33 +238,43 @@ export function CaseWorkspace({ user, directory }: { user: User; directory: User
 
         <aside className="case-aside" aria-label="Sources and run record">
           <section className="aside-block">
-            <div className="aside-head"><h2>Sources</h2><span>Apex records</span></div>
+            <div className="aside-head"><h2>Sources</h2><span>{run ? `${sources.length} records` : "Supplier documents"}</span></div>
             <ol className="sources">
-              {evidence.map(item => {
-                const missing = missingEu && item.id === "QLF-EU-03";
-                return <li key={item.id} id={`source-${item.id}`} className={highlight === item.id ? "is-highlighted" : missing ? "is-missing" : undefined}>
-                  <span className="source-id">{item.id}</span>
-                  <strong>{item.source.split(" | ")[0]}</strong>
-                  <p>{missing ? "Not returned by the qualification system." : item.detail}</p>
-                </li>;
-              })}
+              {sources.map(item => <li key={item.id} id={`source-${item.id}`} className={highlight === item.id ? "is-highlighted" : undefined}>
+                <span className="source-id">{item.id}<em>{item.system}</em></span>
+                <strong>{item.title.split(" | ")[1] ?? item.title}</strong>
+                <p>{item.detail}</p>
+              </li>)}
+              {uncertain.map(f => <li key={`gap-${f.finishedGood}`} className="is-missing">
+                <span className="source-id">{f.finishedGood}<em>QMS</em></span>
+                <strong>No qualification record</strong>
+                <p>{f.rationale}</p>
+              </li>)}
             </ol>
+            {!run && <p className="aside-empty">Apex records appear here once the assessment reads them.</p>}
           </section>
 
           <section className="aside-block">
-            <div className="aside-head"><h2>Run record</h2>{assessment && <span className="live-dot">Recorded</span>}</div>
-            {assessment ? <dl className="run">
-              <div><dt>Assessment run</dt><dd className="mono">{assessment.runId}</dd></div>
-              <div><dt>Model</dt><dd>{assessment.model}</dd></div>
-              <div><dt>Latency</dt><dd>{assessment.latencyMs} ms</dd></div>
-              {quality.workflowRunId && <div><dt>Quality workflow</dt><dd className="mono">{quality.workflowRunId}</dd></div>}
-              {regulatory.workflowRunId && <div><dt>Regulatory workflow</dt><dd className="mono">{regulatory.workflowRunId}</dd></div>}
-            </dl> : <p className="aside-empty">Each assessment and sign-off is recorded here with its run ID, model and timing.</p>}
+            <div className="aside-head"><h2>Run record</h2>{state && <span className="live-dot">Durable</span>}</div>
+            {state ? <dl className="run">
+              <div><dt>Case workflow</dt><dd className="mono">{state.runId}</dd></div>
+              {run && <>
+                <div><dt>Assessed by</dt><dd>{run.model}</dd></div>
+                {run.fallbackReason && <div><dt>Why no model</dt><dd>{run.fallbackReason}</dd></div>}
+                <div><dt>Time</dt><dd>{run.latencyMs} ms{run.usage?.inputTokens ? ` · ${run.usage.inputTokens + (run.usage.outputTokens ?? 0)} tokens` : ""}{run.modelCalls ? ` · ${run.modelCalls} model calls` : ""}</dd></div>
+                {run.mode === "ai-gateway" && <div><dt>Cost</dt><dd>{run.costUsd !== undefined ? `About $${run.costUsd.toFixed(4)}` : "Not available"} · AI runs today {state.aiRuns?.count ?? 0}{run.requestedModel && !run.model.startsWith(run.requestedModel) ? ` · fell back from ${run.requestedModel}` : ""}</dd></div>}
+                <div><dt>Apex system calls</dt><dd>
+                  <ul className="calls">{run.calls.map((call, i) => <li key={i}><span>{call.system}</span><code>{call.endpoint.split("?")[0].replace(/^\/\w+\/v\d/, "")}</code><em className={call.status >= 400 ? "is-error" : undefined}>{call.status} · {call.ms} ms</em></li>)}</ul>
+                </dd></div>
+                {run.mode === "ai-gateway" && <div><dt>Policy corrections</dt><dd>{run.corrections.length ? <ul className="corrections">{run.corrections.map(c => <li key={c}>{c}</li>)}</ul> : "None. The model matched the records."}</dd></div>}
+              </>}
+              <div><dt>History</dt><dd><ol className="history">{state.log.slice(-6).map((entry, i) => <li key={i}><time>{time(entry.at)}</time>{entry.text}</li>)}</ol></dd></div>
+            </dl> : <p className="aside-empty">Opening the case workflow…</p>}
           </section>
 
           <section className="aside-note">
             <h2>System boundary</h2>
-            <p>Reads copies of Apex product, qualification and regulatory records. It never writes to Apex systems, and only people can approve a change.</p>
+            <p>Reads SAP, the quality system and regulatory rules through Apex's service API. It never writes to them, and only people can approve a change.</p>
           </section>
         </aside>
       </div>
@@ -262,8 +282,13 @@ export function CaseWorkspace({ user, directory }: { user: User; directory: User
   </>;
 }
 
-function StatusBadge({ status }: { status: Status }) {
-  return <span className={`badge badge-${status}`}>{statusLabel[status]}</span>;
+function FindingRow({ finding: f, onCite }: { finding: Finding; onCite: (id: string) => void }) {
+  return <tr className={f.disposition === "uncertain" ? "is-uncertain" : f.disposition === "unaffected" ? "is-quiet" : undefined}>
+    <td><strong>{f.product}</strong><span className="cell-sub">{marketLabel(f.market)}<span className="record-id">{f.finishedGood}</span></span></td>
+    <td><span className={`badge badge-${f.disposition}`}>{statusLabel[f.disposition]}</span>{f.noticeDays && f.disposition !== "unaffected" ? <span className="cell-note">{f.noticeDays}-day customer notice</span> : null}</td>
+    <td className="cell-text">{f.rationale}</td>
+    <td><Cite ids={f.evidenceIds} onCite={onCite} /></td>
+  </tr>;
 }
 
 function Cite({ ids, onCite }: { ids: string[]; onCite: (id: string) => void }) {
@@ -274,12 +299,11 @@ function Owner({ user }: { user: User }) {
   return <p className="owner"><span className={`avatar small tone-${user.id}`} aria-hidden="true">{user.initials}</span><span><strong>{user.name}</strong><span>{user.title}</span></span></p>;
 }
 
-function SignOff({ role, scope, assignee, user, review, waitingOn, switching, onNote, onSign, onSwitch }: {
-  role: ReviewRole; scope: string; assignee: User; user: User; review: Review; waitingOn: string | null; switching: boolean;
-  onNote: (note: string) => void; onSign: () => void; onSwitch: () => void;
+function SignOffCard({ role, scope, assignee, user, signed, note, waitingOn, busy, switching, onNote, onSign, onSwitch }: {
+  role: ReviewRole; scope: string; assignee: User; user: User; signed: CaseState["signOffs"][ReviewRole]; note: string; waitingOn: string | null;
+  busy: boolean; switching: boolean; onNote: (note: string) => void; onSign: () => void; onSwitch: () => void;
 }) {
   const isAssignee = user.id === assignee.id;
-  const signed = Boolean(review.signedAt);
   const blocked = Boolean(waitingOn) && !signed;
   const hardBlock = blocked && Boolean(waitingOn?.startsWith("Blocked"));
   return <article className={`signoff ${signed ? "is-signed" : ""} ${hardBlock ? "is-uncertain" : ""}`}>
@@ -289,12 +313,12 @@ function SignOff({ role, scope, assignee, user, review, waitingOn, switching, on
     </header>
     <Owner user={assignee} />
     {signed ? <div className="signed">
-      <p className="signed-note">{review.note}</p>
-      <p className="signed-meta">Signed by {review.signedBy} at {time(review.signedAt!)}</p>
+      <p className="signed-note">{signed.note}</p>
+      <p className="signed-meta">Signed by {signed.reviewer} at {time(signed.at)}</p>
     </div> : blocked ? <p className="waiting">{waitingOn}</p> : isAssignee ? <div className="sign-form">
       <label htmlFor={`note-${role}`}>Decision note</label>
-      <textarea id={`note-${role}`} value={review.note} onChange={event => onNote(event.target.value)} rows={3} />
-      <button className="btn btn-primary" onClick={onSign} disabled={review.note.trim().length < 3}>Sign off as {role}</button>
+      <textarea id={`note-${role}`} value={note} onChange={event => onNote(event.target.value)} rows={3} />
+      <button className="btn btn-primary" onClick={onSign} disabled={busy || note.trim().length < 3}>{busy ? "Recording…" : `Sign off as ${role}`}</button>
     </div> : <div className="handoff">
       <p>You're signed in as {user.name}. Only {assignee.name} can sign off for {role}.</p>
       <button className="btn btn-secondary" onClick={onSwitch} disabled={switching}>{switching ? "Switching…" : `Switch to ${assignee.name}`}</button>
