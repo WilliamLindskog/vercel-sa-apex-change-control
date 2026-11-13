@@ -20,7 +20,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
         <h2 id="hero-title">The works at Apex.</h2>
         <p>From mineral pigments in 1828 to specialty additives today. Our formulations carry nearly two centuries of work.</p>
       </div>
-      <a className="plate" href="https://www.loc.gov/resource/det.4a18921/">Industrial archive / Toledo, Ohio, 1905–1920 ↗</a>
+      <a className="plate" href="https://www.pexels.com/photo/4084699/">Photography by Johannes Plenio ↗</a>
     </section>
 
     <section className="signin-panel" aria-labelledby="signin-title">
