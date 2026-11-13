@@ -20,7 +20,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
         <h2 id="hero-title">The works at Apex.</h2>
         <p>From mineral pigments in 1828 to specialty additives today. Our formulations carry nearly two centuries of work.</p>
       </div>
-      <a className="plate" href="https://www.pexels.com/photo/37845017/">Marble quarry, Thessaloniki | Photography by K ↗</a>
+      <a className="plate" href="https://www.pexels.com/photo/31887450/">Bryce Canyon | Photography by Alex Moliski ↗</a>
     </section>
 
     <section className="signin-panel" aria-labelledby="signin-title">

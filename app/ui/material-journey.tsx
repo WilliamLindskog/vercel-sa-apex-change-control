@@ -4,10 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { ApexMark } from "./apex-mark";
 
 const scenes = [
-  { label: "News", title: "Made at Apex.", image: 37845017, alt: "Terraces of pale marble cut into a green mountainside" },
+  { label: "News", title: "Made at Apex.", image: 31887450, alt: "Sunlit copper-coloured cliffs above pines in Bryce Canyon" },
   { label: "History", title: "Since 1828.", image: 19446112, alt: "Natural layers of deep red sandstone" },
   { label: "Culture", title: "Material knowledge.", image: 31831100, alt: "Fine mineral bands running through fractured stone" },
-  { label: "Team", title: "Our people.", image: 9090362, alt: "Exposed stone meeting emerald quarry water" },
 ];
 
 export function MaterialJourney() {
@@ -54,7 +53,7 @@ export function MaterialJourney() {
     <div className="journey-stage">
       {scenes.map((s,i) => <img className="plate-image" key={s.image} src={`/journal/${s.image}.webp`} alt={s.alt} aria-hidden={active !== i} fetchPriority={i === 0 ? "high" : "auto"} />)}
       <div className="journey-shade"/>
-      <header className="journey-header"><a href="#news" className="journey-brand"><ApexMark size={27}/> Apex Additives</a><a href="/cases" className="journey-workspace">Workspace ↗</a></header>
+      <header className="journey-header"><a href="#news" className="journey-brand"><ApexMark size={27}/> Apex Additives</a><a href="/signin" className="journey-login">Log in</a></header>
       <div className="journey-caption"><h1 key={active}>{scenes[active].title}</h1></div>
       <nav aria-label="Chapters" className="journey-nav">{scenes.map((s,i) => <a href={`#${s.label.toLowerCase()}`} key={s.label} aria-current={active === i ? "step" : undefined}>{s.label}</a>)}</nav>
     </div>

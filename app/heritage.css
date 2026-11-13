@@ -9,11 +9,11 @@
 .journey a {color:inherit;text-decoration:none}
 .journey-brand {display:inline-flex;align-items:center;gap:10px;font-weight:700;font-size:20px}
 .journey-brand svg {color:#fff0d9;--mark-ink:#31291f}
-.journey-workspace {border:1px solid #ffffff8c;background:#201d1966;padding:8px 17px;border-radius:3px;font-size:14px}
+.journey-login {border:1px solid #ffffff8c;background:#201d1966;padding:8px 17px;border-radius:999px;font-size:14px;min-height:44px;min-width:84px;display:grid;place-items:center;font-weight:600}
 .journey-caption {bottom:clamp(94px,13vh,155px)}
 .journey-caption h1 {font:700 clamp(56px,7.6vw,124px)/1 var(--sans);letter-spacing:-.055em;margin:0;text-shadow:0 1px 18px #0003;}
-.journey-nav {bottom:22px;display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(8px,2vw,35px)}
-.journey-nav a {padding:10px 0;border-top:2px solid #ffffff70;font-weight:500;font-size:14px;}
+.journey-nav {bottom:max(16px,env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(8px,2vw,35px)}
+.journey-nav a {min-height:44px;padding:10px 0;border-top:2px solid #ffffff70;font-weight:500;font-size:14px;}
 .journey-nav a[aria-current],.journey-nav a:hover {border-color:#ffdfa6;color:#ffdfa6}
 .chapter-stop {height:100svh;pointer-events:none;}
 .journey-stage + .chapter-stop {margin-top:-100svh}
