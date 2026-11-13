@@ -1,0 +1,9 @@
+{
+  "name": "apex-systems-mock",
+  "private": true,
+  "type": "module",
+  "description": "Mock of Apex's existing ERP, QMS and regulatory systems. Deployed as its own Vercel project to stand in for systems that stay outside Vercel.",
+  "scripts": {
+    "dev": "node dev.js"
+  }
+}

@@ -1,0 +1,127 @@
+/* Landing: framed photo chapters on warm, lightly grained paper, with a calm pause between each.
+   Sign-in waits behind one button in the top bar. */
+
+.landing { --night: #24170f; --night-2: #2f2016; --cream: #fff6e8; --cream-2: #ecd8bb; --paper: #f6efe4; min-height: 100vh; color: var(--ink);
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .17 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"), var(--paper); }
+.landing h1, .landing h2 { font-family: var(--serif); font-weight: 400; font-variation-settings: "SOFT" 40, "opsz" 144; letter-spacing: -.035em; text-wrap: balance; }
+
+/* Top bar */
+.lp-bar { position: fixed; inset: 0 0 auto; z-index: 20; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 24px; height: 72px; padding: 0 clamp(20px, 3.5vw, 52px); background: color-mix(in srgb, var(--paper) 86%, transparent); backdrop-filter: blur(12px); }
+.lp-brand { color: var(--ink); text-decoration: none; }
+.lp-bar nav { display: flex; gap: clamp(18px, 3vw, 36px); }
+.lp-bar nav a { color: var(--ink-2); font-size: 15px; font-weight: 500; text-decoration: none; transition: color .2s; }
+.lp-bar nav a:hover { color: var(--ink); text-decoration: underline; }
+
+/* Sign-in menu */
+.signin-menu { position: relative; justify-self: end; }
+.signin-trigger { min-height: 38px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--action); color: #fff8ef; font-size: 14.5px; font-weight: 600; transition: background-color .2s; }
+.signin-trigger:hover, .signin-trigger[aria-expanded="true"] { background: var(--action-hover); }
+.signin-panel { position: absolute; top: calc(100% + 10px); right: 0; width: min(340px, calc(100vw - 32px)); padding: 22px; border-radius: 18px; background: var(--ground); color: var(--ink); box-shadow: 0 24px 60px -18px rgba(0, 0, 0, .55); animation: panel-in .35s cubic-bezier(.16, 1, .3, 1) both; transform-origin: top right; }
+@keyframes panel-in { from { opacity: 0; transform: translateY(-6px) scale(.98); } }
+.signin-panel h2 { margin-bottom: 14px; color: var(--ink); font-size: 26px; letter-spacing: -.02em; }
+.sso { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 44px; border: 1px dashed var(--line-strong); border-radius: 12px; background: transparent; color: var(--ink-3); font-size: 14.5px; font-weight: 600; --mark-ink: var(--ground); }
+.sso .apex-mark { color: var(--ink-3); }
+.sso-note { margin-top: 6px; color: var(--ink-3); font-size: 12.5px; }
+.demo-toggle { width: 100%; min-height: 44px; margin-top: 14px; border: 0; border-radius: 12px; background: var(--action); color: #fff8ef; font-size: 14.5px; font-weight: 600; transition: background-color .2s; }
+.demo-toggle:hover { background: var(--action-hover); }
+.signin-panel .form-error { margin: 14px 0 0; }
+.account-list { display: grid; gap: 6px; margin-top: 14px; }
+.account { display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); text-align: left; transition: border-color .2s, background-color .2s; }
+.account:hover { border-color: var(--marigold-line); background: #fffcf6; }
+.account-text strong { display: block; font-size: 14.5px; }
+.account-text span { display: block; color: var(--ink-3); font-size: 12.5px; }
+
+/* Chapters: framed panels with breathing room between them */
+.landing main { display: grid; gap: 22vh; padding: 84px clamp(14px, 2.6vw, 36px) 18vh; }
+.chapter { position: relative; isolation: isolate; display: flex; align-items: flex-end; height: calc(100svh - 104px); min-height: 520px; overflow: hidden; border-radius: 26px; background: var(--night); color: var(--cream); }
+.chapter-bg { z-index: -2; object-fit: cover; }
+.chapter-culture .chapter-bg { filter: sepia(.28) saturate(.9) brightness(.95); }
+.chapter::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg, rgba(26, 16, 10, .86) 0%, rgba(26, 16, 10, .35) 50%, rgba(26, 16, 10, .1) 100%); }
+.chapter-body { width: min(1200px, 100% - 48px); margin: 0 auto; padding-bottom: clamp(48px, 9vh, 96px); }
+.chapter h1 { max-width: 9ch; font-size: clamp(60px, 10vw, 136px); line-height: .92; }
+.chapter-hero h1 { color: #fffdf8; text-shadow: 0 2px 40px rgba(26, 16, 10, .45); }
+.chapter-hero .chapter-body > p { color: #fbeedb; text-shadow: 0 1px 18px rgba(26, 16, 10, .5); }
+.chapter h2 { font-size: clamp(56px, 8vw, 112px); line-height: .95; }
+.chapter-body > p { max-width: 40ch; margin-top: 18px; color: var(--cream-2); font-size: 19px; }
+
+/* Transitions: each chapter arrives its own way */
+
+/* Hero: one moment on load. The photo eases back, the headline rises. */
+.chapter-hero .chapter-bg { animation: hero-push 2.8s cubic-bezier(.16, 1, .3, 1) both; }
+.chapter-hero h1 { animation: rise 1.2s .2s cubic-bezier(.16, 1, .3, 1) both; }
+.chapter-hero .chapter-body > p { animation: rise 1.2s .45s cubic-bezier(.16, 1, .3, 1) both; }
+@keyframes hero-push { from { transform: scale(1.12); } }
+@keyframes rise { from { opacity: 0; transform: translateY(28px); } }
+
+@property --edge { syntax: "<length-percentage>"; inherits: false; initial-value: 0%; }
+@property --top { syntax: "<length-percentage>"; inherits: false; initial-value: 0%; }
+
+@supports (animation-timeline: view()) {
+  /* Every chapter arrives with a feathered edge, so there is never a hard line between sections */
+
+  /* Headings wait until their section has mostly arrived, so two headings never overlap mid-transition */
+  .chapter { view-timeline: --chapter block; }
+  .chapter-news h2, .chapter-history h2, .chapter-culture h2 { animation: heading-in linear both; animation-timeline: --chapter; animation-range: entry 65% entry 100%; }
+  @keyframes heading-in { from { opacity: 0; transform: translateY(24px); } }
+
+  /* News: a soft wipe in from the right; the cards slide in sideways one after another */
+  .chapter-news { mask-image: linear-gradient(to left, #000 var(--edge), transparent calc(var(--edge) + 35%)), linear-gradient(to bottom, transparent 0, #000 var(--top)); mask-composite: intersect; animation: wipe-left linear both; animation-timeline: view(); animation-range: entry 0% entry 100%; }
+  @keyframes wipe-left { from { --edge: -35%; --top: 45%; } to { --edge: 100%; --top: 0%; } }
+  .news-rail li { animation: card-slide linear both; animation-timeline: --chapter; animation-range: entry calc(30% + var(--i) * 10%) entry calc(80% + var(--i) * 6%); }
+  @keyframes card-slide { from { transform: translateX(30%); opacity: 0; } }
+
+  /* History: a soft circle opens from the centre while the photo pulls back */
+  .chapter-history { mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, #000 var(--edge), transparent calc(var(--edge) + 40%)), linear-gradient(to bottom, transparent 0, #000 var(--top)); mask-composite: intersect; animation: iris linear both; animation-timeline: view(); animation-range: entry 0% entry 100%; }
+  @keyframes iris { from { --edge: -40%; --top: 45%; } to { --edge: 180%; --top: 0%; } }
+  .chapter-history .chapter-bg { animation: pull-back linear both; animation-timeline: --chapter; animation-range: entry 0% entry 100%; }
+  @keyframes pull-back { from { transform: scale(1.25); } }
+  .era-rail li { animation: slide-in linear both; animation-timeline: --chapter; animation-range: entry calc(55% + var(--i) * 7%) entry calc(85% + var(--i) * 7%); }
+  @keyframes slide-in { from { opacity: 0; transform: translateX(80px); } }
+
+  /* Culture: the whole scene dissolves in from a soft blur, then the values rise */
+  .chapter-culture { mask-image: linear-gradient(to bottom, transparent 0, #000 var(--top)); animation: dissolve linear both; animation-timeline: view(); animation-range: entry 0% entry 100%; }
+  @keyframes dissolve { from { opacity: 0; filter: blur(24px); --top: 45%; } 60% { filter: blur(6px); } to { --top: 0%; } }
+  .values li { animation: rise linear both; animation-timeline: --chapter; animation-range: entry calc(70% + var(--i) * 10%) entry calc(95% + var(--i) * 5%); }
+}
+
+/* Horizontal rails */
+.rail { display: flex; gap: 2px; margin-top: 32px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: thin; scrollbar-color: rgba(255, 240, 220, .35) transparent; }
+.rail > li { flex: none; scroll-snap-align: start; }
+
+/* News fills the whole screen: photos edge to edge, heading laid over them */
+.chapter-news { background: var(--night-2); }
+.chapter-news::after { display: none; }
+.chapter-news .chapter-body { position: relative; width: 100%; height: 100%; padding: 0; }
+.chapter-news h2 { position: absolute; z-index: 2; top: clamp(32px, 7vh, 72px); left: max(24px, (100% - 1200px) / 2); pointer-events: none; text-shadow: 0 2px 24px rgba(0, 0, 0, .35); }
+.news-rail { height: 100%; margin: 0; }
+.news-rail li { position: relative; width: clamp(280px, 30vw, 440px); height: 100%; overflow: hidden; }
+.news-rail li::before { content: ""; position: absolute; inset: 0 0 auto; z-index: 1; height: 45%; background: linear-gradient(180deg, rgba(26, 16, 10, .7), transparent); pointer-events: none; }
+.news-rail img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s cubic-bezier(.16, 1, .3, 1); }
+.news-rail li:hover img { transform: scale(1.05); }
+.news-rail li > div { position: absolute; inset: auto 0 0; display: grid; gap: 4px; padding: 60px 18px 18px; background: linear-gradient(0deg, rgba(26, 16, 10, .9), transparent); }
+.news-rail time { color: #e8b86a; font-size: 13px; font-weight: 600; }
+.news-rail strong { font: 400 22px/1.15 var(--serif); font-variation-settings: "SOFT" 40, "opsz" 48; }
+
+.era-rail li { display: grid; gap: 2px; min-width: 170px; padding: 14px 24px 0 0; border-top: 2px solid rgba(232, 164, 58, .7); color: var(--cream-2); font-size: 15px; }
+.era-rail span { color: #f0b85a; font: 400 40px/1 var(--serif); font-variation-settings: "SOFT" 40, "opsz" 96; }
+
+.values { display: grid; gap: 4px; margin-top: 28px; }
+.values li { font: 400 clamp(34px, 4.6vw, 64px)/1.05 var(--serif); font-variation-settings: "SOFT" 40, "opsz" 144; letter-spacing: -.03em; color: var(--cream); }
+
+
+.lp-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; padding: 0 clamp(20px, 3.5vw, 52px) 32px; color: var(--ink-3); font-size: 13px; }
+.lp-footer a { color: var(--ink-2); }
+
+@media (max-width: 760px) {
+  .lp-bar { grid-template-columns: 1fr auto; row-gap: 6px; height: auto; padding-block: 12px 10px; }
+  .lp-bar nav { grid-column: 1 / -1; grid-row: 2; gap: 20px; overflow-x: auto; }
+  .landing main { gap: 14vh; padding: 112px 10px 14vh; }
+  .chapter { height: calc(100svh - 128px); border-radius: 18px; }
+  .chapter-body { width: calc(100% - 32px); }
+  .chapter h2 { font-size: 56px; }
+  .chapter-news h2 { top: 28px; left: 16px; }
+  .news-rail li { width: 82vw; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing *, .chapter { animation: none !important; }
+}
