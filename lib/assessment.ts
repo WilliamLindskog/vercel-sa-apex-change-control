@@ -27,7 +27,9 @@ const PRICES: Record<string, { input: number; output: number }> = {
   "anthropic/claude-haiku-5.5": { input: 0.1, output: 0.5 },
 };
 
-const aiAvailable = () => Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN);
+// On Vercel, functions authenticate to AI Gateway with the deployment's OIDC token, which arrives per request
+// rather than as an environment variable, so being on Vercel is enough. Locally it comes from `vercel env pull`.
+const aiAvailable = () => Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || process.env.VERCEL);
 
 // Spend guards inside the app. The hard ceiling is the AI Gateway budget on the Vercel project; these keep a
 // public demo with shared test logins from burning through it with repeated clicks.
