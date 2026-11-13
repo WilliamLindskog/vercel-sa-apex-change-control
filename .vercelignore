@@ -1,0 +1,9 @@
+# Never upload local credentials; production settings live in the Vercel project.
+.env*.local
+.env.local
+# The mock of Apex's systems deploys as its own Vercel project from apex-systems/.
+apex-systems
+# Local-only build folders and the earlier static prototype.
+.next-alt
+.next-build
+work
