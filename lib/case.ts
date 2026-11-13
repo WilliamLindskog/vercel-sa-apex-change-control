@@ -49,6 +49,7 @@ export const supplierChange = {
 };
 
 export const evidence: Evidence[] = [
+  { id: "QLF-EU-09", source: "EMEA coating qualification", detail: "AeroShield 420 uses X-17. The replacement requires regional requalification.", type: "qualification" },
   { id: "SUP-01", source: "Supplier change notice | 12 Nov 2026", detail: "X-17 production ends 28 Feb 2027; X-17R is the proposed replacement.", type: "supplier" },
   { id: "SUP-02", source: "Supplier technical statement | Rev. 2", detail: "X-17R contains a revised stabilizer package; equivalency is not certified.", type: "supplier" },
   { id: "QLF-US-14", source: "US qualification record | QLF-US-14", detail: "AeroShield 420 coating is qualified for Binder X-17 only.", type: "qualification" },
@@ -75,7 +76,7 @@ export function records(missingEuQualification = false): ProductRecord[] {
       detail: missingEuQualification
         ? "EU qualification record is unavailable. No approval decision can be made."
         : "Regional qualification is required before use; Regulatory must review customer notification obligations.",
-      evidenceIds: missingEuQualification ? ["SUP-01", "REG-EU-07", "PRD-420"] : ["SUP-01", "SUP-02", "REG-EU-07", "PRD-420"],
+      evidenceIds: missingEuQualification ? ["SUP-01", "REG-EU-07", "PRD-420"] : ["QLF-EU-09", "SUP-02", "REG-EU-07", "PRD-420"],
     },
     {
       id: "US-PLASTIC-88",
@@ -104,7 +105,7 @@ export function fixtureAssessment(missingEuQualification = false): Assessment {
         region: "EMEA",
         disposition: "requalification_required" as const,
         rationale: "A formulation change requires requalification and a regional notification review before use.",
-        evidenceIds: ["SUP-01", "SUP-02", "REG-EU-07", "PRD-420"],
+        evidenceIds: ["QLF-EU-09", "SUP-02", "REG-EU-07", "PRD-420"],
       };
 
   return assessmentSchema.parse({
