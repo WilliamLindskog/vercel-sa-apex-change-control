@@ -52,10 +52,15 @@ export const evidence: Evidence[] = [
   { id: "SUP-01", source: "Supplier change notice | 12 Nov 2026", detail: "X-17 production ends 28 Feb 2027; X-17R is the proposed replacement.", type: "supplier" },
   { id: "SUP-02", source: "Supplier technical statement | Rev. 2", detail: "X-17R contains a revised stabilizer package; equivalency is not certified.", type: "supplier" },
   { id: "QLF-US-14", source: "US qualification record | QLF-US-14", detail: "AeroShield 420 coating is qualified for Binder X-17 only.", type: "qualification" },
+  { id: "QLF-EU-03", source: "EU qualification record | QLF-EU-03", detail: "AeroShield 420 is qualified for EMEA customers with Binder X-17 only.", type: "qualification" },
   { id: "REG-EU-07", source: "EU customer notification matrix | REG-EU-07", detail: "Formula changes for EMEA coating customers require Regulatory notification review.", type: "regulatory" },
   { id: "PRD-420", source: "Product master | AeroShield 420", detail: "Protective coating sold in US and EMEA.", type: "product" },
   { id: "PRD-88", source: "Product master | FlexAdd 88", detail: "US plastic additive does not use Binder X-17.", type: "product" },
 ];
+
+// The curveball removes the EU qualification record, as if the system of record could not return it.
+export const evidenceFor = (missingEuQualification = false) =>
+  missingEuQualification ? evidence.filter(item => item.id !== "QLF-EU-03") : evidence;
 
 export function records(missingEuQualification = false): ProductRecord[] {
   return [
@@ -75,7 +80,7 @@ export function records(missingEuQualification = false): ProductRecord[] {
       detail: missingEuQualification
         ? "EU qualification record is unavailable. No approval decision can be made."
         : "Regional qualification is required before use; Regulatory must review customer notification obligations.",
-      evidenceIds: missingEuQualification ? ["SUP-01", "REG-EU-07", "PRD-420"] : ["SUP-01", "SUP-02", "REG-EU-07", "PRD-420"],
+      evidenceIds: missingEuQualification ? ["SUP-01", "REG-EU-07", "PRD-420"] : ["QLF-EU-03", "SUP-02", "REG-EU-07"],
     },
     {
       id: "US-PLASTIC-88",
@@ -103,8 +108,8 @@ export function fixtureAssessment(missingEuQualification = false): Assessment {
         product: "AeroShield 420",
         region: "EMEA",
         disposition: "requalification_required" as const,
-        rationale: "A formulation change requires requalification and a regional notification review before use.",
-        evidenceIds: ["SUP-01", "SUP-02", "REG-EU-07", "PRD-420"],
+        rationale: "The EU qualification covers X-17 only; the revised formulation requires requalification and a regional notification review.",
+        evidenceIds: ["QLF-EU-03", "SUP-02", "REG-EU-07"],
       };
 
   return assessmentSchema.parse({

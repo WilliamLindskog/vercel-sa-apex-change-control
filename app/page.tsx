@@ -1,5 +1,6 @@
-import { CaseWorkspace } from "./workspace";
+import { redirect } from "next/navigation";
+import { currentUser } from "@/lib/session";
 
-export default function Page() {
-  return <CaseWorkspace />;
+export default async function Home() {
+  redirect((await currentUser()) ? "/cases" : "/signin");
 }

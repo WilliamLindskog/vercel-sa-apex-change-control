@@ -6,3 +6,9 @@ node_modules
 coverage
 /.swc
 .openai
+
+# Local build and tool artifacts
+tsconfig.tsbuildinfo
+.claude/
+# Separate prototype with its own git repo; not part of this app
+work/
