@@ -17,3 +17,6 @@
 .journey-nav a[aria-current],.journey-nav a:hover {border-color:#ffdfa6;color:#ffdfa6}
 .chapter-stop {height:100svh;pointer-events:none;}
 .journey-stage + .chapter-stop {margin-top:-100svh}
+
+.brand-type {display:grid;gap:4px;font:800 25px/.8 var(--sans);letter-spacing:.09em}
+.brand-type small {font:650 8px/1 var(--sans);letter-spacing:.29em}

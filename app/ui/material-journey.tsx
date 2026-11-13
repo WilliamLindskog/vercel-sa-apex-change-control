@@ -53,7 +53,7 @@ export function MaterialJourney() {
     <div className="journey-stage">
       {scenes.map((s,i) => <img className="plate-image" key={s.image} src={`/journal/${s.image}.webp`} alt={s.alt} aria-hidden={active !== i} fetchPriority={i === 0 ? "high" : "auto"} />)}
       <div className="journey-shade"/>
-      <header className="journey-header"><a href="#news" className="journey-brand"><ApexMark size={27}/> Apex Additives</a><a href="/signin" className="journey-login">Log in</a></header>
+      <header className="journey-header"><a href="#news" className="journey-brand"><ApexMark size={38}/><span className="brand-type">APEX<small>ADDITIVES</small></span></a><a href="/signin" className="journey-login">Log in</a></header>
       <div className="journey-caption"><h1 key={active}>{scenes[active].title}</h1></div>
       <nav aria-label="Chapters" className="journey-nav">{scenes.map((s,i) => <a href={`#${s.label.toLowerCase()}`} key={s.label} aria-current={active === i ? "step" : undefined}>{s.label}</a>)}</nav>
     </div>
