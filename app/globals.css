@@ -86,27 +86,41 @@ button:disabled { cursor: not-allowed; }
 .form-error { margin-bottom: 20px; padding: 12px 16px; border: 1px solid var(--rose-line); border-radius: var(--radius-s); background: var(--rose-bg); color: var(--rose); font-size: 14.5px; }
 .env-badge { padding: 3px 11px; border-radius: 999px; background: var(--sunken); color: var(--ink-3); font-size: 13px; font-weight: 500; }
 
-/* Sign in */
-.signin { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .85fr); min-height: 100vh; }
-.signin-panel { align-self: center; justify-self: center; width: min(420px, 100% - 40px); padding: 48px 0; }
-.signin-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 52px; color: var(--marigold); --mark-ink: var(--action); }
-.signin-brand span { color: var(--ink); font-weight: 700; font-size: 16px; }
-.signin h1 { font: 500 38px/1.1 var(--serif); font-variation-settings: "SOFT" 100, "opsz" 72; letter-spacing: -.02em; }
-.signin-intro { margin: 10px 0 30px; color: var(--ink-2); font-size: 16px; }
+/* Sign in: a grand, heritage landing for the internal portal */
+.signin { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(420px, .85fr); min-height: 100vh; background: var(--ground); }
+.signin-hero { position: relative; display: flex; flex-direction: column; overflow: hidden; min-height: 100vh; color: #fbead0;
+  /* Night sky with a faint survey grid */
+  background: linear-gradient(90deg, rgba(243, 220, 182, .05) 1px, transparent 1px) 0 0 / 100px 100px, linear-gradient(rgba(243, 220, 182, .05) 1px, transparent 1px) 0 0 / 100px 100px, linear-gradient(#24170f, #3a261a 70%, #5a3a24); }
+.strata { order: 2; display: block; flex: 1; width: 100%; min-height: 300px; margin-top: -40px; }
+.stratum { animation: rise 1.4s cubic-bezier(.16, 1, .3, 1) both; }
+.era { animation: fade 1s ease both; font-family: var(--sans); }
+@keyframes rise { from { transform: translateY(70px); opacity: 0; } }
+@keyframes fade { from { opacity: 0; } }
+.hero-copy { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 22px; max-width: 560px; padding: clamp(36px, 5vw, 64px); animation: fade 1.2s .2s ease both; }
+.hero-mark { display: flex; align-items: center; gap: 12px; margin-bottom: clamp(32px, 8vh, 96px); color: #e8a43a; --mark-ink: #24170f; }
+.hero-mark span { display: grid; color: #fbead0; font-size: 15px; font-weight: 700; letter-spacing: .02em; line-height: 1.2; }
+.hero-mark small { color: #cfae86; font-size: 12px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
+.hero-copy h2 { font: 400 clamp(48px, 6.2vw, 92px)/.98 var(--serif); font-variation-settings: "SOFT" 30, "opsz" 144; letter-spacing: -.035em; color: #fff4e2; text-wrap: balance; }
+.hero-copy p:last-child { max-width: 40ch; color: #dcc1a0; font-size: 17px; line-height: 1.6; }
+
+.signin-panel { align-self: center; justify-self: center; width: min(440px, 100% - 48px); padding: 56px 0; animation: fade .8s .1s ease both; }
+.signin-panel h1 { margin-top: 10px; font: 500 40px/1.08 var(--serif); font-variation-settings: "SOFT" 100, "opsz" 72; letter-spacing: -.025em; }
+.signin-intro { margin: 12px 0 30px; color: var(--ink-2); font-size: 16px; }
+.sso { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 50px; border: 0; border-radius: 12px; background: var(--action); color: #fff8ef; font-size: 15.5px; font-weight: 600; --mark-ink: var(--action); }
+.sso .apex-mark { color: #e8a43a; }
+.sso:disabled { border: 1px dashed var(--line-strong); background: transparent; color: var(--ink-3); cursor: not-allowed; }
+.sso:disabled .apex-mark { color: var(--ink-3); --mark-ink: var(--ground); }
+.sso-note { margin-top: 8px; color: var(--ink-3); font-size: 13px; }
+.divider { display: flex; align-items: center; gap: 12px; margin: 28px 0 14px; color: var(--ink-3); font-size: 12.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .account-list { display: grid; gap: 10px; }
-.account { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; width: 100%; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); text-align: left; transition: border-color .2s cubic-bezier(.16, 1, .3, 1), background-color .2s; }
-.account:hover { border-color: var(--marigold-line); background: #fffcf6; }
+.account { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; width: 100%; padding: 13px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); text-align: left; transition: border-color .2s cubic-bezier(.16, 1, .3, 1), background-color .2s, transform .2s cubic-bezier(.16, 1, .3, 1); }
+.account:hover { border-color: var(--marigold-line); background: #fffcf6; transform: translateY(-1px); }
 .account-text strong { display: block; font-size: 15.5px; }
 .account-text span { display: block; color: var(--ink-3); font-size: 13.5px; }
 .account-chevron { color: var(--ink-3); transition: transform .2s cubic-bezier(.16, 1, .3, 1); }
 .account:hover .account-chevron { transform: translateX(3px); color: var(--ink); }
-.signin-note { margin-top: 26px; color: var(--ink-3); font-size: 13.5px; }
-.signin-context { display: flex; flex-direction: column; justify-content: center; gap: 22px; padding: 64px clamp(40px, 6vw, 88px); background: var(--shell); }
-.team { display: flex; }
-.team .avatar { box-shadow: 0 0 0 4px var(--shell); }
-.team .avatar + .avatar { margin-left: -10px; }
-.signin-quote { max-width: 14ch; font: 400 46px/1.08 var(--serif); font-variation-settings: "SOFT" 100, "opsz" 96; letter-spacing: -.025em; color: var(--ink); }
-.signin-sub { max-width: 46ch; color: var(--shell-ink); font-size: 16px; }
+.signin-foot { margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--ink-3); font-size: 12.5px; }
 
 /* App shell */
 .app { display: grid; grid-template-columns: 252px minmax(0, 1fr); min-height: 100vh; }
@@ -323,7 +337,14 @@ a.case-title-link:hover strong { text-decoration: underline; }
   .account-trigger-text { display: none; }
   .account-popover { left: auto; right: 0; bottom: auto; top: calc(100% + 8px); width: 270px; }
   .signin { grid-template-columns: 1fr; }
-  .signin-context { display: none; }
+  /* On narrow screens the strata become a banner above the form */
+  .signin-hero { min-height: 0; }
+  .strata { flex: none; height: 160px; min-height: 0; }
+  .hero-mark { margin-bottom: 28px; }
+  .hero-copy h2 { font-size: 46px; }
+  .hero-copy p:last-child { font-size: 15.5px; }
+  .era { display: none; }
+  .signin-panel { padding: 36px 0 56px; }
   /* Narrow screens keep the hand-off horizontal: who is involved, and where the case is, in one row. */
   .handoff-line { padding: 16px 14px; }
   .handoff-line li { align-items: center; gap: 8px; padding-right: 0; text-align: center; }
@@ -360,5 +381,5 @@ a.case-title-link:hover strong { text-decoration: underline; }
   .impact-table tr.is-uncertain td { background: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  *, *::before, *::after { transition-duration: .01ms !important; animation: none !important; scroll-behavior: auto !important; }
 }
