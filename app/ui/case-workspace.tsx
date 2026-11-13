@@ -68,7 +68,7 @@ export function CaseWorkspace({ user, directory }: { user: User; directory: User
     setLoading(true); setError("");
     try {
       const response = await fetch("/api/assessment", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ missingEuQualification: missingEu }) });
-      if (!response.ok) throw new Error("The assessment didn't complete. Run it again; if it keeps failing, check the AI Gateway status in the run record.");
+      if (!response.ok) throw new Error("The evidence assessment could not complete. Check the upstream register and retry.");
       setAssessment(await response.json());
     } catch (reason) { setError(reason instanceof Error ? reason.message : "The assessment didn't complete. Run it again."); }
     finally { setLoading(false); }
@@ -244,6 +244,7 @@ export function CaseWorkspace({ user, directory }: { user: User; directory: User
           <section className="aside-block">
             <div className="aside-head"><h2>Run record</h2>{assessment && <span className="live-dot">Recorded</span>}</div>
             {assessment ? <dl className="run">
+              <div><dt>Evidence source</dt><dd>Apex register | verified snapshot</dd></div>
               <div><dt>Assessment run</dt><dd className="mono">{assessment.runId}</dd></div>
               <div><dt>Model</dt><dd>{assessment.model}</dd></div>
               <div><dt>Latency</dt><dd>{assessment.latencyMs} ms</dd></div>

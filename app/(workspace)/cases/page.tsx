@@ -16,10 +16,15 @@ export default async function CasesPage() {
   return <>
     <header className="topbar"><nav className="breadcrumb" aria-label="Breadcrumb"><span aria-current="page">Cases</span></nav><span className="env-badge">Demo data</span></header>
     <main className="page">
-      <div className="page-head">
+      <div className="page-head register-head"><span className="register-label">Apex Additives / Operations</span>
         <h1>Supplier change cases</h1>
         <p>{greeting}</p>
       </div>
+      <section className="priority-case" aria-label="Current priority">
+        <div><span className="register-label">Decision due {open[0].due}</span><h2>{open[0].title}</h2><p>{open[0].supplier} | {open[0].id}</p></div>
+        <Link className="priority-link" href={`/cases/${open[0].id}`}>Open decision file →</Link>
+      </section>
+      <h2 className="register-title">Case register</h2>
       <div className="table-wrap">
         <table className="case-table">
           <thead><tr><th scope="col">Case</th><th scope="col">Supplier</th><th scope="col">Opened</th><th scope="col">Decision due</th><th scope="col">Owner</th><th scope="col">Status</th></tr></thead>

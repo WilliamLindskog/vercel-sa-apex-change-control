@@ -383,3 +383,33 @@ a.case-title-link:hover strong { text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: .01ms !important; animation: none !important; scroll-behavior: auto !important; }
 }
+
+/* Archive plates frame the entry and register. Keep the decision file quiet for close reading. */
+.signin-hero {
+  justify-content: space-between;
+  isolation: isolate;
+  background: #152a29 url('/archive/toledo.jpg') center / cover no-repeat;
+}
+.signin-hero::before {
+  position: absolute; content: ""; inset: 0; z-index: -1;
+  background: linear-gradient(180deg,rgba(10,29,29,.89),rgba(14,33,32,.77) 33%,rgba(16,36,34,.12) 69%,rgba(7,20,19,.92));
+}
+.hero-copy { max-width: 690px; }
+.hero-mark { margin-bottom: clamp(15px,5vh,52px); }
+.hero-copy h2 { max-width: 8ch; }
+.hero-copy p:last-child { color: #f4e7d5; }
+.plate { align-self: flex-start; margin: 30px clamp(28px,5vw,64px); color: white; font: 12px/1.5 var(--sans); letter-spacing: .05em; }
+.register-head {
+  border-radius: 10px; padding: clamp(25px,5vw,65px); color: #fff7e6;
+  background: linear-gradient(90deg,#102e2c 5%,rgba(17,42,39,.88) 50%,rgba(17,42,39,.22)),url('/archive/cleveland.jpg') center 51% / cover;
+}
+.register-label { font-size: 11px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; }
+.register-head h1 { margin-top: 23px; font-size: clamp(36px,5vw,64px); line-height: 1.02; }
+.register-head p { color: #eee3cf; }
+.priority-case { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:18px; padding:24px; border:1px solid var(--line-strong); border-left:4px solid #b97c31; background:var(--surface); }
+.priority-case h2,.register-title { font-family:var(--serif); font-weight:500; }
+.priority-case h2 { margin:5px 0; }
+.priority-case p { font-size:14px; color:var(--ink-2); }
+.priority-link { padding:11px 17px; background:#193c36; color:white; border-radius:5px; text-decoration:none; }
+.register-title { margin:30px 0 12px; }
+@media(max-width:750px){.signin-hero{min-height:410px}.hero-copy{padding:28px}.hero-copy h2{max-width:none}.plate{margin:12px 28px 20px}}
