@@ -65,6 +65,17 @@ The demo uses directory accounts without passwords; production would use Apex SS
 - `npm test`: policy tests run the mock in-process and check every scenario and correction, without a model.
 - `npm run eval`: real assessments across three scenarios (normal, missing EU qualification, quality system down), checked against hand-written answers. Latest results are in `evals/results/latest.json`: 15/15 correct after the policy check, 42/45 findings right from the model alone, and every invented citation caught.
 
+## Release and rollback
+
+Every change gets a preview link from its branch. Merging to `main` builds production, which rolls out through Rolling Releases: 10%, then 50%, then 100%, each step approved by hand (`vercel rolling-release approve`).
+
+Rehearsed on 14 Nov 2026:
+
+- `vercel rollback <previous deployment>` put the previous version on production in about 3 seconds, for all traffic, with no canary.
+- The live case's workflow run kept the same run ID and state through the rollback and the return. Runs live in Workflows, not in a deployment.
+- `vercel promote <new deployment>` brings the new version back, but with Rolling Releases on it starts again at 10%: going forward is gradual, going back is instant.
+- A new rollout can't start while one is active; finish it (`complete`) or abort it first.
+
 ## Run locally
 
 ```bash
