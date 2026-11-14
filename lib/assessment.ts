@@ -2,7 +2,7 @@ import { gateway, type GatewayProviderOptions } from "@ai-sdk/gateway";
 import { generateText, Output, stepCountIs, tool } from "ai";
 import { z } from "zod";
 import { ApexSystemError, apexSession, type ApexSession, type Scenario, type SourceRecord } from "./apex-systems";
-import { assessmentSchema, marketLabel, supplierChange, supplierDocuments, type Assessment, type AssessmentRun, type Disposition, type Finding } from "./case";
+import { assessmentSchema, marketLabel, supplierChange as demoChange, type Assessment, type AssessmentRun, type Disposition, type Finding, type SupplierChange } from "./case";
 
 // How the assessment works, in three layers:
 //   1. The agent (AI SDK + AI Gateway) plans the cross-system lookup with tools and writes the assessment.
@@ -67,31 +67,37 @@ export type Fact = {
 };
 
 // The policy, written as code so it can be read, tested and defended. It only uses what the systems returned.
-export async function establishFacts(session: ApexSession): Promise<Fact[]> {
-  await session.material(supplierChange.material);
-  const used = await session.whereUsed(supplierChange.material);
+// What a qualification means depends on the kind of change:
+//   formulation or site change -> the qualification covers the old material or site only: requalify.
+//   packaging-only change      -> the qualification still holds: qualified, notice only if the market rule asks.
+export async function establishFacts(session: ApexSession, change: SupplierChange = demoChange): Promise<Fact[]> {
+  await session.material(change.material);
+  const used = await session.whereUsed(change.material);
   // Purchasing's list and the ERP where-used list can disagree. Check the union of both.
-  const scope = [...new Set([...supplierChange.candidates, ...used.map(u => u.finishedGood)])];
+  const scope = [...new Set([...change.candidates, ...used.map(u => u.finishedGood)])];
   const facts: Fact[] = [];
 
   for (const finishedGood of scope) {
     const usage = used.find(u => u.finishedGood === finishedGood);
     if (!usage) {
       const good = await session.finishedGood(finishedGood);
-      facts.push({ finishedGood, product: good?.product ?? finishedGood, market: (good?.market ?? "US") as "US" | "EU", usesMaterial: false, expected: "unaffected", evidence: [finishedGood], noticeDays: null, reason: `The bill of materials does not contain ${supplierChange.material}.` });
+      facts.push({ finishedGood, product: good?.product ?? finishedGood, market: (good?.market ?? "US") as "US" | "EU", usesMaterial: false, expected: "unaffected", evidence: [finishedGood], noticeDays: null, reason: `The bill of materials does not contain ${change.material}.` });
       continue;
     }
 
-    const rules = await session.notificationRules(usage.market);
+    const rules = await session.notificationRules(usage.market, change.changeType);
     const noticeDays = rules[0]?.noticeDays ?? null;
     const ruleIds = rules.map(r => r.id);
     const market = usage.market as "US" | "EU";
 
     try {
       const records = await session.qualifications(finishedGood);
-      const qualification = records.find(q => q.effective && q.material === supplierChange.material);
-      if (qualification) {
-        facts.push({ finishedGood, product: usage.product, market, usesMaterial: true, expected: "requalification_required", evidence: [qualification.id, "SUP-02", ...ruleIds], noticeDays, reason: `${qualification.id} covers Binder X-17 only, and X-17R has a revised stabilizer package.` });
+      const qualification = records.find(q => q.effective && q.material === change.material);
+      if (qualification && change.changeType === "PACKAGING") {
+        facts.push({ finishedGood, product: usage.product, market, usesMaterial: true, expected: "qualified", evidence: [qualification.id, "SUP-02", ...ruleIds], noticeDays, reason: `${qualification.id} does not depend on the pack, and the grade is unchanged, so it stays valid.` });
+      } else if (qualification) {
+        const why = change.changeType === "SITE" ? `${qualification.id} covers production at the current site only; the move to ${change.becomes} needs requalification.` : `${qualification.id} covers ${change.materialName} only, and ${change.becomes} is a different grade.`;
+        facts.push({ finishedGood, product: usage.product, market, usesMaterial: true, expected: "requalification_required", evidence: [qualification.id, "SUP-02", ...ruleIds], noticeDays, reason: why });
       } else {
         facts.push({
           finishedGood, product: usage.product, market, usesMaterial: true, expected: "uncertain", evidence: [finishedGood, "SUP-01", ...ruleIds], noticeDays,
@@ -111,13 +117,17 @@ export async function establishFacts(session: ApexSession): Promise<Fact[]> {
   return facts;
 }
 
-export function rulesAssessment(facts: Fact[]): Assessment {
+export function rulesAssessment(facts: Fact[], change: SupplierChange = demoChange): Assessment {
   const affected = facts.filter(f => f.usesMaterial);
   const uncertain = facts.filter(f => f.expected === "uncertain");
+  const retest = facts.filter(f => f.expected === "requalification_required");
+  const unaffected = facts.length - affected.length;
   return {
     summary: uncertain.length
-      ? `${uncertain.map(f => `${f.product} (${marketLabel(f.market)})`).join(" and ")} cannot be decided until a missing record is resolved. ${affected.length - uncertain.length} other use needs requalification before X-17R ships.`
-      : `X-17R cannot be used as a direct substitute. ${affected.length} product-market uses need requalification and customer notice; ${facts.length - affected.length} flagged product is unaffected.`,
+      ? `${uncertain.map(f => `${f.product} (${marketLabel(f.market)})`).join(" and ")} cannot be decided until a missing record is resolved. ${affected.length - uncertain.length} other use${affected.length - uncertain.length === 1 ? "" : "s"} can proceed.`
+      : retest.length
+        ? `${change.becomes} cannot be used as a direct substitute. ${retest.length} product-market use${retest.length === 1 ? "" : "s"} need requalification and customer notice${unaffected ? `; ${unaffected} flagged product${unaffected === 1 ? " is" : "s are"} unaffected` : ""}.`
+        : `A packaging-only change: existing qualifications stay valid for ${affected.length} product-market use${affected.length === 1 ? "" : "s"}. Customer notice follows each market's rule.`,
     findings: facts.map(f => ({ finishedGood: f.finishedGood, product: f.product, market: f.market, disposition: f.expected, rationale: f.reason, evidenceIds: f.evidence, noticeDays: f.noticeDays })),
     openQuestions: facts.flatMap(f => (f.openQuestion ? [{ finishedGood: f.finishedGood, ...f.openQuestion }] : [])),
   };
@@ -171,11 +181,12 @@ export const AGENT_INSTRUCTIONS = [
   "If a record is missing or a system is unavailable, the disposition is 'uncertain' and you add an open question with an owner. Do not guess.",
 ].join("\n");
 
-export const agentPrompt = () => [
-  `Case ${supplierChange.id}: ${supplierChange.change} ${supplierChange.materialImpact}`,
-  `Raw material: ${supplierChange.material}. Supply ends ${supplierChange.deadline}.`,
-  `Products flagged by Purchasing: ${supplierChange.candidates.join(", ")}.`,
-  `Supplier documents: ${supplierDocuments.map(d => `${d.id} (${d.detail})`).join(" ")}`,
+export const agentPrompt = (change: SupplierChange = demoChange) => [
+  `Case ${change.id}: ${change.change} ${change.materialImpact}`,
+  `Change type: ${change.changeType.toLowerCase()}. A packaging-only change keeps existing qualifications valid; a formulation or site change needs requalification.`,
+  `Raw material: ${change.material} (${change.materialName}). The change takes effect ${change.deadline}.`,
+  `Products flagged by Purchasing: ${change.candidates.join(", ")}.`,
+  `Supplier documents: ${change.documents.map(d => `${d.id} (${d.detail})`).join(" ")}`,
 ].join("\n");
 
 export const agentTools = {
@@ -183,19 +194,19 @@ export const agentTools = {
   findWhereUsed: { description: "ERP where-used: every finished good whose recipe contains a raw material, with its market.", inputSchema: z.object({ material: z.string() }) },
   getBillOfMaterials: { description: "ERP bill of materials for a finished good. Use to confirm a product does NOT use a material.", inputSchema: z.object({ finishedGood: z.string() }) },
   findQualifications: { description: "QMS qualification records for a finished good. An empty list means no record exists.", inputSchema: z.object({ finishedGood: z.string() }) },
-  getNotificationRules: { description: "Regulatory customer-notification rules for formulation changes in a market.", inputSchema: z.object({ market: z.enum(["US", "EU"]) }) },
+  getNotificationRules: { description: "Regulatory customer-notification rules for this kind of change in a market.", inputSchema: z.object({ market: z.enum(["US", "EU"]) }) },
 } as const;
 export type AgentToolName = keyof typeof agentTools;
 
 // Runs one tool against Apex's systems. A system outage becomes data the model can reason about, not a crash.
-export async function runAgentTool(session: ApexSession, name: AgentToolName, input: Record<string, string>) {
+export async function runAgentTool(session: ApexSession, name: AgentToolName, input: Record<string, string>, change: SupplierChange = demoChange) {
   try {
     switch (name) {
       case "lookupMaterial": return await session.material(input.material);
       case "findWhereUsed": return await session.whereUsed(input.material);
       case "getBillOfMaterials": return await session.finishedGood(input.finishedGood);
       case "findQualifications": return await session.qualifications(input.finishedGood);
-      case "getNotificationRules": return await session.notificationRules(input.market);
+      case "getNotificationRules": return await session.notificationRules(input.market, change.changeType);
     }
   } catch (error) {
     if (error instanceof ApexSystemError) return { error: `${error.system} unavailable (HTTP ${error.status}). Treat the affected data as unknown.` };
@@ -203,12 +214,12 @@ export async function runAgentTool(session: ApexSession, name: AgentToolName, in
   }
 }
 
-export const agentGatewayOptions = (requestedBy: string) => ({
+export const agentGatewayOptions = (requestedBy: string, caseId: string = demoChange.id) => ({
   gateway: {
     models: FALLBACK_MODELS,
     // Reporting dimensions: spend per person and per feature shows up in AI Gateway usage.
     user: requestedBy,
-    tags: ["supplier-change-assessment", `case:${supplierChange.id}`],
+    tags: ["supplier-change-assessment", `case:${caseId}`],
   } satisfies GatewayProviderOptions,
 });
 
@@ -220,13 +231,14 @@ export function modelPlan(aiRunsToday: number): { useModel: true; model: string;
 }
 
 // Layer 2 as a finished run: re-read the records independently, hold the model's draft to them, and price the run.
-export async function policyCheckedRun(input: { scenario: Scenario; draft: Assessment; agentSources: SourceRecord[]; agentCalls: ApexSession["calls"]; steps: StepMeta[]; startedAt: number }): Promise<AssessmentRun> {
+export async function policyCheckedRun(input: { scenario: Scenario; draft: Assessment; agentSources: SourceRecord[]; agentCalls: ApexSession["calls"]; steps: StepMeta[]; startedAt: number; change?: SupplierChange }): Promise<AssessmentRun> {
+  const change = input.change ?? demoChange;
   const session = apexSession(input.scenario);
-  const facts = await establishFacts(session);
-  const known = new Set([...supplierDocuments.map(d => d.id), ...input.agentSources.map(s => s.id), ...session.sources.keys()]);
+  const facts = await establishFacts(session, change);
+  const known = new Set([...change.documents.map(d => d.id), ...input.agentSources.map(s => s.id), ...session.sources.keys()]);
   const { assessment, corrections } = enforcePolicy(input.draft, facts, known);
   const { costUsd, servedBy } = servedAndCost(input.steps);
-  const sources = new Map<string, SourceRecord>([...supplierDocuments, ...input.agentSources, ...session.sources.values()].map(s => [s.id, s]));
+  const sources = new Map<string, SourceRecord>([...change.documents, ...input.agentSources, ...session.sources.values()].map(s => [s.id, s]));
   const generationIds = input.steps.map(step => (step.providerMetadata?.gateway as { generationId?: string } | undefined)?.generationId).filter((id): id is string => Boolean(id));
   return {
     assessment, corrections, mode: "ai-gateway",
@@ -244,12 +256,12 @@ export async function policyCheckedRun(input: { scenario: Scenario; draft: Asses
 }
 
 // The safe answer without a model: the policy alone, fully cited, and saying plainly why no model was used.
-export async function rulesOnlyRun(scenario: Scenario, model: string, reason: string, startedAt = Date.now()): Promise<AssessmentRun> {
+export async function rulesOnlyRun(scenario: Scenario, model: string, reason: string, startedAt = Date.now(), change: SupplierChange = demoChange): Promise<AssessmentRun> {
   const session = apexSession(scenario);
-  const facts = await establishFacts(session);
+  const facts = await establishFacts(session, change);
   return {
-    assessment: rulesAssessment(facts), mode: "rules-only", model, fallbackReason: reason, corrections: [],
-    sources: [...supplierDocuments, ...session.sources.values()], calls: session.calls,
+    assessment: rulesAssessment(facts, change), mode: "rules-only", model, fallbackReason: reason, corrections: [],
+    sources: [...change.documents, ...session.sources.values()], calls: session.calls,
     latencyMs: Date.now() - startedAt, completedAt: new Date().toISOString(),
   };
 }
@@ -281,7 +293,7 @@ export async function assessSupplierChange(scenario: Scenario, options: { reques
     });
     return policyCheckedRun({ scenario, draft: result.output, agentSources: [...session.sources.values()], agentCalls: session.calls, steps: result.steps as StepMeta[], startedAt });
   } catch (error) {
-    console.error("assessment_model_failed", { case: supplierChange.id, error: error instanceof Error ? error.message : String(error) });
+    console.error("assessment_model_failed", { case: demoChange.id, error: error instanceof Error ? error.message : String(error) });
     return rulesOnlyRun(scenario, "Policy rules (model unavailable)", error instanceof Error ? error.message.slice(0, 200) : "Model call failed.", startedAt);
   }
 }

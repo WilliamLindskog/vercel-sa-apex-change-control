@@ -32,7 +32,7 @@ const erpFinishedGood = z.object({ d: z.object({ FinishedGood: z.string(), Descr
 const qmsQualifications = z.object({ data: z.array(z.object({ id: z.string(), name__v: z.string(), status__v: z.string(), product__c: z.string(), material__c: z.string(), material_grade__c: z.string(), region__c: z.string(), effective_date__c: z.string(), scope__c: z.string() })) });
 const regRules = z.object({ items: z.array(z.object({ ruleId: z.string(), market: z.string(), changeType: z.string(), appliesTo: z.string(), noticeDays: z.number(), requirement: z.string() })) });
 
-const title = (text: string) => text.toLowerCase().replace(/(^|[\s(/-])\S/g, s => s.toUpperCase()).replace(/\bX-17(\w?)\b/gi, m => m.toUpperCase());
+const title = (text: string) => text.toLowerCase().replace(/(^|[\s(/-])\S/g, s => s.toUpperCase()).replace(/\bX-17(\w?)\b/gi, m => m.toUpperCase()).replace(/\b(Uv|Hals|Pd|Pb|Py|Ao|Sx|Cr|R-\d+n?)\b/g, m => m.toUpperCase());
 const sapDate = (d: string) => `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`;
 export const marketFor = (salesOrg: string) => (salesOrg.startsWith("EU") ? "EU" : "US");
 
@@ -98,10 +98,10 @@ export function apexSession(scenario: Scenario) {
       return data.map(q => ({ id: q.id, product: q.product__c, material: q.material__c, grade: q.material_grade__c, effective: q.status__v === "effective__c", scope: q.scope__c }));
     },
 
-    async notificationRules(market: string) {
-      const body = await get("Regulatory", `/regulatory/v2/notification-rules?market=${market}&changeType=FORMULATION`, regRules);
+    async notificationRules(market: string, changeType = "FORMULATION") {
+      const body = await get("Regulatory", `/regulatory/v2/notification-rules?market=${market}&changeType=${changeType}`, regRules);
       const items = body?.items ?? [];
-      for (const r of items) remember({ id: r.ruleId, system: "Regulatory", title: `Notification rule | ${r.market} formulation change`, detail: `${r.requirement} Notice period: ${r.noticeDays} days.` });
+      for (const r of items) remember({ id: r.ruleId, system: "Regulatory", title: `Notification rule | ${r.market} ${r.changeType.toLowerCase()} change`, detail: `${r.requirement} Notice period: ${r.noticeDays ? `${r.noticeDays} days` : "none"}.` });
       return items.map(r => ({ id: r.ruleId, market: r.market, noticeDays: r.noticeDays, requirement: r.requirement }));
     },
   };

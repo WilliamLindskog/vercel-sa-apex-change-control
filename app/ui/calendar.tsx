@@ -45,7 +45,7 @@ export function CalendarView({ cards, userId, nameOf, now }: { cards: BoardCard[
           const opened = parse(card.opened), due = parse(card.due);
           const daysLeft = Math.ceil((due - today) / DAY);
           const stage = stages.find(s => s.id === card.stage)!;
-          const rowClass = `cal-row is-${card.stage} ${mine ? "is-mine" : ""} ${card.live ? "is-live" : "is-example"}`;
+          const rowClass = `cal-row is-${card.stage} ${mine ? "is-mine" : ""}`;
           const cells = <>
             <span className="cal-name" role="cell">
               <strong>{card.material}</strong>
@@ -62,10 +62,7 @@ export function CalendarView({ cards, userId, nameOf, now }: { cards: BoardCard[
               </span>
             </span>
           </>;
-          // Only the live case opens; example rows sit in the plan for context.
-          return card.live
-            ? <Link key={card.id} href={`/cases/${card.id}`} role="row" data-case={card.id} className={rowClass}>{cells}</Link>
-            : <div key={card.id} role="row" data-case={card.id} className={rowClass} title="Example case">{cells}</div>;
+          return <Link key={card.id} href={`/cases/${card.id}`} role="row" data-case={card.id} className={rowClass}>{cells}</Link>;
         })}
       </div>
     </div>

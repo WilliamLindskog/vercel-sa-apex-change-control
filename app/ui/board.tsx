@@ -13,7 +13,7 @@ const daysUntil = (date: string, now: number) => Math.ceil((new Date(date).getTi
 // What each stage asks of the person whose turn it is.
 const ask: Partial<Record<Stage, string>> = { new: "Start the assessment", review: "Review and sign off", ready: "Send the plan" };
 
-// Moves a drag may trigger on the live case. Each one is a real case command, checked again by the workflow.
+// Moves a drag may trigger on a case. Each one is a real case command, checked again by the workflow.
 const allowedMoves: Partial<Record<`${Stage}>${Stage}`, { command: "assess" | "route"; label: string }>> = {
   "new>assessing": { command: "assess", label: "Running the assessment…" },
   "ready>done": { command: "route", label: "Sending the plan…" },
@@ -39,7 +39,6 @@ export function Board({ cards: allCards, user, directory, view, now }: { cards: 
 
   async function move(card: BoardCard, to: Stage) {
     if (card.stage === to) return;
-    if (!card.live) { setNotice({ text: `${card.material} is an example case. Binder X-17 is the one that runs live.`, tone: "warn" }); return; }
     const move = allowedMoves[`${card.stage}>${to}`];
     if (!move) { setNotice({ text: whyNot(card.stage, to), tone: "warn" }); return; }
     setPending(card.id); setNotice({ text: move.label, tone: "info" });
@@ -116,7 +115,7 @@ export function Board({ cards: allCards, user, directory, view, now }: { cards: 
   </>;
 }
 
-// The cases waiting on you, behind a bell. A live case opens; an example case is pointed out on the board.
+// The cases waiting on you, behind a bell, soonest deadline first. Each one opens its case.
 function Bell({ cards, now }: { cards: BoardCard[]; now: number }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -126,12 +125,6 @@ function Bell({ cards, now }: { cards: BoardCard[]; now: number }) {
     document.addEventListener("mousedown", close); document.addEventListener("keydown", close);
     return () => { document.removeEventListener("mousedown", close); document.removeEventListener("keydown", close); };
   }, [open]);
-  const point = (id: string) => {
-    setOpen(false);
-    const el = document.querySelector<HTMLElement>(`[data-case="${id}"]`);
-    el?.scrollIntoView({ block: "center", behavior: "smooth" });
-    el?.classList.remove("is-flash"); void el?.offsetWidth; el?.classList.add("is-flash");
-  };
   const sorted = [...cards].sort((a, b) => Date.parse(a.due) - Date.parse(b.due));
   return <div className="bell" ref={ref}>
     <button className="bell-button" onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="true" aria-label={`${cards.length} ${cards.length === 1 ? "case needs" : "cases need"} you`}>
@@ -143,9 +136,7 @@ function Bell({ cards, now }: { cards: BoardCard[]; now: number }) {
       {sorted.length === 0 && <p className="bell-empty">Nothing needs you right now.</p>}
       {sorted.map(card => {
         const body = <><strong>{card.material}</strong><span>{ask[card.stage] ?? card.note}</span><em className={daysUntil(card.due, now) < 30 ? "is-soon" : undefined}>{daysUntil(card.due, now)}d</em></>;
-        return card.live
-          ? <Link key={card.id} role="menuitem" href={`/cases/${card.id}`} className="bell-item" onClick={() => setOpen(false)}>{body}</Link>
-          : <button key={card.id} role="menuitem" className="bell-item" onClick={() => point(card.id)}>{body}</button>;
+        return <Link key={card.id} role="menuitem" href={`/cases/${card.id}`} className="bell-item" onClick={() => setOpen(false)}>{body}</Link>;
       })}
     </div>}
   </div>;
@@ -159,8 +150,8 @@ function Chip({ card, now, mine, pending, onDragStart, onDragEnd }: { card: Boar
     <span className="chip-meta">{card.stage === "done" ? card.note ?? "Closed" : `${days} days`}</span>
     {mine && <span className="bc-turn">Your turn</span>}
   </>;
-  return <div data-case={card.id} className={`strip-chip ${card.live ? "is-live" : "is-example"} ${mine ? "is-mine" : ""} ${pending ? "is-pending" : ""}`} draggable onDragStart={onDragStart} onDragEnd={onDragEnd} title={card.live ? undefined : `${card.material} | ${card.supplier} | example case`}>
-    {card.live ? <Link href={`/cases/${card.id}`} draggable={false}>{body}</Link> : <span className="chip-body">{body}</span>}
+  return <div data-case={card.id} className={`strip-chip ${mine ? "is-mine" : ""} ${pending ? "is-pending" : ""}`} draggable onDragStart={onDragStart} onDragEnd={onDragEnd} title={`${card.material} | ${card.supplier}`}>
+    <Link href={`/cases/${card.id}`} draggable={false}>{body}</Link>
   </div>;
 }
 
@@ -170,7 +161,7 @@ function CardView({ card, now, userId, waitingName, pending, onDragStart, onDrag
   const body = <>
     <div className="bc-top">
       <span className="bc-id" title={card.id}>#{card.id.split("-").pop()}</span>
-      {card.blocked ? <span className="pill pill-blocked">Blocked</span> : card.stage !== "done" && days >= 0 ? <span className={`bc-due ${days < 30 ? "is-soon" : ""}`}>{days} days</span> : null}
+      {card.blocked ? <span className="pill pill-blocked" title={card.note}>Blocked</span> : card.stage !== "done" && days >= 0 ? <span className={`bc-due ${days < 30 ? "is-soon" : ""}`}>{days} days</span> : null}
     </div>
     <h3>{card.material}</h3>
     <p className="bc-supplier">{card.supplier}</p>
@@ -183,8 +174,8 @@ function CardView({ card, now, userId, waitingName, pending, onDragStart, onDrag
     </div>
     {pending && <span className="bc-pending" aria-hidden="true" />}
   </>;
-  // Only the live case opens; example cards fill out the board and show the rules when dragged.
-  return <article data-case={card.id} className={`board-card ${card.live ? "is-live" : "is-example"} ${mine ? "is-mine" : ""} ${pending ? "is-pending" : ""}`} draggable onDragStart={onDragStart} onDragEnd={onDragEnd} aria-busy={pending} title={card.live ? undefined : "Example case"}>
-    {card.live ? <Link href={`/cases/${card.id}`} className="bc-link" draggable={false}>{body}</Link> : <div className="bc-link">{body}</div>}
+  // Every case opens, and every drag is a real command checked by that case's workflow.
+  return <article data-case={card.id} className={`board-card ${mine ? "is-mine" : ""} ${pending ? "is-pending" : ""}`} draggable onDragStart={onDragStart} onDragEnd={onDragEnd} aria-busy={pending}>
+    <Link href={`/cases/${card.id}`} className="bc-link" draggable={false}>{body}</Link>
   </article>;
 }

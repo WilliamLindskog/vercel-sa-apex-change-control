@@ -2,14 +2,15 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { CaseWorkspace } from "@/app/ui/case-workspace";
-import { openCaseId } from "@/lib/cases";
+import { cases, isCase } from "@/lib/cases";
 import { requireUser } from "@/lib/session";
 import { users } from "@/lib/users";
 import "./case.css";
 
-// Only the live case has a page: it runs on the durable workflow. Example cases stay on the board.
+// Every case has a page backed by its own durable workflow. The IDs are known at build time,
+// so each page gets a prerendered frame.
 export function generateStaticParams() {
-  return [{ caseId: openCaseId }];
+  return cases.map(c => ({ caseId: c.id }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ caseId: string }> }): Promise<Metadata> {
@@ -22,8 +23,8 @@ export default function CasePage({ params }: { params: Promise<{ caseId: string 
 
 async function Case({ params }: { params: Promise<{ caseId: string }> }) {
   const [{ caseId }, user] = await Promise.all([params, requireUser()]);
-  if (caseId !== openCaseId) notFound();
-  return <CaseWorkspace user={user} directory={users} />;
+  if (!isCase(caseId)) notFound();
+  return <CaseWorkspace caseId={caseId} user={user} directory={users} />;
 }
 
 function CaseSkeleton() {

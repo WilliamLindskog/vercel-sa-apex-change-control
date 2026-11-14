@@ -3,7 +3,7 @@ import { erp, qms, regulatory } from "./data.js";
 // One web-standard handler for the whole mock, so it runs the same locally (dev.js) and on Vercel (api/router.js).
 //
 // Demo controls, sent by the Change Control app as a request header (x-apex-scenario):
-//   missing-eu-qualification  QMS behaves as if QLF-EU-03 was archived without a replacement.
+//   missing-eu-qualification  QMS behaves as if the EMEA qualification records were archived without a replacement.
 //   qms-outage                QMS answers 503, as during a maintenance window.
 
 const json = (body, status = 200, headers = {}) =>
@@ -54,7 +54,7 @@ export async function handle(request) {
     const product = url.searchParams.get("product");
     const data = qms.qualifications
       .filter(record => !product || record.product__c === product)
-      .filter(record => !(scenario === "missing-eu-qualification" && record.id === "QLF-EU-03"));
+      .filter(record => !(scenario === "missing-eu-qualification" && record.region__c === "emea__c"));
     return json({ responseStatus: "SUCCESS", responseDetails: { total: data.length }, data });
   }
 
