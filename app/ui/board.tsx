@@ -159,7 +159,7 @@ function Chip({ card, now, mine, pending, onDragStart, onDragEnd }: { card: Boar
     <span className="chip-meta">{card.stage === "done" ? card.note ?? "Closed" : `${days} days`}</span>
     {mine && <span className="bc-turn">Your turn</span>}
   </>;
-  return <div data-case={card.id} className={`strip-chip ${card.live ? "is-live" : "is-example"} ${mine ? "is-mine" : ""} ${pending ? "is-pending" : ""}`} draggable onDragStart={onDragStart} onDragEnd={onDragEnd} title={card.live ? undefined : `${card.material} · ${card.supplier} · example case`}>
+  return <div data-case={card.id} className={`strip-chip ${card.live ? "is-live" : "is-example"} ${mine ? "is-mine" : ""} ${pending ? "is-pending" : ""}`} draggable onDragStart={onDragStart} onDragEnd={onDragEnd} title={card.live ? undefined : `${card.material} | ${card.supplier} | example case`}>
     {card.live ? <Link href={`/cases/${card.id}`} draggable={false}>{body}</Link> : <span className="chip-body">{body}</span>}
   </div>;
 }

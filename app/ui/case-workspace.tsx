@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { switchAccount } from "@/app/actions";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Scenario, SourceRecord } from "@/lib/apex-systems";
 import type { CaseState, Disposition, Finding } from "@/lib/case";
 import { supplierChange, supplierDocuments } from "@/lib/case";
@@ -76,8 +74,6 @@ function useCase(caseId: string) {
 }
 
 export function CaseWorkspace({ user, directory }: { user: User; directory: User[] }) {
-  const router = useRouter();
-  const [switching, startSwitch] = useTransition();
   const { state, error, busy, send } = useCase(supplierChange.id);
   const [tab, setTab] = useState<Tab | null>(null);
   const [open, setOpen] = useState<string | null>(null);
@@ -96,7 +92,6 @@ export function CaseWorkspace({ user, directory }: { user: User; directory: User
   const sources = run?.sources ?? supplierDocuments;
   const sourceById = new Map(sources.map(s => [s.id, s]));
   const selected = findings.find(f => f.finishedGood === open) ?? null;
-  const switchTo = (target: User) => startSwitch(async () => { await switchAccount(target.id); router.refresh(); });
 
   // 1. Where the case is: five stages, each owned by a person.
   const stagesView = [
@@ -122,7 +117,7 @@ export function CaseWorkspace({ user, directory }: { user: User; directory: User
     <main className="page cw">
       <header className="cw-head">
         <div>
-          <p className="cw-meta">{supplierChange.id} · {supplierChange.supplier}</p>
+          <p className="cw-meta">{supplierChange.id} | {supplierChange.supplier}</p>
           <h1>Binder X-17 <span className="cw-arrow" aria-label="replaced by" /> X-17R</h1>
         </div>
         <div className="cw-head-side">
@@ -169,17 +164,17 @@ export function CaseWorkspace({ user, directory }: { user: User; directory: User
               </li>) : supplierChange.candidates.map(id => <li key={id}><div className="cw-node is-pending"><span className="cw-node-name">{id}</span><span className="pill">Not checked</span><span className="cw-node-notice">Flagged by Purchasing</span></div></li>)}
             </ul>
           </div>}
-          {run && !assessing && <p className="cw-map-foot">{run.mode === "ai-gateway" ? "AI, checked by policy" : "Policy rules"} · {(run.latencyMs / 1000).toFixed(1)} s{run.costUsd ? ` · $${run.costUsd.toFixed(4)}` : ""}{run.corrections.length ? ` · ${run.corrections.length} AI corrections` : ""}<button className="btn-text" onClick={() => send({ type: "assess" })} disabled={busy || Boolean(state?.routed)}>Run again</button></p>}
+          {run && !assessing && <p className="cw-map-foot">{run.mode === "ai-gateway" ? "AI, checked by policy" : "Policy rules"} | {(run.latencyMs / 1000).toFixed(1)} s{run.costUsd ? ` | $${run.costUsd.toFixed(4)}` : ""}{run.corrections.length ? ` | ${run.corrections.length} AI corrections` : ""}<button className="btn-text" onClick={() => send({ type: "assess" })} disabled={busy || Boolean(state?.routed)}>Run again</button></p>}
         </section>
 
         {/* 3. What to do now */}
-        <NextStep view={view} state={state} user={user} lead={lead} person={person} questions={questions} busy={busy} switching={switching} assessing={assessing}
-          onAssess={() => send({ type: "assess" })} onRoute={() => send({ type: "route" })} onSign={(role, note) => send({ type: "sign", role, note })} onSwitch={switchTo} />
+        <NextStep view={view} state={state} user={user} lead={lead} person={person} questions={questions} busy={busy} assessing={assessing}
+          onAssess={() => send({ type: "assess" })} onRoute={() => send({ type: "route" })} onSign={(role, note) => send({ type: "sign", role, note })} />
       </div>
 
       <nav className="cw-tabs" role="tablist" aria-label="More detail">
         {(["evidence", "activity"] as Tab[]).map(t => <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(tab === t ? null : t)}>
-          {t === "evidence" ? `Evidence${run ? ` · ${sources.length}` : ""}` : `Activity${run ? ` · ${run.calls.length} lookups` : ""}`}
+          {t === "evidence" ? "Evidence" : "Activity"}
         </button>)}
       </nav>
 
@@ -204,19 +199,19 @@ export function CaseWorkspace({ user, directory }: { user: User; directory: User
           <h3 className="cw-label">This assessment</h3>
           {run ? <dl className="cw-facts">
             <div><dt>Answered by</dt><dd>{run.model}</dd></div>
-            <div><dt>Time</dt><dd>{(run.latencyMs / 1000).toFixed(1)} s{run.modelCalls ? ` · ${run.modelCalls} model calls` : ""}</dd></div>
-            {run.mode === "ai-gateway" && <div><dt>Cost</dt><dd>About ${run.costUsd?.toFixed(4) ?? "n/a"} · {state.aiRuns?.count ?? 0} AI runs today</dd></div>}
+            <div><dt>Time</dt><dd>{(run.latencyMs / 1000).toFixed(1)} s{run.modelCalls ? ` | ${run.modelCalls} model calls` : ""}</dd></div>
+            {run.mode === "ai-gateway" && <div><dt>Cost</dt><dd>About ${run.costUsd?.toFixed(4) ?? "n/a"} | {state.aiRuns?.count ?? 0} AI runs today</dd></div>}
             {run.fallbackReason && <div><dt>Why no AI</dt><dd>{run.fallbackReason}</dd></div>}
             <div><dt>Case workflow</dt><dd className="mono">{state.runId}</dd></div>
           </dl> : <p className="cw-empty">Not assessed yet.</p>}
         </section>
         {run?.mode === "ai-gateway" && <section className="cw-card">
-          <h3 className="cw-label">Corrected by policy <span className="cw-count">{run.corrections.length}</span></h3>
+          <h3 className="cw-label">Corrected by policy</h3>
           {run.corrections.length ? <ul className="corrections">{run.corrections.map(c => <li key={c}>{c}</li>)}</ul> : <p className="cw-empty">None. The AI matched the records.</p>}
         </section>}
         {run && <section className="cw-card">
-          <h3 className="cw-label">Calls to Apex's systems <span className="cw-count">{run.calls.length}</span></h3>
-          <ul className="calls">{run.calls.map((call, i) => <li key={i}><span>{call.system}</span><code>{call.endpoint.split("?")[0].replace(/^\/\w+\/v\d/, "")}</code><em className={call.status >= 400 ? "is-error" : undefined}>{call.status} · {call.ms} ms</em></li>)}</ul>
+          <h3 className="cw-label">Calls to Apex's systems</h3>
+          <ul className="calls">{run.calls.map((call, i) => <li key={i}><span>{call.system}</span><code>{call.endpoint.split("?")[0].replace(/^\/\w+\/v\d/, "")}</code><em className={call.status >= 400 ? "is-error" : undefined}>{call.status} | {call.ms} ms</em></li>)}</ul>
         </section>}
         <section className="cw-card">
           <h3 className="cw-label">History</h3>
@@ -231,10 +226,10 @@ export function CaseWorkspace({ user, directory }: { user: User; directory: User
 }
 
 // One card that tells the signed-in person exactly what to do, or who the case is waiting for.
-function NextStep({ view, state, user, lead, person, questions, busy, switching, assessing, onAssess, onRoute, onSign, onSwitch }: {
+function NextStep({ view, state, user, lead, person, questions, busy, assessing, onAssess, onRoute, onSign }: {
   view: View; state: CaseState | null; user: User; lead: User; person: (role: User["role"]) => User;
-  questions: { finishedGood: string; owner: string; detail: string }[]; busy: boolean; switching: boolean; assessing: boolean;
-  onAssess: () => void; onRoute: () => void; onSign: (role: ReviewRole, note: string) => void; onSwitch: (target: User) => void;
+  questions: { finishedGood: string; owner: string; detail: string }[]; busy: boolean; assessing: boolean;
+  onAssess: () => void; onRoute: () => void; onSign: (role: ReviewRole, note: string) => void;
 }) {
   const [note, setNote] = useState("");
   const quality = state?.signOffs.Quality ?? null;
@@ -261,8 +256,9 @@ function NextStep({ view, state, user, lead, person, questions, busy, switching,
       <textarea id="sign-note" rows={3} value={note || defaultNotes[signRole]} onChange={event => setNote(event.target.value)} />
       <button className="btn btn-primary" onClick={() => onSign(signRole!, note || defaultNotes[signRole!])} disabled={busy}>{busy ? "Recording…" : `Sign off as ${signRole}`}</button>
     </div>;
-  } else if (!isMe && (signRole || view === "unassessed" || view === "ready")) {
-    action = <button className="btn btn-secondary" onClick={() => onSwitch(owner)} disabled={switching}>{switching ? "Switching…" : `Sign in as ${owner.name.split(" ")[0]}`}</button>;
+  } else if (!isMe) {
+    // Not your turn: no action here (switch people from the account menu). Show what happened lately instead.
+    action = null;
   }
 
   return <aside className={`cw-next is-${view}`} aria-labelledby="next-h">
@@ -274,6 +270,10 @@ function NextStep({ view, state, user, lead, person, questions, busy, switching,
     <p className="cw-next-task">{task}</p>
     {action}
     {questions.length > 1 && <ul className="cw-next-more">{questions.slice(1).map(q => <li key={`${q.finishedGood}-${q.owner}`}><strong>{q.owner}:</strong> {q.detail}</li>)}</ul>}
+    {!isMe && state && <div className="cw-latest">
+      <h3 className="cw-label">Latest</h3>
+      <ol>{state.log.slice(-3).reverse().map((entry, i) => <li key={i}><time>{time(entry.at)}</time><span>{entry.text}</span></li>)}</ol>
+    </div>}
   </aside>;
 }
 
@@ -286,7 +286,7 @@ function ProductPanel({ finding: f, sourceById, onClose }: { finding: Finding; s
   return <div className="cw-panel-backdrop" onClick={onClose}>
     <aside className="cw-panel" role="dialog" aria-modal="true" aria-labelledby="panel-h" onClick={event => event.stopPropagation()}>
       <header>
-        <div><p className="cw-meta">{f.finishedGood} · {marketTag(f.market)}</p><h2 id="panel-h">{shortName(f.product)}</h2></div>
+        <div><p className="cw-meta">{f.finishedGood} | {marketTag(f.market)}</p><h2 id="panel-h">{shortName(f.product)}</h2></div>
         <button className="cw-close" onClick={onClose} aria-label="Close">×</button>
       </header>
       <span className={`pill pill-${f.disposition}`}>{statusLabel[f.disposition]}</span>
@@ -294,7 +294,7 @@ function ProductPanel({ finding: f, sourceById, onClose }: { finding: Finding; s
       {f.noticeDays && f.disposition !== "unaffected" ? <p className="cw-panel-notice"><strong>{f.noticeDays} days</strong> customer notice before X-17R ships</p> : null}
       <h3 className="cw-label">Sources</h3>
       <ul className="cw-panel-sources">
-        {f.evidenceIds.map(id => { const s = sourceById.get(id); return <li key={id}><code>{id}</code><div><strong>{s ? s.title.split(" | ")[1] ?? s.title : "Record"}</strong>{s && <p>{s.system === "Supplier notice" ? "Supplier document" : s.system} · {s.detail}</p>}</div></li>; })}
+        {f.evidenceIds.map(id => { const s = sourceById.get(id); return <li key={id}><code>{id}</code><div><strong>{s ? s.title.split(" | ")[1] ?? s.title : "Record"}</strong>{s && <p>{s.system === "Supplier notice" ? "Supplier document" : s.system} | {s.detail}</p>}</div></li>; })}
       </ul>
     </aside>
   </div>;

@@ -83,7 +83,7 @@ function DraftCard({ draft }: { draft: Draft }) {
   if (!draft.ok) return <p className="as-note">{draft.error}</p>;
   const copy = async () => { try { await navigator.clipboard.writeText(draft.message); setCopied(true); setTimeout(() => setCopied(false), 1600); } catch {} };
   return <div className="as-draft">
-    <div className="as-draft-to"><span className={`avatar tiny tone-${draft.to.id}`} aria-hidden="true" /><span>To <strong>{draft.to.name.split(" ")[0]}</strong> · {draft.material}</span></div>
+    <div className="as-draft-to"><span className={`avatar tiny tone-${draft.to.id}`} aria-hidden="true" /><span>To <strong>{draft.to.name.split(" ")[0]}</strong> | {draft.material}</span></div>
     <p>{draft.message}</p>
     <div className="as-draft-actions">
       <button className="btn btn-primary" onClick={copy}>{copied ? "Copied" : "Copy message"}</button>

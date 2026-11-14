@@ -54,11 +54,11 @@ export function CalendarView({ cards, userId, nameOf, now }: { cards: BoardCard[
                 : stage.label}</span>
             </span>
             <span className="cal-track" role="cell">
-              <span className="cal-bar" style={{ left: at(opened), width: `calc(${at(due)} - ${at(opened)})` }} title={`${short(opened)} → ${short(due)} · ${stage.label}`}>
+              <span className="cal-bar" style={{ left: at(opened), width: `calc(${at(due)} - ${at(opened)})` }} title={`${short(opened)} → ${short(due)} | ${stage.label}`}>
                 <span className="cal-fill" style={{ width: `${(card.step / 5) * 100}%` }} />
               </span>
               <span className={`cal-due ${card.stage !== "done" && daysLeft < 30 ? "is-soon" : ""}`} style={{ left: at(due) }}>
-                {card.stage === "done" ? short(due) : `${short(due)} · ${daysLeft}d`}
+                {card.stage === "done" ? short(due) : `${short(due)} | ${daysLeft}d`}
               </span>
             </span>
           </>;

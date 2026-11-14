@@ -96,7 +96,7 @@ export async function POST(request: Request) {
       draftReport: tool({
         description: "Draft a short supplier-change report for a period and product line. Shown to the user as a card they can copy.",
         inputSchema: z.object({
-          title: z.string().max(80).describe("e.g. 'Coatings · Q4 2026'"),
+          title: z.string().max(80).describe("e.g. 'Coatings | Q4 2026'"),
           period: z.enum(Object.keys(periods) as [keyof typeof periods, ...(keyof typeof periods)[]]),
           line: z.enum(productLines).optional(),
           summary: z.string().max(400).describe("Two sentences: the headline result"),
