@@ -154,3 +154,50 @@ button.cw-node:hover { transform: translateX(3px); box-shadow: 0 0 0 1px var(--l
 .cw-latest li { display: grid; grid-template-columns: 64px 1fr; gap: 8px; font-size: 13px; line-height: 1.4; }
 .cw-latest time { color: var(--ink-3); font-variant-numeric: tabular-nums; }
 .cw-latest span { color: var(--ink-2); }
+
+/* Evidence grid: products down, systems across, record chips in each cell */
+.ev-grid { overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.ev-row { display: grid; grid-template-columns: minmax(170px, 1.3fr) repeat(3, minmax(110px, 1fr)); align-items: center; border-bottom: 1px solid var(--line); }
+.ev-row:last-child { border-bottom: 0; }
+.ev-row.is-head { background: var(--sunken); color: var(--ink-3); font-size: 12.5px; font-weight: 700; }
+.ev-row > * { padding: 10px 14px; }
+.ev-product { display: flex; align-items: center; gap: 8px; height: 100%; border: 0; background: none; color: inherit; text-align: left; }
+.ev-product:hover { background: var(--sunken); }
+.ev-product strong { font: 500 15px/1.2 var(--serif); font-variation-settings: "SOFT" 100, "opsz" 36; }
+.ev-product em { padding: 0 6px; border-radius: 6px; background: var(--sunken); color: var(--ink-3); font-size: 11px; font-style: normal; font-weight: 700; }
+.ev-dot { width: 9px; height: 9px; margin-left: auto; border-radius: 50%; background: var(--sage); }
+.ev-dot.is-requalification_required { background: var(--marigold-deep); }
+.ev-dot.is-uncertain { background: var(--rose); }
+.ev-cell { display: flex; flex-wrap: wrap; gap: 4px; }
+.ev-chip { padding: 1px 7px; border-radius: 6px; background: var(--marigold-bg); color: var(--marigold-ink); font: 600 11.5px/1.6 ui-monospace, "SF Mono", Menlo, monospace; cursor: help; }
+.ev-chip.is-gap { background: var(--rose-bg); color: var(--rose); font-family: inherit; }
+.ev-none { color: var(--line-strong); }
+.ev-foot { margin-top: 8px; color: var(--ink-3); font-size: 12.5px; }
+
+/* Activity: four numbers, a lookup timeline, the history */
+.act-stats { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.act-stats div { padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.act-stats span { display: block; color: var(--ink-3); font-size: 12.5px; font-weight: 600; }
+.act-stats strong { display: block; font: 500 20px/1.25 var(--serif); font-variation-settings: "SOFT" 100, "opsz" 48; overflow-wrap: anywhere; }
+.act-lanes { display: grid; gap: 8px; }
+.act-lane { display: grid; grid-template-columns: 78px 1fr; align-items: center; gap: 10px; }
+.act-lane-name { color: var(--ink-2); font-size: 12.5px; font-weight: 600; }
+.act-track { position: relative; height: 14px; border-radius: 4px; background: var(--sunken); }
+.act-call { position: absolute; top: 0; bottom: 0; border-radius: 3px; background: var(--marigold); box-shadow: 0 0 0 1px var(--surface); cursor: help; }
+.act-call.is-QMS { background: var(--marigold-deep); }
+.act-call.is-Regulatory { background: var(--sage); }
+.act-call.is-error { background: var(--rose); }
+.act-axis { display: flex; justify-content: space-between; margin-left: 88px; color: var(--ink-3); font-size: 11.5px; }
+.act-history ol { display: grid; gap: 6px; }
+.act-history li { display: grid; grid-template-columns: 64px 1fr; gap: 8px; font-size: 13px; line-height: 1.4; }
+.act-history time { color: var(--ink-3); }
+.act-fixes { grid-column: 1 / -1; color: var(--ink-2); font-size: 13px; }
+.act-fixes summary { color: var(--ink-3); font-weight: 600; cursor: pointer; }
+.act-fixes ul { display: grid; gap: 4px; margin-top: 6px; padding-left: 18px; list-style: disc; }
+.act-run { grid-column: 1 / -1; color: var(--ink-3); font-size: 12px; }
+.act-run code { font: 11.5px ui-monospace, "SF Mono", Menlo, monospace; }
+@media (max-width: 680px) {
+  .ev-grid { overflow-x: auto; }
+  .ev-row { min-width: 520px; }
+  .act-stats { grid-template-columns: 1fr 1fr; }
+}

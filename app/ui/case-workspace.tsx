@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Scenario, SourceRecord } from "@/lib/apex-systems";
-import type { CaseState, Disposition, Finding } from "@/lib/case";
+import type { AssessmentRun, CaseState, Disposition, Finding } from "@/lib/case";
 import { supplierChange, supplierDocuments } from "@/lib/case";
 import type { ReviewRole, User } from "@/lib/users";
 
@@ -21,8 +21,9 @@ const defaultNotes: Record<ReviewRole, string> = {
   Quality: "Requalification required for AeroShield 420 before X-17R is used.",
   "Regulatory Affairs": "Customer notices: 90 days EMEA (REG-EU-07), 60 days US (REG-US-02).",
 };
-const systemOrder: SourceRecord["system"][] = ["ERP", "QMS", "Regulatory", "Supplier notice"];
-const systemLabel: Record<SourceRecord["system"], string> = { ERP: "SAP (ERP)", QMS: "Quality system", Regulatory: "Regulatory rules", "Supplier notice": "Supplier documents" };
+// Evidence grid columns: the three systems of record.
+const evSystems = ["ERP", "QMS", "Regulatory"] as const;
+const evLabel: Record<(typeof evSystems)[number], string> = { ERP: "SAP", QMS: "Quality", Regulatory: "Regulatory" };
 const marketTag = (market: string) => (market === "EU" ? "EU" : "US");
 const shortName = (product: string) => product.replace(/ \(eu\)$/i, "").replace(/ (Protective Coating|Plastic Additive)$/i, "");
 const time = (iso: string) => new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
@@ -178,46 +179,53 @@ export function CaseWorkspace({ user, directory }: { user: User; directory: User
         </button>)}
       </nav>
 
+      {/* Evidence at a glance: one row per product, one column per Apex system, the records that back each answer. */}
       {tab === "evidence" && <div className="cw-evidence" role="tabpanel">
-        {!run && <p className="cw-empty">Apex records appear here once the assessment reads them.</p>}
-        {systemOrder.map(system => {
-          const items = sources.filter(s => s.system === system);
-          const gaps = system === "QMS" ? uncertain : [];
-          if (!items.length && !gaps.length) return null;
-          return <section key={system} className="cw-system">
-            <h3 className="cw-label">{systemLabel[system]}</h3>
-            <ul>
-              {items.map(s => <li key={s.id}><code>{s.id}</code><div><strong>{s.title.split(" | ")[1] ?? s.title}</strong><p>{s.detail}</p></div></li>)}
-              {gaps.map(f => <li key={`gap-${f.finishedGood}`} className="is-gap"><code>{f.finishedGood}</code><div><strong>No qualification record returned</strong><p>{f.rationale}</p></div></li>)}
-            </ul>
-          </section>;
-        })}
+        {!run ? <p className="cw-empty">Apex records appear here once the assessment reads them.</p> : <>
+          <div className="ev-grid" role="table" aria-label="Records behind each product">
+            <div className="ev-row is-head" role="row"><span role="columnheader">Product</span>{evSystems.map(sys => <span key={sys} role="columnheader">{evLabel[sys]}</span>)}</div>
+            {findings.map(f => <div key={f.finishedGood} className="ev-row" role="row">
+              <button className="ev-product" role="rowheader" onClick={() => setOpen(f.finishedGood)} title="Open details">
+                <strong>{shortName(f.product)}</strong><em>{marketTag(f.market)}</em><i className={`ev-dot is-${f.disposition}`} aria-label={statusLabel[f.disposition]} />
+              </button>
+              {evSystems.map(sys => {
+                const ids = f.evidenceIds.filter(id => sourceById.get(id)?.system === sys);
+                const missing = sys === "QMS" && f.disposition === "uncertain" && ids.length === 0;
+                return <span key={sys} role="cell" className="ev-cell">
+                  {ids.map(id => { const rec = sourceById.get(id)!; return <code key={id} className="ev-chip" title={`${rec.title.split(" | ")[1] ?? rec.title}: ${rec.detail}`}>{id}</code>; })}
+                  {missing && <span className="ev-chip is-gap" title={f.rationale}>Missing</span>}
+                  {ids.length === 0 && !missing && <span className="ev-none" aria-label="None">–</span>}
+                </span>;
+              })}
+            </div>)}
+          </div>
+          <p className="ev-foot">Hover a record for what it says; click a product for the full reasoning.</p>
+        </>}
       </div>}
 
+      {/* Activity at a glance: the run in four numbers, each lookup on a timeline, and the case history. */}
       {tab === "activity" && state && <div className="cw-activity" role="tabpanel">
-        <section className="cw-card">
-          <h3 className="cw-label">This assessment</h3>
-          {run ? <dl className="cw-facts">
-            <div><dt>Answered by</dt><dd>{run.model}</dd></div>
-            <div><dt>Time</dt><dd>{(run.latencyMs / 1000).toFixed(1)} s{run.modelCalls ? ` | ${run.modelCalls} model calls` : ""}</dd></div>
-            {run.mode === "ai-gateway" && <div><dt>Cost</dt><dd>About ${run.costUsd?.toFixed(4) ?? "n/a"} | {state.aiRuns?.count ?? 0} AI runs today</dd></div>}
-            {run.fallbackReason && <div><dt>Why no AI</dt><dd>{run.fallbackReason}</dd></div>}
-            <div><dt>Case workflow</dt><dd className="mono">{state.runId}</dd></div>
-          </dl> : <p className="cw-empty">Not assessed yet.</p>}
-        </section>
-        {run?.mode === "ai-gateway" && <section className="cw-card">
-          <h3 className="cw-label">Corrected by policy</h3>
-          {run.corrections.length ? <ul className="corrections">{run.corrections.map(c => <li key={c}>{c}</li>)}</ul> : <p className="cw-empty">None. The AI matched the records.</p>}
-        </section>}
-        {run && <section className="cw-card">
-          <h3 className="cw-label">Calls to Apex's systems</h3>
-          <ul className="calls">{run.calls.map((call, i) => <li key={i}><span>{call.system}</span><code>{call.endpoint.split("?")[0].replace(/^\/\w+\/v\d/, "")}</code><em className={call.status >= 400 ? "is-error" : undefined}>{call.status} | {call.ms} ms</em></li>)}</ul>
-        </section>}
-        <section className="cw-card">
+        {run ? <>
+          <div className="act-stats">
+            <div><span>Answered by</span><strong>{run.mode === "ai-gateway" ? run.model.split("/").pop() : "Policy rules"}</strong></div>
+            <div><span>Time</span><strong>{(run.latencyMs / 1000).toFixed(1)} s</strong></div>
+            <div><span>Cost</span><strong>{run.costUsd ? `$${run.costUsd.toFixed(4)}` : "–"}</strong></div>
+            <div><span>Fixed by policy</span><strong>{run.mode === "ai-gateway" ? run.corrections.length : "–"}</strong></div>
+          </div>
+          <section className="cw-card act-calls">
+            <h3 className="cw-label">Lookups in Apex's systems</h3>
+            <CallTimeline calls={run.calls} />
+          </section>
+        </> : <p className="cw-empty">Not assessed yet.</p>}
+        <section className="cw-card act-history">
           <h3 className="cw-label">History</h3>
-          <ol className="history">{state.log.slice(-8).map((entry, i) => <li key={i}><time>{time(entry.at)}</time>{entry.text}</li>)}</ol>
+          <ol>{state.log.slice(-6).reverse().map((entry, i) => <li key={i}><time>{time(entry.at)}</time><span>{entry.text}</span></li>)}</ol>
         </section>
-        <p className="cw-boundary">Reads SAP, the quality system and regulatory rules through Apex's service API. Never writes to them. Only people approve a change.</p>
+        {run?.mode === "ai-gateway" && run.corrections.length > 0 && <details className="act-fixes">
+          <summary>What the policy check corrected</summary>
+          <ul>{run.corrections.map(c => <li key={c}>{c}</li>)}</ul>
+        </details>}
+        <p className="act-run">Workflow run <code>{state.runId}</code></p>
       </div>}
     </main>
 
@@ -297,5 +305,24 @@ function ProductPanel({ finding: f, sourceById, onClose }: { finding: Finding; s
         {f.evidenceIds.map(id => { const s = sourceById.get(id); return <li key={id}><code>{id}</code><div><strong>{s ? s.title.split(" | ")[1] ?? s.title : "Record"}</strong>{s && <p>{s.system === "Supplier notice" ? "Supplier document" : s.system} | {s.detail}</p>}</div></li>; })}
       </ul>
     </aside>
+  </div>;
+}
+
+// Each lookup as a block on one timeline, in the order the workflow made them, one lane per system.
+// Width is how long the call took. A failed call is red. Hover for the endpoint and status.
+function CallTimeline({ calls }: { calls: AssessmentRun["calls"] }) {
+  const total = Math.max(1, calls.reduce((n, c) => n + c.ms, 0));
+  let offset = 0;
+  const placed = calls.map(call => { const at = offset; offset += call.ms; return { ...call, at }; });
+  return <div className="act-lanes">
+    {evSystems.map(sys => <div key={sys} className="act-lane">
+      <span className="act-lane-name">{evLabel[sys]}</span>
+      <div className="act-track">
+        {placed.filter(c => c.system === sys).map((c, i) => <i key={i} className={`act-call is-${sys} ${c.status >= 400 ? "is-error" : ""}`}
+          style={{ left: `${(c.at / total) * 100}%`, width: `max(4px, ${(c.ms / total) * 100}%)` }}
+          title={`${c.endpoint.split("?")[0]} | ${c.status} | ${c.ms} ms`} />)}
+      </div>
+    </div>)}
+    <div className="act-axis"><span>0</span><span>{total} ms of lookups</span></div>
   </div>;
 }

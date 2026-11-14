@@ -33,10 +33,13 @@ async function Dashboard({ searchParams }: { searchParams: Promise<{ period?: st
   };
   const maxDays = Math.max(...a.months.map(m => m.days ?? 0), a.daysToDecision.before, 1);
   const caught = [
-    { label: "Missing records found", value: a.caught.missingRecords, note: "e.g. no EU qualification on file" },
-    { label: "Invented citations removed", value: a.caught.inventedCitations, note: "record IDs the model made up" },
-    { label: "Model answers corrected", value: a.caught.modelCorrections, note: "by the policy check" },
+    { label: "Missing records", value: a.caught.missingRecords, tip: "e.g. no EU qualification on file" },
+    { label: "Invented citations", value: a.caught.inventedCitations, tip: "record IDs the model made up, removed" },
+    { label: "Model corrections", value: a.caught.modelCorrections, tip: "answers the policy check fixed" },
   ];
+  const maxLineDays = Math.max(...a.byLine.map(r => r.before), 1);
+  // Budget ring: share of the monthly AI budget used.
+  const ring = 2 * Math.PI * 34;
   const maxCaught = Math.max(...caught.map(c => c.value), 1);
   const budgetShare = Math.min(1, a.ai.costUsd / a.ai.budgetUsd);
 
@@ -56,14 +59,14 @@ async function Dashboard({ searchParams }: { searchParams: Promise<{ period?: st
       </div>
 
       <section className="an-tiles" aria-label="Headline numbers">
-        <div><span>Days to decision</span><strong>{a.cases ? a.daysToDecision.workspace : "—"}</strong><small>was {a.daysToDecision.before} days before the workspace</small></div>
-        <div><span>Specialist time saved</span><strong>{a.effort.hoursSaved} h</strong><small>{a.cases} {a.cases === 1 ? "case" : "cases"} decided | {a.daysToDecision.daysSaved} calendar days sooner</small></div>
-        <div><span>Cost saved</span><strong>{usd(a.effort.costSavedUsd)}</strong><small>after {usd(a.ai.costUsd, 3)} of AI</small></div>
-        <div><span>Customer notices on time</span><strong>{pct(a.notices.onTimeShare)}</strong><small>{a.notices.onTime} of {a.notices.total} | was {pct(a.notices.beforeOnTimeShare)}</small></div>
+        <div><span>Days to decision</span><strong>{a.cases ? a.daysToDecision.workspace : "–"}</strong><em className="is-good">was {a.daysToDecision.before}</em></div>
+        <div><span>Time saved</span><strong>{a.effort.hoursSaved} h</strong><em>{a.cases} cases</em></div>
+        <div><span>Cost saved</span><strong>{usd(a.effort.costSavedUsd)}</strong><em>net of AI</em></div>
+        <div><span>Notices on time</span><strong>{pct(a.notices.onTimeShare)}</strong><em className="is-good">was {pct(a.notices.beforeOnTimeShare)}</em></div>
       </section>
 
       <section className="an-card" aria-labelledby="trend">
-        <header><h2 id="trend">Days from supplier notice to decision</h2><span className="an-legend"><i className="is-manual" />Manual <i className="is-ws" />Workspace <i className="is-base" />Before ({a.daysToDecision.before} d)</span></header>
+        <header><h2 id="trend">Days to decision, by month</h2><span className="an-legend"><i className="is-manual" />Manual <i className="is-ws" />Workspace <i className="is-base" />Before</span></header>
         <div className="an-bars" role="img" aria-label={`Median days to decision by month. Manual months around ${a.daysToDecision.before} days, workspace months around ${a.daysToDecision.workspace || 2} days.`}>
           <i className="an-base" style={{ bottom: `calc(22px + (100% - 22px) * ${a.daysToDecision.before / maxDays})` }} />
           {a.months.map(m => <div key={m.month} className={`an-bar ${m.inPeriod ? "" : "is-out"}`}>
@@ -75,46 +78,45 @@ async function Dashboard({ searchParams }: { searchParams: Promise<{ period?: st
         </div>
       </section>
 
-      <div className="an-pair">
+      <div className="an-trio">
+        <section className="an-card" aria-labelledby="lines">
+          <header><h2 id="lines">By product line</h2><span className="an-legend"><i className="is-manual" />Before <i className="is-ws" />Now</span></header>
+          <ul className="an-pairs">
+            {a.byLine.map(r => <li key={r.line}>
+              <Link href={href({ line: r.line })}>{r.line}</Link>
+              <span className="an-pairbars">
+                <i className="is-before" style={{ width: `${(r.before / maxLineDays) * 100}%` }} title={`Before: ${r.before} days`}><b>{r.before} d</b></i>
+                <i className="is-now" style={{ width: `max(26px, ${((r.cases ? r.medianDays : 0) / maxLineDays) * 100}%)` }} title={`Now: ${r.cases ? r.medianDays : "no"} days`}><b>{r.cases ? `${r.medianDays} d` : "–"}</b></i>
+              </span>
+            </li>)}
+          </ul>
+        </section>
+
         <section className="an-card" aria-labelledby="caught">
-          <header><h2 id="caught">Problems caught before sign-off</h2></header>
+          <header><h2 id="caught">Caught before sign-off</h2></header>
           <ul className="an-hbars">
-            {caught.map(c => <li key={c.label}>
-              <span><strong>{c.label}</strong><small>{c.note}</small></span>
+            {caught.map(c => <li key={c.label} title={c.tip}>
+              <strong>{c.label}</strong>
               <i><b style={{ width: `${(c.value / maxCaught) * 100}%` }} /></i>
               <em>{c.value}</em>
             </li>)}
           </ul>
-          <p className="an-foot">{a.inFlight.count} cases in flight{a.inFlight.dueSoon ? `, ${a.inFlight.dueSoon} due within 30 days` : ""}.</p>
         </section>
 
-        <section className="an-card" aria-labelledby="spend">
+        <section className="an-card an-spendcard" aria-labelledby="spend">
           <header><h2 id="spend">AI spend</h2></header>
-          <div className="an-spend">
-            <strong>{usd(a.ai.costUsd, 3)}</strong><span>of the {usd(a.ai.budgetUsd)} monthly budget</span>
+          <div className="an-ring" role="meter" aria-valuemin={0} aria-valuemax={a.ai.budgetUsd} aria-valuenow={Number(a.ai.costUsd.toFixed(2))} aria-label="AI spend against the monthly budget">
+            <svg width="96" height="96" viewBox="0 0 80 80" aria-hidden="true">
+              <circle cx="40" cy="40" r="34" fill="none" stroke="var(--sunken)" strokeWidth="9" />
+              <circle cx="40" cy="40" r="34" fill="none" stroke="var(--sage)" strokeWidth="9" strokeLinecap="round" strokeDasharray={`${Math.max(2, budgetShare * ring)} ${ring}`} transform="rotate(-90 40 40)" />
+            </svg>
+            <span><strong>{usd(a.ai.costUsd, 2)}</strong><small>of {usd(a.ai.budgetUsd)}</small></span>
           </div>
-          <div className="an-meter" role="meter" aria-valuemin={0} aria-valuemax={a.ai.budgetUsd} aria-valuenow={Number(a.ai.costUsd.toFixed(2))} aria-label="AI spend against budget"><i style={{ width: `max(4px, ${budgetShare * 100}%)` }} /></div>
-          <dl className="an-dl">
-            <div><dt>Assessments run</dt><dd>{a.ai.runs}</dd></div>
-            <div><dt>Cost per assessment</dt><dd>{usd(a.ai.costPerRunUsd, 4)}</dd></div>
-            <div><dt>Model</dt><dd>{a.ai.model}</dd></div>
-          </dl>
+          <p className="an-foot">{usd(a.ai.costPerRunUsd, 4)} per assessment</p>
         </section>
       </div>
 
-      <section className="an-card" aria-labelledby="lines">
-        <header><h2 id="lines">By product line</h2></header>
-        <div className="table-wrap an-table">
-          <table>
-            <thead><tr><th>Product line</th><th>Decided</th><th>Days to decision</th><th>Before</th><th>Time saved</th><th>In flight</th></tr></thead>
-            <tbody>{a.byLine.map(r => <tr key={r.line}>
-              <td><Link href={href({ line: r.line })}>{r.line}</Link></td><td>{r.cases}</td><td>{r.cases ? r.medianDays : "—"}</td><td>{r.before}</td><td>{r.hoursSaved} h</td><td>{r.open}</td>
-            </tr>)}</tbody>
-          </table>
-        </div>
-      </section>
-
-      <p className="an-note">Sample history: cases from January to July were handled the manual way; from August in the workspace. AI cost and AI mistakes are measured in the AI test set. Assumed effort: {assumptions.manualHours} h per case manually, {assumptions.workspaceHours} h in the workspace, at {usd(assumptions.hourlyRate)} an hour. Ask Helper to draft a report for any period or product line.</p>
+      <p className="an-note">Example history (manual until July). AI cost and mistakes measured in tests. Assumes {assumptions.manualHours} h → {assumptions.workspaceHours} h per case at {usd(assumptions.hourlyRate)}/h.</p>
     </main>
   </>;
 }
