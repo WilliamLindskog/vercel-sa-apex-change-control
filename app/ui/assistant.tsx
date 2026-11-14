@@ -4,6 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { openCaseId } from "@/lib/cases";
 import type { User } from "@/lib/users";
 import "./assistant.css";
 
@@ -86,7 +87,7 @@ function DraftCard({ draft }: { draft: Draft }) {
     <p>{draft.message}</p>
     <div className="as-draft-actions">
       <button className="btn btn-primary" onClick={copy}>{copied ? "Copied" : "Copy message"}</button>
-      <Link className="as-link" href={`/cases/${draft.caseId}`}>Open case</Link>
+      {draft.caseId === openCaseId && <Link className="as-link" href={`/cases/${draft.caseId}`}>Open case</Link>}
     </div>
   </div>;
 }

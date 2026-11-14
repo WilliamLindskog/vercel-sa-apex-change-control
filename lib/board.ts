@@ -21,7 +21,8 @@ function stageOf(state: CaseState | null): { stage: Stage; blocked: boolean; ste
   return { stage: "review", blocked, step: 2 + signed, waitingOn: owner };
 }
 
-const fixedStep: Record<Stage, number> = { new: 1, assessing: 1, review: 3, ready: 4, done: 5 };
+// Progress out of 5, as for the live case: 1 new, 2 in review (no sign-off yet), 4 both signed, 5 sent.
+const fixedStep: Record<Stage, number> = { new: 1, assessing: 1, review: 2, ready: 4, done: 5 };
 
 // Reference cases: the same for everyone and they change rarely, so they are cached and tagged.
 // In production these would come from Apex's case index; a change event from there calls

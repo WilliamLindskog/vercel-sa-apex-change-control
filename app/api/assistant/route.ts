@@ -109,7 +109,7 @@ export async function POST(request: Request) {
       draftCheckIn: tool({
         description: "Draft a check-in message to a colleague about one case. Shown to the user as a card they can copy.",
         inputSchema: z.object({
-          caseId: z.string().describe("Case ID from getBoard, e.g. SCC-2026-042"),
+          caseId: z.string().describe("Case ID from getBoard, e.g. SCC-2026-040"),
           personId: z.enum(users.map(u => u.id) as [string, ...string[]]).describe("Who to check in with"),
           message: z.string().max(600).describe("The message, written as the user"),
         }),
