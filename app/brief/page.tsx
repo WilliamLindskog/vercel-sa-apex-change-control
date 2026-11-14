@@ -126,6 +126,7 @@ export default function Brief() {
             <li><strong>Dana</strong>, Change Lead: runs the assessment</li>
             <li><strong>Priya</strong>, Quality: signs off scope</li>
             <li><strong>Marcus</strong>, Regulatory: signs off notices</li>
+            <li>Plus <strong>Ingrid</strong>, <strong>Kenji</strong> and <strong>Lucía</strong> for Plastics and Inks</li>
           </ul>
         </div>
         <ol className="steps-list">

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { openCaseId } from "@/lib/cases";
+import { isCase } from "@/lib/cases";
 import { restartCase, sendCommand } from "@/lib/case-store";
+import { PLAN_RECIPIENTS } from "@/workflows/supplier-change-case";
 import { currentUser } from "@/lib/session";
-import { userForRole } from "@/lib/users";
 
 const body = z.discriminatedUnion("type", [
   z.object({ type: z.literal("assess") }),
@@ -18,7 +18,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ cas
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: "Sign in to act on this case." }, { status: 401 });
   const { caseId } = await params;
-  if (caseId !== openCaseId) return NextResponse.json({ error: "Case not found." }, { status: 404 });
+  if (!isCase(caseId)) return NextResponse.json({ error: "Case not found." }, { status: 404 });
 
   const parsed = body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "That action isn't valid. A decision note needs at least 3 characters." }, { status: 400 });
@@ -34,7 +34,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ cas
       await sendCommand(caseId, { type: "sign", role: command.role, reviewer: user.name, note: command.note, at });
       break;
     case "route":
-      await sendCommand(caseId, { type: "route", by: user.name, to: userForRole("Product Change Lead").name, at });
+      await sendCommand(caseId, { type: "route", by: user.name, to: PLAN_RECIPIENTS, at });
       break;
     case "scenario":
       await restartCase(caseId, command.scenario, user.name);

@@ -66,6 +66,13 @@ button:disabled { cursor: not-allowed; }
 .tone-dana { background-color: #f8d9b8; background-image: url(/people/dana.jpg); background-position: 52% 24%; }
 .tone-priya { background-color: #dbe8cd; background-image: url(/people/priya.jpg); background-position: 44% 26%; }
 .tone-marcus { background-color: #ecd8e5; background-image: url(/people/marcus.jpg); background-position: 50% 26%; }
+.tone-ingrid { background: #e4d4f0; color: #5b3f78; }
+.tone-kenji { background: #cfe3e6; color: #2f5a60; }
+.tone-lucia { background: #f6d2c4; color: #7a3a24; }
+/* No photo for these three yet: an empty avatar shows their initials. */
+.tone-ingrid:empty::before { content: "IS"; }
+.tone-kenji:empty::before { content: "KW"; }
+.tone-lucia:empty::before { content: "LF"; }
 .tone-supplier { background: #f1e7da; color: var(--ink-2); }
 
 /* Badges */

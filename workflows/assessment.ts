@@ -2,7 +2,7 @@ import { WorkflowAgent } from "@ai-sdk/workflow";
 import { Output, stepCountIs } from "ai";
 import { apexSession, type Scenario, type SourceRecord, type SystemCall } from "@/lib/apex-systems";
 import { AGENT_INSTRUCTIONS, agentGatewayOptions, agentPrompt, agentTools, modelPlan, policyCheckedRun, rulesOnlyRun, runAgentTool, type AgentToolName, type StepMeta } from "@/lib/assessment";
-import { assessmentSchema, type AssessmentRun, type ProgressItem } from "@/lib/case";
+import { assessmentSchema, getChange, type AssessmentRun, type ProgressItem } from "@/lib/case";
 
 // The durable assessment, run inside the case workflow. What makes it durable:
 //   - every lookup in Apex's systems is its own step: retried on its own, and never repeated once it succeeded;
@@ -12,13 +12,18 @@ import { assessmentSchema, type AssessmentRun, type ProgressItem } from "@/lib/c
 // After each lookup the caller publishes progress, so people watch the check happen rather than a spinner.
 
 export async function durableAssessment(
-  input: { scenario: Scenario; requestedBy: string; aiRunsToday: number },
+  input: { caseId: string; scenario: Scenario; requestedBy: string; aiRunsToday: number; rulesOnly?: boolean },
   onProgress: (item: ProgressItem) => Promise<void>,
 ): Promise<AssessmentRun> {
   const plan = await planRun(input.aiRunsToday);
+  // rulesOnly: replaying a case's earlier history when it starts part-way through. No model, no spend.
+  if (input.rulesOnly) {
+    await onProgress({ system: "Policy", label: "Checking the records with the policy rules", ok: true });
+    return rulesOnlyStep(input.caseId, input.scenario, "Policy rules", "Earlier assessment, replayed with the policy rules when the case was loaded.", plan.startedAt);
+  }
   if (!plan.useModel) {
     await onProgress({ system: "Policy", label: "Checking the records with the policy rules", ok: true });
-    return rulesOnlyStep(input.scenario, plan.model, plan.reason, plan.startedAt);
+    return rulesOnlyStep(input.caseId, input.scenario, plan.model, plan.reason, plan.startedAt);
   }
 
   const sources: SourceRecord[] = [];
@@ -27,7 +32,7 @@ export async function durableAssessment(
     ...agentTools[name],
     // Workflow-level wrapper around a step: the lookup is durable, the bookkeeping stays deterministic.
     execute: async (args: Record<string, string>) => {
-      const result = await lookupStep(input.scenario, name, args);
+      const result = await lookupStep(input.caseId, input.scenario, name, args);
       sources.push(...result.sources);
       calls.push(...result.calls);
       await onProgress(result.progress);
@@ -42,18 +47,18 @@ export async function durableAssessment(
     output: Output.object({ schema: assessmentSchema }),
     stopWhen: stepCountIs(plan.maxSteps),
     maxOutputTokens: plan.maxOutputTokens,
-    providerOptions: agentGatewayOptions(input.requestedBy),
+    providerOptions: agentGatewayOptions(input.requestedBy, input.caseId),
   });
 
   try {
-    const result = await agent.generate({ prompt: agentPrompt() });
+    const result = await agent.generate({ prompt: agentPrompt(getChange(input.caseId)) });
     await onProgress({ system: "Policy", label: "Checking the AI's answer against the records", ok: true });
     const steps: StepMeta[] = result.steps.map(step => ({ usage: { inputTokens: step.usage.inputTokens, outputTokens: step.usage.outputTokens }, providerMetadata: step.providerMetadata as Record<string, unknown> | undefined }));
-    return policyCheckStep({ scenario: input.scenario, draft: result.output, agentSources: sources, agentCalls: calls, steps, startedAt: plan.startedAt });
+    return policyCheckStep({ caseId: input.caseId, scenario: input.scenario, draft: result.output, agentSources: sources, agentCalls: calls, steps, startedAt: plan.startedAt });
   } catch (error) {
     // Every model in Gateway's fallback chain failed, or the output did not match the schema.
     await onProgress({ system: "AI", label: "AI unavailable, using the policy rules", ok: false });
-    return rulesOnlyStep(input.scenario, "Policy rules (model unavailable)", error instanceof Error ? error.message.slice(0, 200) : "Model call failed.", plan.startedAt);
+    return rulesOnlyStep(input.caseId, input.scenario, "Policy rules (model unavailable)", error instanceof Error ? error.message.slice(0, 200) : "Model call failed.", plan.startedAt);
   }
 }
 
@@ -73,11 +78,11 @@ const describe = (name: AgentToolName, args: Record<string, string>): Pick<Progr
   }
 };
 
-async function lookupStep(scenario: Scenario, name: AgentToolName, args: Record<string, string>) {
+async function lookupStep(caseId: string, scenario: Scenario, name: AgentToolName, args: Record<string, string>) {
   "use step";
   const session = apexSession(scenario);
   const started = Date.now();
-  const output = await runAgentTool(session, name, args);
+  const output = await runAgentTool(session, name, args, getChange(caseId));
   const failed = Boolean(output && typeof output === "object" && "error" in output);
   return {
     output,
@@ -87,12 +92,14 @@ async function lookupStep(scenario: Scenario, name: AgentToolName, args: Record<
   };
 }
 
-async function policyCheckStep(input: Parameters<typeof policyCheckedRun>[0]) {
+// Steps take the case ID, not the case: step inputs are recorded, so they stay small and serializable.
+async function policyCheckStep(input: Omit<Parameters<typeof policyCheckedRun>[0], "change"> & { caseId: string }) {
   "use step";
-  return policyCheckedRun(input);
+  const { caseId, ...rest } = input;
+  return policyCheckedRun({ ...rest, change: getChange(caseId) });
 }
 
-async function rulesOnlyStep(scenario: Scenario, model: string, reason: string, startedAt: number) {
+async function rulesOnlyStep(caseId: string, scenario: Scenario, model: string, reason: string, startedAt: number) {
   "use step";
-  return rulesOnlyRun(scenario, model, reason, startedAt);
+  return rulesOnlyRun(scenario, model, reason, startedAt, getChange(caseId));
 }

@@ -75,7 +75,7 @@ export async function POST(request: Request) {
           daysLeft: card.stage === "done" ? null : daysUntil(card.due),
           blocked: card.blocked,
           note: card.note ?? null,
-          liveWorkflow: Boolean(card.live),
+          productLine: card.line,
         }))
           // Already in priority order (your turn, then blocked, then the rest; soonest first), so small models don't have to sort.
           .sort((a, b) => Number(b.isYourTurn) - Number(a.isYourTurn) || Number(b.blocked) - Number(a.blocked) || (a.daysLeft ?? 1e9) - (b.daysLeft ?? 1e9)),

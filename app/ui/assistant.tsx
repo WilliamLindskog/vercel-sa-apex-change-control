@@ -4,7 +4,6 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { openCaseId } from "@/lib/cases";
 import type { User } from "@/lib/users";
 import "./assistant.css";
 
@@ -71,7 +70,7 @@ export function HelperBuddy({ thinking = false }: { thinking?: boolean }) {
 const starters = (user: User) => [
   "What should I focus on today?",
   "Who is holding things up?",
-  user.id === "priya" ? "Check in with Marcus on Binder X-17" : "Check in with Priya on Wax W-210",
+  user.id === "priya" || user.id === "kenji" ? "Check in with Marcus on UV absorber UV-5" : "Check in with Priya on Wax W-210",
   "Draft a Q4 report for Coatings",
 ];
 
@@ -120,7 +119,7 @@ function DraftCard({ draft }: { draft: Draft }) {
     <p>{draft.message}</p>
     <div className="as-draft-actions">
       <button className="btn btn-primary" onClick={copy}>{copied ? "Copied" : "Copy message"}</button>
-      {draft.caseId === openCaseId && <Link className="as-link" href={`/cases/${draft.caseId}`}>Open case</Link>}
+      <Link className="as-link" href={`/cases/${draft.caseId}`}>Open case</Link>
     </div>
   </div>;
 }

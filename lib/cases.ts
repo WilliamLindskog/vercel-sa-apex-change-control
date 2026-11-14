@@ -1,4 +1,4 @@
-import { supplierChange } from "./case";
+import { displayDate, supplierChanges, type ProductLine } from "./case";
 
 export type Stage = "new" | "assessing" | "review" | "ready" | "done";
 export const stages: { id: Stage; label: string }[] = [
@@ -9,32 +9,25 @@ export const stages: { id: Stage; label: string }[] = [
   { id: "done", label: "Done" },
 ];
 
+// A case as the board and calendar list it. Every case is live: its stage, owner and progress come from
+// its own durable workflow (lib/board.ts).
 export type CaseSummary = {
   id: string;
   title: string;
   supplier: string;
   material: string;
+  line: ProductLine;
   opened: string;
   due: string;
   people: string[];
-  products: number;
-  // The live case takes its stage from its workflow; example cases have a fixed stage and stay on the board.
-  live?: boolean;
-  stage?: Stage;
-  note?: string;
-  // Who the case is waiting for right now. The live case works this out from its workflow.
   waitingOn?: string;
+  note?: string;
 };
 
-// One live case backed by the durable workflow. The rest are example cases so the board reads like a working week;
-// only the live case opens. Case numbers rise with the date the notice arrived.
-export const cases: CaseSummary[] = [
-  { id: supplierChange.id, title: supplierChange.title, supplier: supplierChange.supplier, material: "Binder X-17", opened: supplierChange.received, due: supplierChange.deadline, people: ["dana", "priya", "marcus"], products: 3, live: true },
-  { id: "SCC-2026-044", title: "Pigment PB-15:3 grade change", supplier: "Sunfield Colours", material: "Pigment PB-15:3", opened: "13 Nov 2026", due: "15 Jan 2027", people: ["dana"], products: 4, stage: "new", note: "Notice received 13 Nov", waitingOn: "dana" },
-  { id: "SCC-2026-040", title: "Wax W-210 plant relocation", supplier: "Nordhavn Waxes", material: "Wax W-210", opened: "3 Nov 2026", due: "31 Dec 2026", people: ["dana", "priya"], products: 2, stage: "review", note: "Quality reviewing", waitingOn: "priya" },
-  { id: "SCC-2026-038", title: "Silica SX-9 packaging size change", supplier: "Corvane Industrial", material: "Silica SX-9", opened: "21 Oct 2026", due: "5 Dec 2026", people: ["dana", "priya", "marcus"], products: 1, stage: "ready", note: "Both signed", waitingOn: "dana" },
-  { id: "SCC-2026-033", title: "Dispersant PD-4 site transfer", supplier: "Halvorsen Chemie", material: "Dispersant PD-4", opened: "2 Sep 2026", due: "21 Oct 2026", people: ["dana", "priya", "marcus"], products: 5, stage: "done", note: "Approved with customer notice" },
-  { id: "SCC-2026-029", title: "Antioxidant AO-12 packaging change", supplier: "Corvane Industrial", material: "Antioxidant AO-12", opened: "11 Aug 2026", due: "30 Sep 2026", people: ["dana"], products: 2, stage: "done", note: "No product impact" },
-];
+export const cases: CaseSummary[] = supplierChanges.map(c => ({
+  id: c.id, title: c.title, supplier: c.supplier, material: c.materialName, line: c.line,
+  opened: displayDate(c.received), due: displayDate(c.deadline),
+  people: [c.team.lead, c.team.quality, c.team.regulatory],
+}));
 
-export const openCaseId = supplierChange.id;
+export const isCase = (id: string) => cases.some(c => c.id === id);

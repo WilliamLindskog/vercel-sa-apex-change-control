@@ -1,6 +1,6 @@
 import { getHookByToken, getRun, resumeHook, start } from "workflow/api";
 import type { Scenario } from "./apex-systems";
-import type { CaseState } from "./case";
+import { getChange, type CaseState } from "./case";
 import { caseToken, supplierChangeCase, type CaseCommand } from "@/workflows/supplier-change-case";
 
 // Server-side access to the durable case. There is no database: the workflow run is the record,
@@ -13,7 +13,8 @@ async function activeRunId(caseId: string) {
 }
 
 // Open the case if no run holds it yet. Waits until the hook is registered, so the next command finds it.
-export async function openCase(caseId: string, scenario: Scenario = "normal") {
+// A case starts in its own scenario unless one is asked for (the demo control on the case page).
+export async function openCase(caseId: string, scenario: Scenario = getChange(caseId).start.scenario ?? "normal") {
   const existing = await activeRunId(caseId);
   if (existing) return existing;
   const run = await start(supplierChangeCase, [{ caseId, scenario }]);

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { openCaseId } from "@/lib/cases";
+import { isCase } from "@/lib/cases";
 import { latestState, openCase } from "@/lib/case-store";
 import { currentUser } from "@/lib/session";
 
@@ -7,7 +7,7 @@ import { currentUser } from "@/lib/session";
 export async function GET(_request: Request, { params }: { params: Promise<{ caseId: string }> }) {
   if (!(await currentUser())) return NextResponse.json({ error: "Sign in to view this case." }, { status: 401 });
   const { caseId } = await params;
-  if (caseId !== openCaseId) return NextResponse.json({ error: "Case not found." }, { status: 404 });
+  if (!isCase(caseId)) return NextResponse.json({ error: "Case not found." }, { status: 404 });
 
   const runId = await openCase(caseId);
   const state = await latestState(runId);

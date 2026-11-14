@@ -31,7 +31,7 @@ async function Dashboard({ searchParams }: { searchParams: Promise<{ period?: st
     const p = next.period ?? period, l = next.line === null ? undefined : next.line ?? line;
     return `/analytics?period=${p}${l ? `&line=${encodeURIComponent(l)}` : ""}`;
   };
-  const maxDays = Math.max(...a.months.map(m => m.days ?? 0), a.daysToDecision.before, 1);
+  const maxDays = Math.max(...a.timeline.map(c => c.days), a.daysToDecision.before, 1);
   const caught = [
     { label: "Missing records", value: a.caught.missingRecords, tip: "e.g. no EU qualification on file" },
     { label: "Invented citations", value: a.caught.inventedCitations, tip: "record IDs the model made up, removed" },
@@ -58,23 +58,21 @@ async function Dashboard({ searchParams }: { searchParams: Promise<{ period?: st
         </nav>
       </div>
 
-      <section className="an-tiles" aria-label="Headline numbers">
-        <div><span>Days to decision</span><strong>{a.cases ? a.daysToDecision.workspace : "–"}</strong><em className="is-good">was {a.daysToDecision.before}</em></div>
-        <div><span>Time saved</span><strong>{a.effort.hoursSaved} h</strong><em>{a.cases} cases</em></div>
-        <div><span>Cost saved</span><strong>{usd(a.effort.costSavedUsd)}</strong><em>net of AI</em></div>
-        <div><span>Notices on time</span><strong>{pct(a.notices.onTimeShare)}</strong><em className="is-good">was {pct(a.notices.beforeOnTimeShare)}</em></div>
-      </section>
-
+      {/* One bar per decided case, oldest first. Left: the manual way. Right: in the workspace. */}
       <section className="an-card" aria-labelledby="trend">
-        <header><h2 id="trend">Days to decision, by month</h2><span className="an-legend"><i className="is-manual" />Manual <i className="is-ws" />Workspace <i className="is-base" />Before</span></header>
-        <div className="an-bars" role="img" aria-label={`Median days to decision by month. Manual months around ${a.daysToDecision.before} days, workspace months around ${a.daysToDecision.workspace || 2} days.`}>
-          <i className="an-base" style={{ bottom: `calc(22px + (100% - 22px) * ${a.daysToDecision.before / maxDays})` }} />
-          {a.months.map(m => <div key={m.month} className={`an-bar ${m.inPeriod ? "" : "is-out"}`}>
-            {m.days !== null
-              ? <span className={`is-${m.mode}`} style={{ height: `${(m.days / maxDays) * 100}%` }} data-tip={`${m.label}: ${m.days} days | ${m.cases} ${m.cases === 1 ? "case" : "cases"}`} tabIndex={0} />
-              : <span className="is-none" data-tip={`${m.label}: no cases`} tabIndex={0} />}
-            <b>{m.label}</b>
-          </div>)}
+        <header><h2 id="trend">How long each decision took</h2><span className="an-legend"><i className="is-manual" />Manual <i className="is-ws" />Workspace</span></header>
+        <div className="an-groups" role="img" aria-label={`Days from supplier notice to decision for each case. Manual cases: median ${a.daysToDecision.before} days. Workspace cases: median ${a.daysToDecision.workspace} days.`}>
+          {(["manual", "workspace"] as const).map(mode => {
+            const list = a.timeline.filter(c => c.mode === mode);
+            const median = mode === "manual" ? a.daysToDecision.before : a.daysToDecision.workspace;
+            return <div key={mode} className={`an-group is-${mode}`} style={{ flexGrow: Math.max(list.length, 1) }}>
+              <p className="an-median"><strong>{median} {median === 1 ? "day" : "days"}</strong> {mode === "manual" ? "before, Jan to Jul" : "with the workspace"}</p>
+              <div className="an-cols">
+                <i className="an-mline" style={{ bottom: `${(median / maxDays) * 100}%` }} />
+                {list.map(c => <span key={c.id} className={c.inPeriod ? undefined : "is-out"} style={{ height: `${Math.max(2, (c.days / maxDays) * 100)}%` }} data-tip={`${c.material}: ${c.days} ${c.days === 1 ? "day" : "days"}`} tabIndex={0} />)}
+              </div>
+            </div>;
+          })}
         </div>
       </section>
 

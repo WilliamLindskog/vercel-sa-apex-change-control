@@ -56,10 +56,6 @@ const workspace: Row[] = [
   ["SCC-2026-037", "Resin R-44", "Coatings", "2026-10-16", "2026-10-18", 2, 0, 0],
   ["SCC-2026-039", "Pigment PY-83", "Inks", "2026-11-02", "2026-11-04", 2, 0, 1],
 ];
-// Product line of the cases on the board, for the "in flight" numbers.
-const boardLine: Record<string, ProductLine> = {
-  "SCC-2026-041": "Coatings", "SCC-2026-040": "Coatings", "SCC-2026-044": "Inks", "SCC-2026-038": "Plastics",
-};
 
 const DAY = 86_400_000;
 const days = (from: string, to: string) => Math.max(1, Math.round((Date.parse(to) - Date.parse(from)) / DAY));
@@ -124,6 +120,8 @@ async function history(period: Period, line?: ProductLine) {
     },
     ai: { runs: aiRuns, costUsd: aiCost, costPerRunUsd: aiCostPerRun, model: ai.models[0], budgetUsd: 5 },
     months,
+    // Every decided case for the line, oldest first, for the "each decision" chart.
+    timeline: [...ofLine].sort((x, y) => x.decided.localeCompare(y.decided)).map(c => ({ id: c.id, material: c.material, decided: c.decided, days: c.days, mode: c.mode, inPeriod: c.mode === "manual" || inPeriod(c.decided, period) })),
     byLine,
     decided: scope.map(({ id, material, line, days }) => ({ id, material, line, days })),
   };
@@ -133,11 +131,11 @@ async function history(period: Period, line?: ProductLine) {
 export async function analytics({ period = "ytd", line }: { period?: Period; line?: ProductLine } = {}) {
   await connection(); // "in flight" and days left are about now, so this part is request time
   const [past, cards] = await Promise.all([history(period, line), boardCards()]);
-  const open = cards.filter(c => c.stage !== "done" && (!line || boardLine[c.id] === line));
+  const open = cards.filter(c => c.stage !== "done" && (!line || c.line === line));
   const daysLeft = (due: string) => Math.ceil((Date.parse(due) - Date.now()) / DAY);
   return {
     ...past,
-    byLine: past.byLine.map(r => ({ ...r, open: open.filter(c => boardLine[c.id] === r.line).length })),
+    byLine: past.byLine.map(r => ({ ...r, open: open.filter(c => c.line === r.line).length })),
     inFlight: { count: open.length, dueSoon: open.filter(c => daysLeft(c.due) < 30).length, cases: open.map(c => ({ material: c.material, daysLeft: daysLeft(c.due) })) },
   };
 }

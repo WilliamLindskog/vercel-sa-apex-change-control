@@ -98,3 +98,18 @@
 .an-spendcard .an-foot { margin-top: 10px; text-align: center; }
 @media (max-width: 1100px) { .an-trio { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 680px) { .an-trio { grid-template-columns: 1fr; } .an-hbars li { grid-template-columns: 1fr 32px; } }
+
+/* Each decision: two groups side by side, bars for every case, a dashed median line per group. */
+.an-groups { display: flex; gap: 22px; height: 230px; }
+.an-group { display: grid; grid-template-rows: auto 1fr; gap: 8px; min-width: 0; }
+.an-median { color: var(--ink-3); font-size: 13px; }
+.an-median strong { color: var(--ink); font: 500 22px/1 var(--serif); font-variation-settings: "SOFT" 100, "opsz" 48; }
+.an-group.is-workspace .an-median strong { color: var(--marigold-deep); }
+.an-cols { position: relative; display: flex; align-items: flex-end; gap: 6px; padding-bottom: 1px; border-bottom: 1px solid var(--line-strong); }
+.an-cols > span { position: relative; flex: 1; max-width: 34px; border-radius: 4px 4px 0 0; background: var(--line-strong); outline: none; }
+.an-group.is-workspace .an-cols > span { background: var(--marigold-deep); }
+.an-cols > span.is-out { opacity: .35; }
+.an-cols > span::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 6px); left: 50%; z-index: 2; padding: 4px 9px; border-radius: 8px; background: var(--action); color: #fff8ef; font-size: 12px; font-weight: 600; white-space: nowrap; opacity: 0; transform: translateX(-50%); pointer-events: none; transition: opacity .15s; }
+.an-cols > span:hover::after, .an-cols > span:focus-visible::after { opacity: 1; }
+.an-mline { position: absolute; left: 0; right: 0; z-index: 1; border-top: 2px dashed var(--ink-3); opacity: .5; pointer-events: none; }
+@media (max-width: 680px) { .an-groups { gap: 12px; } .an-cols { gap: 3px; } }
