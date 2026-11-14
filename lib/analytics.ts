@@ -1,3 +1,5 @@
+import { cacheLife, cacheTag } from "next/cache";
+import { connection } from "next/server";
 import evalResults from "@/evals/results/latest.json";
 import { boardCards } from "./board";
 
@@ -77,7 +79,12 @@ const decided = [...manual.map(r => [...r, "manual"] as const), ...workspace.map
   }));
 export type DecidedCase = (typeof decided)[number];
 
-export async function analytics({ period = "ytd", line }: { period?: Period; line?: ProductLine } = {}) {
+// Decided-case history for a period and product line. Same for everyone and only changes when a case is
+// decided, so it is cached and tagged; a decision event calls revalidateTag("analytics").
+async function history(period: Period, line?: ProductLine) {
+  "use cache";
+  cacheTag("analytics");
+  cacheLife("hours");
   const ofLine = decided.filter(c => !line || c.line === line);
   const before = ofLine.filter(c => c.mode === "manual");
   const scope = ofLine.filter(c => c.mode === "workspace" && inPeriod(c.decided, period));
@@ -92,9 +99,6 @@ export async function analytics({ period = "ytd", line }: { period?: Period; lin
   const beforeNotices = before.reduce((n, c) => n + c.notices, 0);
   const beforeLate = before.reduce((n, c) => n + c.late, 0);
 
-  const open = (await boardCards()).filter(c => c.stage !== "done" && (!line || boardLine[c.id] === line));
-  const daysLeft = (due: string) => Math.ceil((Date.parse(due) - Date.now()) / DAY);
-
   // Median days to decision for every month of 2026 so far, for the trend chart.
   const months = Array.from({ length: 11 }, (_, i) => {
     const key = `2026-${String(i + 1).padStart(2, "0")}`;
@@ -104,7 +108,7 @@ export async function analytics({ period = "ytd", line }: { period?: Period; lin
 
   const byLine = productLines.filter(l => !line || l === line).map(l => {
     const of = decided.filter(c => c.line === l && c.mode === "workspace" && inPeriod(c.decided, period));
-    return { line: l, cases: of.length, medianDays: median(of.map(c => c.days)), before: median(decided.filter(c => c.line === l && c.mode === "manual").map(c => c.days)), hoursSaved: of.length * (assumptions.manualHours - assumptions.workspaceHours), open: open.filter(c => boardLine[c.id] === l).length };
+    return { line: l, cases: of.length, medianDays: median(of.map(c => c.days)), before: median(decided.filter(c => c.line === l && c.mode === "manual").map(c => c.days)), hoursSaved: of.length * (assumptions.manualHours - assumptions.workspaceHours) };
   });
 
   return {
@@ -119,10 +123,22 @@ export async function analytics({ period = "ytd", line }: { period?: Period; lin
       modelCorrections: Math.round(aiRuns * correctedShare),
     },
     ai: { runs: aiRuns, costUsd: aiCost, costPerRunUsd: aiCostPerRun, model: ai.models[0], budgetUsd: 5 },
-    inFlight: { count: open.length, dueSoon: open.filter(c => daysLeft(c.due) < 30).length, cases: open.map(c => ({ material: c.material, daysLeft: daysLeft(c.due) })) },
     months,
     byLine,
     decided: scope.map(({ id, material, line, days }) => ({ id, material, line, days })),
+  };
+}
+
+// History (cached) plus what is in flight right now (live, per request).
+export async function analytics({ period = "ytd", line }: { period?: Period; line?: ProductLine } = {}) {
+  await connection(); // "in flight" and days left are about now, so this part is request time
+  const [past, cards] = await Promise.all([history(period, line), boardCards()]);
+  const open = cards.filter(c => c.stage !== "done" && (!line || boardLine[c.id] === line));
+  const daysLeft = (due: string) => Math.ceil((Date.parse(due) - Date.now()) / DAY);
+  return {
+    ...past,
+    byLine: past.byLine.map(r => ({ ...r, open: open.filter(c => boardLine[c.id] === r.line).length })),
+    inFlight: { count: open.length, dueSoon: open.filter(c => daysLeft(c.due) < 30).length, cases: open.map(c => ({ material: c.material, daysLeft: daysLeft(c.due) })) },
   };
 }
 export type Analytics = Awaited<ReturnType<typeof analytics>>;

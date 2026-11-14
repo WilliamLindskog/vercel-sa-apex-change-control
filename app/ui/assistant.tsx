@@ -91,7 +91,11 @@ function DraftCard({ draft }: { draft: Draft }) {
   </div>;
 }
 
-export function Assistant({ user, open, onToggle }: { user: User; open: boolean; onToggle: () => void }) {
+export function Assistant({ user }: { user: User }) {
+  // Floats over the page, so it starts closed unless the person left it open (remembered per browser).
+  const [open, setOpen] = useState(false);
+  useEffect(() => { try { setOpen(localStorage.getItem("apex-helper") === "open" && window.matchMedia("(min-width: 861px)").matches); } catch {} }, []);
+  const onToggle = () => { setOpen(!open); try { localStorage.setItem("apex-helper", open ? "closed" : "open"); } catch {} };
   const { messages, sendMessage, status, error, setMessages } = useChat({ transport: new DefaultChatTransport({ api: "/api/assistant" }) });
   const [input, setInput] = useState("");
   const end = useRef<HTMLDivElement>(null);

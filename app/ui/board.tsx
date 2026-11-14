@@ -8,7 +8,7 @@ import type { BoardCard } from "@/lib/board";
 import { stages, type Stage } from "@/lib/cases";
 import type { User } from "@/lib/users";
 
-const daysUntil = (date: string) => Math.ceil((new Date(date).getTime() - Date.now()) / 86_400_000);
+const daysUntil = (date: string, now: number) => Math.ceil((new Date(date).getTime() - now) / 86_400_000);
 
 // Moves a drag may trigger on the live case. Each one is a real case command, checked again by the workflow.
 const allowedMoves: Partial<Record<`${Stage}>${Stage}`, { command: "assess" | "route"; label: string }>> = {
@@ -21,7 +21,7 @@ const whyNot = (from: Stage, to: Stage) =>
   : to === "assessing" && from !== "new" ? "This case has already been assessed. Run it again from the case page."
   : "Cases only move forward.";
 
-export function Board({ cards: allCards, user, directory, view }: { cards: BoardCard[]; user: User; directory: User[]; view: "board" | "calendar" }) {
+export function Board({ cards: allCards, user, directory, view, now }: { cards: BoardCard[]; user: User; directory: User[]; view: "board" | "calendar"; now: number }) {
   const router = useRouter();
   const userId = user.id;
   const [onlyMine, setOnlyMine] = useState(false);
@@ -67,7 +67,7 @@ export function Board({ cards: allCards, user, directory, view }: { cards: Board
       onDrop={event => { event.preventDefault(); setOver(null); const card = cards.find(c => c.id === dragging); setDragging(null); if (card) move(card, stage.id); }}>
       <header><span className={`board-dot is-${stage.id}`} aria-hidden="true" /><h2>{stage.label}</h2><span className="board-count">{column.length}</span></header>
       <div className="board-cards">
-        {column.map(card => <CardView key={card.id} card={card} userId={userId} waitingName={nameOf(card.waitingOn)} pending={pending === card.id}
+        {column.map(card => <CardView key={card.id} card={card} now={now} userId={userId} waitingName={nameOf(card.waitingOn)} pending={pending === card.id}
           onDragStart={() => { setDragging(card.id); setNotice(null); }} onDragEnd={() => { setDragging(null); setOver(null); }} />)}
         {column.length === 0 && <p className="board-empty">Nothing here</p>}
       </div>
@@ -83,7 +83,7 @@ export function Board({ cards: allCards, user, directory, view }: { cards: Board
       <label className="board-filter"><input type="checkbox" checked={onlyMine} onChange={event => setOnlyMine(event.target.checked)} /> Only mine</label>
     </div>
     {notice && <p className={`board-notice is-${notice.tone}`} role="status">{notice.text}<button onClick={() => setNotice(null)} aria-label="Dismiss">×</button></p>}
-    {view === "calendar" ? <CalendarView cards={cards} userId={userId} nameOf={nameOf} /> :
+    {view === "calendar" ? <CalendarView cards={cards} userId={userId} nameOf={nameOf} now={now} /> :
     <div className="board-flow">
       {zone(first, true)}
       <div className="board">{middle.map(stage => zone(stage, false))}</div>
@@ -92,8 +92,8 @@ export function Board({ cards: allCards, user, directory, view }: { cards: Board
   </>;
 }
 
-function CardView({ card, userId, waitingName, pending, onDragStart, onDragEnd }: { card: BoardCard; userId: string; waitingName?: string; pending: boolean; onDragStart: () => void; onDragEnd: () => void }) {
-  const days = daysUntil(card.due);
+function CardView({ card, now, userId, waitingName, pending, onDragStart, onDragEnd }: { card: BoardCard; now: number; userId: string; waitingName?: string; pending: boolean; onDragStart: () => void; onDragEnd: () => void }) {
+  const days = daysUntil(card.due, now);
   const mine = card.waitingOn === userId;
   const body = <>
     <div className="bc-top">

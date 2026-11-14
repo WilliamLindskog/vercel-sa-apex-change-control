@@ -62,6 +62,14 @@ export default function Brief() {
 
       <section id="architecture" className="brief-section">
         <h2>2 · Architecture</h2>
+        <h3>Today</h3>
+        <ol className="flow" aria-label="Current state">
+          <li><strong>Supplier notice</strong><span>PDF in one buyer's inbox</span></li>
+          <li><strong>Manual look-ups</strong><span>SAP export, Veeva search, rules lookup</span></li>
+          <li><strong>Spreadsheet + email</strong><span>joined by hand, sign-offs by reply</span></li>
+          <li className="is-pain"><strong>Decision</strong><span>1 to 3 weeks, no single record</span></li>
+        </ol>
+        <h3>With Vercel</h3>
         <div className="arch">
           <div className="arch-col stays">
             <h3>Stays at Apex</h3>
@@ -97,6 +105,7 @@ export default function Brief() {
           <tbody>
             <tr><td>AI SDK + Gateway</td><td>Any model, automatic fallback, cost per run, hard budget.</td><td>The model is checked by policy, not trusted.</td></tr>
             <tr><td>Workflows</td><td>Cases wait days for people; runs survive crashes and deploys.</td><td>Open runs keep the code they started on.</td></tr>
+            <tr><td>Cache Components</td><td>Pages paint a static shell at once; reference data is cached and tagged.</td><td>The live case is never cached, so sign-offs are never stale.</td></tr>
             <tr><td>Fluid Compute</td><td>Mostly waiting on AI and SAP; billed for active CPU only.</td><td>Long work moves into the workflow.</td></tr>
             <tr><td>Rolling Releases</td><td>Every release goes to 10%, then 50%, then everyone, with approval.</td><td>Needs the Git release path.</td></tr>
             <tr><td>Runtime Cache</td><td>Helper's per-person limit, shared by all instances.</td><td>Best effort; the Gateway budget is the hard cap.</td></tr>

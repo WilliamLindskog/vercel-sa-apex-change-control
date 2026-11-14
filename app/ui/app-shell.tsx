@@ -2,9 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { AccountMenu } from "@/app/ui/account-menu";
-import { Assistant } from "@/app/ui/assistant";
+import { Suspense, useEffect, useState } from "react";
 import { ApexLogo, ApexMark } from "@/app/ui/apex-mark";
 import { BoardIcon, BriefIcon, CalendarIcon, ChartIcon, ChevronIcon } from "@/app/ui/icons";
 import type { User } from "@/lib/users";
@@ -13,27 +11,18 @@ import type { User } from "@/lib/users";
 const remember = (key: string, value: string) => { try { localStorage.setItem(key, value); } catch {} };
 const recall = (key: string) => { try { return localStorage.getItem(key); } catch { return null; } };
 
-// The signed-in frame: a sidebar that collapses to an icon rail, the page, and the Helper on the right.
-export function AppShell({ user, accounts, children }: { user: User; accounts: User[]; children: React.ReactNode }) {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const calendar = pathname === "/cases" && searchParams.get("view") === "calendar";
+// The signed-in frame. Nothing here depends on who is signed in, so it is part of the prerendered static
+// shell. The account menu and Helper do depend on the person; the layout streams them in as slots.
+export function AppShell({ accounts, account, helper, children }: { accounts: User[]; account: React.ReactNode; helper: React.ReactNode; children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [teamOpen, setTeamOpen] = useState(true);
-  const [helperOpen, setHelperOpen] = useState(false);
 
   useEffect(() => {
     setCollapsed(recall("apex-sidebar") === "collapsed");
     setTeamOpen(recall("apex-team") !== "closed");
-    // The helper window floats over the page, so it starts closed unless the person left it open.
-    setHelperOpen(recall("apex-helper") === "open" && window.matchMedia("(min-width: 861px)").matches);
   }, []);
   const toggleSidebar = () => { setCollapsed(!collapsed); remember("apex-sidebar", collapsed ? "open" : "collapsed"); };
   const toggleTeam = () => { setTeamOpen(!teamOpen); remember("apex-team", teamOpen ? "closed" : "open"); };
-  const toggleHelper = () => { setHelperOpen(!helperOpen); remember("apex-helper", helperOpen ? "closed" : "open"); };
-
-  const link = (href: string, label: string, icon: React.ReactNode, active: boolean) =>
-    <Link key={href} href={href} aria-current={active ? "page" : undefined} title={collapsed ? label : undefined}>{icon}<span className="nav-label">{label}</span></Link>;
 
   return <div className="app" data-collapsed={collapsed || undefined}>
     <aside className="sidebar">
@@ -43,10 +32,8 @@ export function AppShell({ user, accounts, children }: { user: User; accounts: U
       </div>
 
       <nav className="sidebar-nav" aria-label="Workspace">
-        {/* Two views of the same cases: the board for daily work, the calendar for long-range planning. */}
-        {link("/cases", "Board", <BoardIcon />, pathname.startsWith("/cases") && !calendar)}
-        {link("/cases?view=calendar", "Calendar", <CalendarIcon />, calendar)}
-        {link("/analytics", "Analytics", <ChartIcon />, pathname.startsWith("/analytics"))}
+        {/* The active link depends on the URL's ?view=, which is only known at request time. */}
+        <Suspense fallback={<MainLinks collapsed={collapsed} calendar={false} />}><MainLinksFromUrl collapsed={collapsed} /></Suspense>
         <button className="sidebar-heading sidebar-fold" onClick={toggleTeam} aria-expanded={teamOpen} aria-controls="sidebar-team">Team<ChevronIcon /></button>
         {teamOpen && <ul className="sidebar-team" id="sidebar-team">
           {accounts.map(person => <li key={person.id} title={collapsed ? `${person.name}, ${person.role}` : undefined}>
@@ -55,13 +42,33 @@ export function AppShell({ user, accounts, children }: { user: User; accounts: U
           </li>)}
         </ul>}
         <p className="sidebar-heading">About</p>
-        {link("/brief", "Solution brief", <BriefIcon />, false)}
+        <NavLink href="/brief" label="Solution brief" icon={<BriefIcon />} active={false} collapsed={collapsed} />
       </nav>
 
-      <AccountMenu user={user} accounts={accounts} />
+      {account}
     </aside>
     <div className="app-main">{children}</div>
-    {/* Always mounted, so the conversation survives collapsing the panel. */}
-    <Assistant user={user} open={helperOpen} onToggle={toggleHelper} />
+    {helper}
   </div>;
+}
+
+function NavLink({ href, label, icon, active, collapsed }: { href: string; label: string; icon: React.ReactNode; active: boolean; collapsed: boolean }) {
+  return <Link href={href} aria-current={active ? "page" : undefined} title={collapsed ? label : undefined}>{icon}<span className="nav-label">{label}</span></Link>;
+}
+
+function MainLinksFromUrl({ collapsed }: { collapsed: boolean }) {
+  const pathname = usePathname();
+  const view = useSearchParams().get("view");
+  const calendar = pathname === "/cases" && view === "calendar";
+  return <MainLinks collapsed={collapsed} calendar={calendar} />;
+}
+
+// Board and Calendar are two views of the same cases; Analytics is the numbers behind them.
+function MainLinks({ collapsed, calendar }: { collapsed: boolean; calendar: boolean }) {
+  const pathname = usePathname();
+  return <>
+    <NavLink href="/cases" label="Board" icon={<BoardIcon />} active={pathname.startsWith("/cases") && !calendar} collapsed={collapsed} />
+    <NavLink href="/cases?view=calendar" label="Calendar" icon={<CalendarIcon />} active={calendar} collapsed={collapsed} />
+    <NavLink href="/analytics" label="Analytics" icon={<ChartIcon />} active={pathname.startsWith("/analytics")} collapsed={collapsed} />
+  </>;
 }

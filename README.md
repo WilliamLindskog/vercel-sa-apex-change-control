@@ -43,11 +43,27 @@ The demo uses directory accounts without passwords; production would use Apex SS
 - **The assessment is durable step by step** (`workflows/assessment.ts`): every system lookup and every model call is its own step, so a crash resumes after the last completed call without paying for the model twice. A final policy step re-reads the records and corrects the model where it's wrong.
 - **AI Gateway** (`lib/assessment.ts`): `openai/gpt-5.4-nano` first, falling back to Gemini Flash and Claude Haiku. The served model and cost are recorded per run. Auth is the deployment's OIDC token, so there's no API key in the app.
 
+## Rendering and caching
+
+Cache Components is on (`next.config.ts`), with Partial Prefetching.
+
+| What | How it renders | Why |
+| --- | --- | --- |
+| Solution brief | Static, built once | The same for everyone |
+| Sign-in landing | Static shell; only the menu reads the URL | Fast first impression |
+| Workspace frame (sidebar) | Static shell; account menu and Helper stream in | Who you are is a request-time cookie |
+| Sample cases, analytics history | `"use cache"`, tagged `cases` / `analytics`, `cacheLife("hours")` | Shared reference data that changes rarely |
+| Live case (Binder X-17), "in flight" | Request time (`connection()`), streamed behind `<Suspense>` | Workflow state changes on its own schedule; a sign-off must never be stale |
+
+- **Sign-in gate:** `proxy.ts`, before any page renders. That is what lets the pages keep a static shell.
+- **Invalidation:** `POST /api/revalidate` with a shared secret calls `revalidateTag(tag, "max")`. In production, Apex's systems would call it when a case is decided or the case index changes.
+
 ## Vercel features used
 
 | Feature | Why | Trade-off accepted |
 | --- | --- | --- |
-| Next.js on Fluid Compute | Mostly waiting on AI and Apex's systems; billed for active CPU | Long work moves into the workflow; the page shows live progress |
+| Next.js on Fluid Compute | Mostly waiting on AI and Apex's systems; billed for active CPU. Pinned with the region in `vercel.ts` | Long work moves into the workflow; the page shows live progress |
+| Cache Components | Static shell, streamed live data, tagged cache for reference data | The live case is deliberately never cached |
 | Workflows | Cases wait days for people; durable, auditable, enforces sign-off | Open runs keep the code they started on |
 | AI SDK + AI Gateway | One API for any model, automatic fallback, cost per run, hard budget | The model is checked by a policy step, never trusted alone |
 | Runtime Cache | Helper's per-person hourly limit, shared across instances | No atomic increment: a best-effort guard; the Gateway budget is the hard cap |

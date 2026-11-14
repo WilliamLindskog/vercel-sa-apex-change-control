@@ -1,3 +1,5 @@
+import { cacheLife, cacheTag } from "next/cache";
+import { connection } from "next/server";
 import { latestState, openCase } from "./case-store";
 import type { CaseState } from "./case";
 import { cases, type CaseSummary, type Stage } from "./cases";
@@ -21,12 +23,28 @@ function stageOf(state: CaseState | null): { stage: Stage; blocked: boolean; ste
 
 const fixedStep: Record<Stage, number> = { new: 1, assessing: 1, review: 3, ready: 4, done: 5 };
 
-// Every case as the board shows it. The board and the assistant both read this, so they never disagree.
-export async function boardCards(): Promise<BoardCard[]> {
+// Reference cases: the same for everyone and they change rarely, so they are cached and tagged.
+// In production these would come from Apex's case index; a change event from there calls
+// revalidateTag("cases") (see app/api/revalidate) instead of waiting for the lifetime to run out.
+async function referenceCards(): Promise<BoardCard[]> {
+  "use cache";
+  cacheTag("cases");
+  cacheLife("hours");
+  return cases.filter(c => !c.live).map(c => ({ ...c, stage: c.stage!, blocked: false, step: fixedStep[c.stage!] }));
+}
+
+// The live case is never cached. Its state lives in the workflow, changes on the workflow's own schedule
+// (an assessment finishing, a sign-off), and a sign-off record must never be shown stale. It is read per request.
+async function liveCard(): Promise<BoardCard> {
+  await connection(); // request time, never prerendered
   const live = cases.find(c => c.live)!;
   const state = await latestState(await openCase(live.id));
   const at = stageOf(state);
-  return cases.map(c => c.live
-    ? { ...c, stage: at.stage, blocked: at.blocked, step: at.step, waitingOn: at.waitingOn, version: state?.version ?? 0, runId: state?.runId ?? "" }
-    : { ...c, stage: c.stage!, blocked: false, step: fixedStep[c.stage!] });
+  return { ...live, stage: at.stage, blocked: at.blocked, step: at.step, waitingOn: at.waitingOn, version: state?.version ?? 0, runId: state?.runId ?? "" };
+}
+
+// Every case as the board shows it. The board, analytics and Helper all read this, so they never disagree.
+export async function boardCards(): Promise<BoardCard[]> {
+  const [live, reference] = await Promise.all([liveCard(), referenceCards()]);
+  return cases.map(c => c.live ? live : reference.find(r => r.id === c.id)!);
 }

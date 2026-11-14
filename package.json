@@ -25,6 +25,7 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@vercel/config": "^0.14.1",
     "tsx": "^4.20.0",
     "typescript": "^5.9.0"
   }
