@@ -1,0 +1,53 @@
+/* Case board: columns by stage, cards you can drag forward when the case rules allow it. */
+
+.board-page { max-width: none; }
+.board-head { margin-bottom: 20px; }
+.board-head h1 { font: 500 30px/1.15 var(--serif); font-variation-settings: "SOFT" 100, "opsz" 72; letter-spacing: -.02em; }
+.board-head p { margin-top: 4px; color: var(--ink-3); font-size: 14.5px; }
+
+.board { display: grid; grid-template-columns: repeat(5, minmax(184px, 1fr)); gap: 12px; align-items: start; overflow-x: auto; padding-bottom: 8px; }
+.board-col { display: grid; align-content: start; gap: 10px; min-width: 0; min-height: 360px; padding: 12px; border-radius: 16px; background: var(--sunken); transition: background-color .2s, box-shadow .2s; }
+.board-col.is-over { background: var(--marigold-bg); box-shadow: inset 0 0 0 2px var(--marigold-line); }
+.board-col header { display: flex; align-items: center; gap: 8px; padding: 2px 4px; }
+.board-col h2 { font-size: 14px; font-weight: 700; }
+.board-count { margin-left: auto; min-width: 22px; padding: 0 7px; border-radius: 999px; background: var(--surface); color: var(--ink-2); font-size: 12px; font-weight: 600; text-align: center; }
+.board-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--line-strong); }
+.board-dot.is-assessing { background: var(--marigold); }
+.board-dot.is-review { background: var(--marigold-deep); }
+.board-dot.is-ready { background: var(--sage); }
+.board-dot.is-done { background: var(--ink-3); }
+.board-cards { display: grid; gap: 8px; }
+.board-empty { padding: 18px 8px; border: 1.5px dashed var(--line-strong); border-radius: 12px; color: var(--ink-3); font-size: 13px; text-align: center; }
+
+.board-card { position: relative; border-radius: 12px; background: var(--surface); box-shadow: 0 0 0 1px var(--line), 0 6px 14px -10px rgba(74, 50, 38, .35); cursor: grab; transition: transform .2s cubic-bezier(.16, 1, .3, 1), box-shadow .2s; }
+.board-card:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px var(--line-strong), 0 12px 24px -14px rgba(74, 50, 38, .45); }
+.board-card:active { cursor: grabbing; }
+.board-card.is-live { box-shadow: 0 0 0 1.5px var(--marigold-line), 0 8px 18px -12px rgba(196, 127, 18, .5); }
+.board-card.is-pending { opacity: .7; }
+.bc-link { display: grid; gap: 6px; padding: 12px 14px; color: inherit; text-decoration: none; }
+.bc-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.bc-id { color: var(--ink-3); font-size: 11.5px; font-weight: 600; }
+.bc-due { padding: 1px 8px; border-radius: 999px; background: var(--sunken); color: var(--ink-2); font-size: 11.5px; font-weight: 600; }
+.bc-due.is-soon { background: var(--rose-bg); color: var(--rose); }
+.board-card h3 { font: 500 17px/1.25 var(--serif); font-variation-settings: "SOFT" 100, "opsz" 36; }
+.bc-supplier { color: var(--ink-3); font-size: 13px; }
+.bc-progress { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; margin: 4px 0 2px; }
+.bc-progress i { height: 4px; border-radius: 4px; background: var(--line); }
+.bc-progress i.is-on { background: var(--marigold); }
+.bc-foot { display: flex; align-items: center; gap: 8px; }
+.bc-people { display: flex; }
+.bc-people .avatar { margin: 0 0 0 -6px; box-shadow: 0 0 0 2px var(--surface); }
+.bc-people .avatar:first-child { margin-left: 0; }
+.bc-people .avatar.is-me { box-shadow: 0 0 0 2px var(--marigold); }
+.bc-meta { overflow: hidden; color: var(--ink-3); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.bc-pending { position: absolute; inset: auto 12px 6px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, transparent, var(--marigold), transparent); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+.board-notice { position: sticky; top: 72px; z-index: 4; display: flex; align-items: center; gap: 12px; width: fit-content; margin: 0 0 12px; padding: 8px 10px 8px 14px; border-radius: 999px; background: var(--surface); box-shadow: 0 0 0 1px var(--line), 0 10px 24px -14px rgba(74, 50, 38, .45); font-size: 14px; }
+.board-notice.is-warn { background: var(--marigold-bg); color: var(--marigold-ink); }
+.board-notice button { width: 24px; height: 24px; border: 0; border-radius: 50%; background: transparent; color: inherit; font-size: 16px; line-height: 1; }
+
+@media (max-width: 680px) {
+  .board { grid-template-columns: repeat(5, 78vw); scroll-snap-type: x mandatory; }
+  .board-col { scroll-snap-align: start; }
+}

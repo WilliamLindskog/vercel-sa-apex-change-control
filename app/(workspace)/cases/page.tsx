@@ -1,45 +1,46 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { cases } from "@/lib/cases";
+import { Board, type BoardCard } from "@/app/ui/board";
+import { latestState, openCase } from "@/lib/case-store";
+import type { CaseState } from "@/lib/case";
+import { cases, type Stage } from "@/lib/cases";
 import { requireUser } from "@/lib/session";
-import { findUser } from "@/lib/users";
+import "./board.css";
 
-export const metadata: Metadata = { title: "Cases" };
+export const metadata: Metadata = { title: "Board" };
 
-export default async function CasesPage() {
+// Where the live case sits on the board follows its durable workflow, never a stored column.
+function stageOf(state: CaseState | null): { stage: Stage; blocked: boolean; step: number } {
+  if (!state) return { stage: "new", blocked: false, step: 1 };
+  const run = state.assessment;
+  const blocked = run?.assessment.findings.some(f => f.disposition === "uncertain") ?? false;
+  const signed = Number(Boolean(state.signOffs.Quality)) + Number(Boolean(state.signOffs["Regulatory Affairs"]));
+  if (state.routed) return { stage: "done", blocked: false, step: 5 };
+  if (state.assessing) return { stage: "assessing", blocked: false, step: 1 };
+  if (!run) return { stage: "new", blocked: false, step: 1 };
+  if (signed === 2 && !blocked) return { stage: "ready", blocked: false, step: 4 };
+  return { stage: "review", blocked, step: 2 + signed };
+}
+
+const fixedStep: Record<Stage, number> = { new: 1, assessing: 1, review: 3, ready: 4, done: 5 };
+
+export default async function BoardPage() {
   const user = await requireUser();
-  const open = cases.filter(item => item.state === "open");
-  const greeting = user.role === "Product Change Lead"
-    ? "You own 1 open case."
-    : `1 open case needs your ${user.role} sign-off.`;
+  const live = cases.find(c => c.live)!;
+  const liveState = await latestState(await openCase(live.id));
+  const liveStage = stageOf(liveState);
+
+  const cards: BoardCard[] = cases.map(c => c.live
+    ? { ...c, stage: liveStage.stage, blocked: liveStage.blocked, step: liveStage.step, version: liveState?.version ?? 0, runId: liveState?.runId ?? "" }
+    : { ...c, stage: c.stage!, blocked: false, step: fixedStep[c.stage!] });
 
   return <>
-    <header className="topbar"><nav className="breadcrumb" aria-label="Breadcrumb"><span aria-current="page">Cases</span></nav><span className="env-badge">Demo data</span></header>
-    <main className="page">
-      <div className="page-head">
-        <h1>Supplier change cases</h1>
-        <p>{greeting}</p>
+    <header className="topbar"><nav className="breadcrumb" aria-label="Breadcrumb"><span aria-current="page">Board</span></nav></header>
+    <main className="page board-page">
+      <div className="board-head">
+        <h1>Supplier changes</h1>
+        <p>{user.role === "Product Change Lead" ? "Drag a case to move it forward. The case rules decide what is allowed." : `Cases waiting on ${user.role} show your face.`}</p>
       </div>
-      <div className="table-wrap">
-        <table className="case-table">
-          <thead><tr><th scope="col">Case</th><th scope="col">Supplier</th><th scope="col">Opened</th><th scope="col">Decision due</th><th scope="col">Owner</th><th scope="col">Status</th></tr></thead>
-          <tbody>
-            {cases.map(item => <tr key={item.id} className={item.state === "closed" ? "is-closed" : undefined}>
-              <td>
-                {item.state === "open"
-                  ? <Link href={`/cases/${item.id}`} className="case-title-link"><strong>{item.title}</strong><span>{item.id}</span></Link>
-                  : <span className="case-title-link"><strong>{item.title}</strong><span>{item.id}</span></span>}
-              </td>
-              <td>{item.supplier}</td>
-              <td className="num">{item.opened}</td>
-              <td className="num">{item.due}</td>
-              <td>{findUser(item.ownerId)?.name}</td>
-              <td>{item.state === "open" ? <span className="badge badge-progress">In review</span> : <span className="badge badge-neutral">Closed</span>}<span className="cell-note">{item.outcome}</span></td>
-            </tr>)}
-          </tbody>
-        </table>
-      </div>
-      <p className="page-footnote">Closed cases are shown for context. Only {open[0].id} is loaded with records in this demo.</p>
+      <Board cards={cards} userId={user.id} />
     </main>
   </>;
 }
