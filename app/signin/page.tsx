@@ -102,7 +102,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
     </main>
 
     <footer className="lp-footer">
-      <span>Apex is a fictional company created for a product demo.</span>
+      <span>Apex is a fictional company created for a product demo. <a href="/brief">Read the solution brief</a>.</span>
       <span>Photos on <a href="https://unsplash.com">Unsplash</a> by {credits.map((c, i) => <span key={c.name}>{i ? (i === credits.length - 1 ? " and " : ", ") : ""}<a href={c.href}>{c.name}</a></span>)}.</span>
     </footer>
   </div>;
