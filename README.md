@@ -72,6 +72,7 @@ Cache Components is on (`next.config.ts`), with Partial Prefetching.
 | Runtime Cache | Helper's per-person hourly limit, shared across instances | No atomic increment: a best-effort guard; the Gateway budget is the hard cap |
 | Git deploys + Rolling Releases | A preview link per change; production rolls out 10% → 50% → 100% with manual approval | Needs the Git-connected path, set up mid-project |
 | Secure Compute (production only) | Private link into Apex's network | Mocked in the demo |
+| Vercel Connect (phase 2) | IT-approved connectors; each person connects their own Outlook, Teams or Salesforce; the app gets short-lived tokens via OIDC, no stored secrets | Not built: each tool needs a consent step per person |
 
 ## Spend guards
 

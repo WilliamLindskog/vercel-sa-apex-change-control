@@ -136,7 +136,7 @@ export async function analytics({ period = "ytd", line }: { period?: Period; lin
   return {
     ...past,
     byLine: past.byLine.map(r => ({ ...r, open: open.filter(c => c.line === r.line).length })),
-    inFlight: { count: open.length, dueSoon: open.filter(c => daysLeft(c.due) < 30).length, cases: open.map(c => ({ material: c.material, daysLeft: daysLeft(c.due) })) },
+    inFlight: { count: open.length, dueSoon: open.filter(c => daysLeft(c.due) < 30).length, cases: open.map(c => ({ id: c.id, material: c.material, line: c.line, stage: c.stage, blocked: c.blocked, daysLeft: daysLeft(c.due) })) },
   };
 }
 export type Analytics = Awaited<ReturnType<typeof analytics>>;

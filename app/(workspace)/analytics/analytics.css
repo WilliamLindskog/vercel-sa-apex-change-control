@@ -113,3 +113,28 @@
 .an-cols > span:hover::after, .an-cols > span:focus-visible::after { opacity: 1; }
 .an-mline { position: absolute; left: 0; right: 0; z-index: 1; border-top: 2px dashed var(--ink-3); opacity: .5; pointer-events: none; }
 @media (max-width: 680px) { .an-groups { gap: 12px; } .an-cols { gap: 3px; } }
+
+/* Simple charts: two side-by-side bar cards, deadlines, decisions per month. */
+.an-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.an-total { font: 500 22px/1 var(--serif); font-variation-settings: "SOFT" 100, "opsz" 48; }
+.an-hbars b.is-new { background: var(--line-strong); }
+.an-hbars b.is-review { background: var(--marigold-deep); }
+.an-hbars b.is-ready { background: var(--sage); }
+.an-legend i.is-soon { background: var(--rose); }
+.an-deadlines { display: grid; gap: 8px; }
+.an-deadlines li { display: grid; grid-template-columns: 150px minmax(0, 1fr) 48px; align-items: center; gap: 12px; }
+.an-deadlines a { overflow: hidden; color: var(--ink); font-size: 13.5px; font-weight: 600; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+.an-deadlines a:hover { text-decoration: underline; }
+.an-deadlines i { height: 10px; border-radius: 999px; background: var(--sunken); overflow: hidden; }
+.an-deadlines b { display: block; height: 100%; border-radius: 999px; background: var(--marigold); }
+.an-deadlines b.is-soon { background: var(--rose); }
+.an-deadlines em { color: var(--ink-2); font-size: 13px; font-style: normal; font-weight: 700; text-align: right; }
+.an-empty { color: var(--ink-3); font-size: 13.5px; }
+.an-months { display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); gap: 8px; height: 170px; }
+.an-months > div { display: grid; grid-template-rows: 1fr auto; justify-items: center; gap: 6px; }
+.an-months span { position: relative; align-self: end; width: min(100%, 34px); min-height: 3px; border-radius: 4px 4px 0 0; background: var(--marigold-deep); outline: none; }
+.an-months span b { position: absolute; top: -18px; left: 50%; color: var(--ink-2); font-size: 11.5px; transform: translateX(-50%); }
+.an-months .is-out span { opacity: .35; }
+.an-months small { color: var(--ink-3); font-size: 12px; font-weight: 600; }
+@media (max-width: 860px) { .an-row { grid-template-columns: 1fr; } }
+@media (max-width: 680px) { .an-deadlines li { grid-template-columns: 110px 1fr 40px; } .an-months { gap: 3px; } }

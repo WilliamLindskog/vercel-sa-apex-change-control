@@ -92,6 +92,7 @@ export default function Brief() {
               <li><strong>Workflows</strong><span>one durable run per case</span></li>
               <li><strong>AI SDK agent</strong><span>read-only tools, checked output</span></li>
               <li><strong>AI Gateway</strong><span>fallback, cost, budget</span></li>
+              <li><strong>Vercel Connect</strong><span>phase 2: Outlook, Teams, Salesforce</span></li>
             </ul>
           </div>
         </div>
@@ -109,6 +110,7 @@ export default function Brief() {
             <tr><td>Fluid Compute</td><td>Mostly waiting on AI and SAP; billed for active CPU only.</td><td>Long work moves into the workflow.</td></tr>
             <tr><td>Rolling Releases</td><td>Every release goes to 10%, then 50%, then everyone, with approval.</td><td>Needs the Git release path.</td></tr>
             <tr><td>Runtime Cache</td><td>Helper's per-person limit, shared by all instances.</td><td>Best effort; the Gateway budget is the hard cap.</td></tr>
+            <tr><td>Vercel Connect (phase 2)</td><td>Per-person access to Outlook, Teams and Salesforce, through connectors IT approves.</td><td>Each person consents once per tool.</td></tr>
             <tr><td>Secure Compute</td><td>Private link into Apex's network.</td><td>Production only; mocked in the demo.</td></tr>
           </tbody>
         </table>
@@ -146,11 +148,12 @@ export default function Brief() {
           <li><strong>Cut over</strong><span>100%; pilot team moves in.</span></li>
           <li><strong>Roll back</strong><span>One click; open cases keep running.</span></li>
         </ol>
-        <h3>Phase 2: more sources, same pattern</h3>
+        <h3>Phase 2: connect the tools people already use</h3>
+        <p className="note">Through Vercel Connect: Apex IT approves each connector once; each person connects their own account; the app gets short-lived tokens, never stored secrets.</p>
         <ul className="ticks">
-          <li><strong>Supplier email</strong> opens the case on its own: a webhook starts the case workflow, so no notice waits in an inbox.</li>
-          <li><strong>Teams or Slack</strong> through Chat SDK: Helper sends the check-ins it drafts, and the workflow waits for the reply.</li>
-          <li><strong>CRM</strong> as one more read-only tool: which customers must be told, so the notice plan names them.</li>
+          <li><strong>Outlook</strong>: a supplier email opens the case workflow on its own.</li>
+          <li><strong>Teams or Slack</strong>: Helper sends the check-ins it drafts, as the person.</li>
+          <li><strong>Salesforce</strong>: one more read-only tool names the customers to notify.</li>
         </ul>
       </section>
 
