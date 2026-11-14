@@ -1,0 +1,215 @@
+{
+  "summary": {
+    "ranAt": "2026-11-14T11:50:56.049Z",
+    "runs": 15,
+    "aiRuns": 15,
+    "models": [
+      "openai/gpt-5.4-nano"
+    ],
+    "finalAnswerCorrect": "15/15",
+    "modelStatusAccuracy": "42/45 findings",
+    "runsNeedingACorrection": "12/15",
+    "inventedCitations": 45,
+    "averageCostUsd": 0.00143,
+    "averageLatencyMs": 6620,
+    "byScenario": {
+      "normal": {
+        "modelStatusErrors": 0,
+        "inventedCitations": 15,
+        "runs": 5
+      },
+      "missing-eu-qualification": {
+        "modelStatusErrors": 3,
+        "inventedCitations": 6,
+        "runs": 5
+      },
+      "qms-outage": {
+        "modelStatusErrors": 0,
+        "inventedCitations": 24,
+        "runs": 5
+      }
+    }
+  },
+  "rows": [
+    {
+      "scenario": "normal",
+      "run": 1,
+      "mode": "ai-gateway",
+      "model": "openai/gpt-5.4-nano",
+      "finalCorrect": true,
+      "modelStatusErrors": 0,
+      "inventedCitations": 3,
+      "skipped": 0,
+      "costUsd": 0.00130585,
+      "latencyMs": 5854
+    },
+    {
+      "scenario": "normal",
+      "run": 2,
+      "mode": "ai-gateway",
+      "model": "openai/gpt-5.4-nano",
+      "finalCorrect": true,
+      "modelStatusErrors": 0,
+      "inventedCitations": 6,
+      "skipped": 0,
+      "costUsd": 0.0013433499999999999,
+      "latencyMs": 5866
+    },
+    {
+      "scenario": "normal",
+      "run": 3,
+      "mode": "ai-gateway",
+      "model": "openai/gpt-5.4-nano",
+      "finalCorrect": true,
+      "modelStatusErrors": 0,
+      "inventedCitations": 3,
+      "skipped": 0,
+      "costUsd": 0.0013396,
+      "latencyMs": 7147
+    },
+    {
+      "scenario": "normal",
+      "run": 4,
+      "mode": "ai-gateway",
+      "model": "openai/gpt-5.4-nano",
+      "finalCorrect": true,
+      "modelStatusErrors": 0,
+      "inventedCitations": 0,
+      "skipped": 0,
+      "costUsd": 0.0013808499999999999,
+      "latencyMs": 6565
+    },
+    {
+      "scenario": "normal",
+      "run": 5,
+      "mode": "ai-gateway",
+      "model": "openai/gpt-5.4-nano",
+      "finalCorrect": true,
+      "modelStatusErrors": 0,
+      "inventedCitations": 3,
+      "skipped": 0,
+      "costUsd": 0.00129835,
+      "latencyMs": 6000
+    },
+    {
+      "scenario": "missing-eu-qualification",
+      "run": 1,
+      "mode": "ai-gateway",
+      "model": "openai/gpt-5.4-nano",
+      "finalCorrect": true,
+      "modelStatusErrors": 1,
+      "inventedCitations": 0,
+      "skipped": 0,
+      "costUsd": 0.0013250999999999998,
+      "latencyMs": 6939
+    },
+    {
+      "scenario": "missing-eu-qualification",
+      "run": 2,
+      "mode": "ai-gateway",
+      "model": "openai/gpt-5.4-nano",
+      "finalCorrect": true,
+      "modelStatusErrors": 1,
+      "inventedCitations": 3,
+      "skipped": 0,
+      "costUsd": 0.0015101,
+      "latencyMs": 6302
+    },
+    {
+      "scenario": "missing-eu-qualification",
+      "run": 3,
+      "mode": "ai-gateway",
+      "model": "openai/gpt-5.4-nano",
+      "finalCorrect": true,
+      "modelStatusErrors": 0,
+      "inventedCitations": 3,
+      "skipped": 0,
+      "costUsd": 0.00138635,
+      "latencyMs": 6117
+    },
+    {
+      "scenario": "missing-eu-qualification",
+      "run": 4,
+      "mode": "ai-gateway",
+      "model": "openai/gpt-5.4-nano",
+      "finalCorrect": true,
+      "modelStatusErrors": 1,
+      "inventedCitations": 0,
+      "skipped": 0,
+      "costUsd": 0.0014076,
+      "latencyMs": 5763
+    },
+    {
+      "scenario": "missing-eu-qualification",
+      "run": 5,
+      "mode": "ai-gateway",
+      "model": "openai/gpt-5.4-nano",
+      "finalCorrect": true,
+      "modelStatusErrors": 0,
+      "inventedCitations": 0,
+      "skipped": 0,
+      "costUsd": 0.00133135,
+      "latencyMs": 7496
+    },
+    {
+      "scenario": "qms-outage",
+      "run": 1,
+      "mode": "ai-gateway",
+      "model": "openai/gpt-5.4-nano",
+      "finalCorrect": true,
+      "modelStatusErrors": 0,
+      "inventedCitations": 6,
+      "skipped": 0,
+      "costUsd": 0.00147455,
+      "latencyMs": 6533
+    },
+    {
+      "scenario": "qms-outage",
+      "run": 2,
+      "mode": "ai-gateway",
+      "model": "openai/gpt-5.4-nano",
+      "finalCorrect": true,
+      "modelStatusErrors": 0,
+      "inventedCitations": 8,
+      "skipped": 0,
+      "costUsd": 0.0015795499999999999,
+      "latencyMs": 7263
+    },
+    {
+      "scenario": "qms-outage",
+      "run": 3,
+      "mode": "ai-gateway",
+      "model": "openai/gpt-5.4-nano",
+      "finalCorrect": true,
+      "modelStatusErrors": 0,
+      "inventedCitations": 3,
+      "skipped": 0,
+      "costUsd": 0.00143705,
+      "latencyMs": 6177
+    },
+    {
+      "scenario": "qms-outage",
+      "run": 4,
+      "mode": "ai-gateway",
+      "model": "openai/gpt-5.4-nano",
+      "finalCorrect": true,
+      "modelStatusErrors": 0,
+      "inventedCitations": 7,
+      "skipped": 0,
+      "costUsd": 0.00183205,
+      "latencyMs": 8376
+    },
+    {
+      "scenario": "qms-outage",
+      "run": 5,
+      "mode": "ai-gateway",
+      "model": "openai/gpt-5.4-nano",
+      "finalCorrect": true,
+      "modelStatusErrors": 0,
+      "inventedCitations": 0,
+      "skipped": 0,
+      "costUsd": 0.0014558,
+      "latencyMs": 6902
+    }
+  ]
+}

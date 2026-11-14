@@ -65,6 +65,8 @@ export type AssessmentRun = {
   completedAt: string;
 };
 
+export type ProgressItem = { system: "ERP" | "QMS" | "Regulatory" | "AI" | "Policy"; label: string; ok: boolean; ms?: number };
+
 export type SignOff = { role: "Quality" | "Regulatory Affairs"; reviewer: string; note: string; at: string };
 
 // The durable case record. The workflow owns it; the UI only ever reads the latest snapshot.
@@ -78,6 +80,8 @@ export type CaseState = {
   signOffs: { Quality: SignOff | null; "Regulatory Affairs": SignOff | null };
   routed: { by: string; to: string; at: string } | null;
   aiRuns: { day: string; count: number };
+  // Live progress of the running assessment, one entry per lookup. Cleared when a new assessment starts.
+  progress: ProgressItem[];
   log: { at: string; text: string }[];
 };
 

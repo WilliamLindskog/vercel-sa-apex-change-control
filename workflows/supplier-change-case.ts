@@ -1,7 +1,7 @@
 import { createHook, getWorkflowMetadata, getWritable } from "workflow";
 import type { Scenario } from "@/lib/apex-systems";
-import { assessSupplierChange } from "@/lib/assessment";
 import type { CaseState, SignOff } from "@/lib/case";
+import { durableAssessment } from "./assessment";
 
 // One durable workflow run is one supplier-change case. It holds the case until people act on it:
 // assessment, Quality sign-off, Regulatory sign-off, routing. It can wait days between steps, and
@@ -36,6 +36,7 @@ export async function supplierChangeCase(input: { caseId: string; scenario: Scen
     signOffs: { Quality: null, "Regulatory Affairs": null },
     routed: null,
     aiRuns: { day: new Date().toISOString().slice(0, 10), count: 0 },
+    progress: [],
     log: [{ at: new Date().toISOString(), text: `Case opened${input.scenario === "normal" ? "" : ` (scenario: ${input.scenario})`}` }],
   };
   await publish(state);
@@ -51,13 +52,17 @@ export async function supplierChangeCase(input: { caseId: string; scenario: Scen
     }
 
     if (command.type === "assess") {
-      state = { ...state, version: state.version + 1, assessing: true };
+      state = { ...state, version: state.version + 1, assessing: true, progress: [] };
       await publish(state);
       try {
         // AI runs are counted per case per day in the durable state, so the limit holds across servers and restarts.
         const today = command.at.slice(0, 10);
         const runsToday = state.aiRuns.day === today ? state.aiRuns.count : 0;
-        const assessment = await runAssessment(state.scenario, command.by, runsToday);
+        // Each lookup is its own durable step; after each one the page gets a new snapshot with the progress so far.
+        const assessment = await durableAssessment({ scenario: state.scenario, requestedBy: command.by, aiRunsToday: runsToday }, async item => {
+          state = { ...state, version: state.version + 1, progress: [...state.progress, item] };
+          await publish(state);
+        });
         // A new assessment replaces the evidence the sign-offs were based on, so earlier sign-offs no longer count.
         const hadSignOffs = Boolean(state.signOffs.Quality || state.signOffs["Regulatory Affairs"]);
         state = {
@@ -109,13 +114,6 @@ function rejectionFor(state: CaseState, command: CaseCommand): string | null {
     default:
       return null;
   }
-}
-
-async function runAssessment(scenario: Scenario, requestedBy: string, aiRunsToday: number) {
-  "use step";
-  // A step: if the function crashes mid-call, Workflows retries it (3 times by default) and the
-  // completed result is never recomputed on replay. Model spend happens once per successful run.
-  return assessSupplierChange(scenario, { requestedBy, aiRunsToday });
 }
 
 async function publish(state: CaseState) {

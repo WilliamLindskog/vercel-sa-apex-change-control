@@ -3,6 +3,10 @@
 .env.local
 # The mock of Apex's systems deploys as its own Vercel project from apex-systems/.
 apex-systems
+# Tests and the AI test runner use the mock in-process, so they run locally, not in the app's build.
+# The eval results file stays: the solution brief reads it.
+tests
+evals/*.mts
 # Local-only build folders and the earlier static prototype.
 .next-alt
 .next-build
