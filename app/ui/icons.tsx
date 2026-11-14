@@ -5,3 +5,4 @@ export const BoardIcon = () => <svg {...base}><rect x="2.5" y="3.5" width="4.5" 
 export const CaseIcon = () => <svg {...base}><path d="M5 2.5h7l3.5 3.5v11.5H5z" /><path d="M12 2.5V6h3.5" /><path d="M7.5 10.5h5M7.5 13.5h3.5" /></svg>;
 export const BriefIcon = () => <svg {...base}><path d="M4 3.5h12v13H4z" /><path d="M7 7h6M7 10h6M7 13h3.5" /></svg>;
 export const ChevronIcon = ({ direction = "left" }: { direction?: "left" | "right" }) => <svg {...base} style={{ transform: direction === "right" ? "rotate(180deg)" : undefined }}><path d="M12 5l-5 5 5 5" /></svg>;
+export const CalendarIcon = () => <svg {...base}><rect x="3" y="4" width="14" height="13" rx="2" /><path d="M3 8h14M7 2.5v3M13 2.5v3M6.5 11.5h4M8.5 14h5" /></svg>;

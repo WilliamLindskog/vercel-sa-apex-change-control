@@ -22,7 +22,6 @@ export function SampleCase({ card, user, directory }: { card: BoardCard; user: U
   return <>
     <header className="topbar">
       <nav className="breadcrumb" aria-label="Breadcrumb"><Link href="/cases">Board</Link><span aria-hidden="true">/</span><span aria-current="page">{card.id}</span></nav>
-      <span className="env-badge">Sample case · view only</span>
     </header>
 
     <main className="page cw">
