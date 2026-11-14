@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { stages, type CaseSummary, type Stage } from "@/lib/cases";
+import { CalendarView } from "@/app/ui/calendar";
+import type { BoardCard } from "@/lib/board";
+import { stages, type Stage } from "@/lib/cases";
 import type { User } from "@/lib/users";
-
-export type BoardCard = CaseSummary & { stage: Stage; blocked: boolean; step: number; version?: number; runId?: string };
 
 const daysUntil = (date: string) => Math.ceil((new Date(date).getTime() - Date.now()) / 86_400_000);
 
@@ -21,7 +21,7 @@ const whyNot = (from: Stage, to: Stage) =>
   : to === "assessing" && from !== "new" ? "This case has already been assessed. Run it again from the case page."
   : "Cases only move forward.";
 
-export function Board({ cards: allCards, user, directory }: { cards: BoardCard[]; user: User; directory: User[] }) {
+export function Board({ cards: allCards, user, directory, view }: { cards: BoardCard[]; user: User; directory: User[]; view: "board" | "calendar" }) {
   const router = useRouter();
   const userId = user.id;
   const [onlyMine, setOnlyMine] = useState(false);
@@ -58,31 +58,37 @@ export function Board({ cards: allCards, user, directory }: { cards: BoardCard[]
     }
   }
 
+  // One drop zone per stage. "New" and "Done" are wide lanes above and below the three working columns.
+  const zone = (stage: (typeof stages)[number], lane: boolean) => {
+    const column = cards.filter(c => c.stage === stage.id);
+    return <section key={stage.id} className={`${lane ? "board-lane" : "board-col"} is-${stage.id} ${over === stage.id ? "is-over" : ""}`} aria-label={stage.label}
+      onDragOver={event => { event.preventDefault(); setOver(stage.id); }}
+      onDragLeave={() => setOver(current => current === stage.id ? null : current)}
+      onDrop={event => { event.preventDefault(); setOver(null); const card = cards.find(c => c.id === dragging); setDragging(null); if (card) move(card, stage.id); }}>
+      <header><span className={`board-dot is-${stage.id}`} aria-hidden="true" /><h2>{stage.label}</h2><span className="board-count">{column.length}</span></header>
+      <div className="board-cards">
+        {column.map(card => <CardView key={card.id} card={card} userId={userId} waitingName={nameOf(card.waitingOn)} pending={pending === card.id}
+          onDragStart={() => { setDragging(card.id); setNotice(null); }} onDragEnd={() => { setDragging(null); setOver(null); }} />)}
+        {column.length === 0 && <p className="board-empty">Nothing here</p>}
+      </div>
+    </section>;
+  };
+  const [first, ...middle] = stages;
+  const last = middle.pop()!;
+
   return <>
     <div className="board-head">
-      <div>
-        <h1>Supplier changes</h1>
-        <p>{mine.length ? <><strong>{mine.length} {mine.length === 1 ? "case needs" : "cases need"} you</strong>, marked “Your turn”.</> : "Nothing is waiting for you right now."} Drag a case forward; the case rules decide what is allowed.</p>
-      </div>
+      <h1>Supplier changes</h1>
+      {mine.length > 0 && <span className="board-mine">{mine.length} need you</span>}
       <label className="board-filter"><input type="checkbox" checked={onlyMine} onChange={event => setOnlyMine(event.target.checked)} /> Only mine</label>
     </div>
     {notice && <p className={`board-notice is-${notice.tone}`} role="status">{notice.text}<button onClick={() => setNotice(null)} aria-label="Dismiss">×</button></p>}
-    <div className="board">
-      {stages.map(stage => {
-        const column = cards.filter(c => c.stage === stage.id);
-        return <section key={stage.id} className={`board-col ${over === stage.id ? "is-over" : ""}`} aria-label={stage.label}
-          onDragOver={event => { event.preventDefault(); setOver(stage.id); }}
-          onDragLeave={() => setOver(current => current === stage.id ? null : current)}
-          onDrop={event => { event.preventDefault(); setOver(null); const card = cards.find(c => c.id === dragging); setDragging(null); if (card) move(card, stage.id); }}>
-          <header><span className={`board-dot is-${stage.id}`} aria-hidden="true" /><h2>{stage.label}</h2><span className="board-count">{column.length}</span></header>
-          <div className="board-cards">
-            {column.map(card => <CardView key={card.id} card={card} userId={userId} waitingName={nameOf(card.waitingOn)} pending={pending === card.id}
-              onDragStart={() => { setDragging(card.id); setNotice(null); }} onDragEnd={() => { setDragging(null); setOver(null); }} />)}
-            {column.length === 0 && <p className="board-empty">Nothing here</p>}
-          </div>
-        </section>;
-      })}
-    </div>
+    {view === "calendar" ? <CalendarView cards={cards} userId={userId} nameOf={nameOf} /> :
+    <div className="board-flow">
+      {zone(first, true)}
+      <div className="board">{middle.map(stage => zone(stage, false))}</div>
+      {zone(last, true)}
+    </div>}
   </>;
 }
 
@@ -105,7 +111,7 @@ function CardView({ card, userId, waitingName, pending, onDragStart, onDragEnd }
     </div>
     {pending && <span className="bc-pending" aria-hidden="true" />}
   </>;
-  return <article className={`board-card ${card.live ? "is-live" : "is-sample"} ${mine ? "is-mine" : ""} ${pending ? "is-pending" : ""}`} draggable onDragStart={onDragStart} onDragEnd={onDragEnd} aria-busy={pending} title={card.live ? undefined : "Sample case (view only)"}>
-    {card.live ? <Link href={`/cases/${card.id}`} className="bc-link" draggable={false}>{body}</Link> : <div className="bc-link">{body}</div>}
+  return <article className={`board-card ${card.live ? "is-live" : "is-sample"} ${mine ? "is-mine" : ""} ${pending ? "is-pending" : ""}`} draggable onDragStart={onDragStart} onDragEnd={onDragEnd} aria-busy={pending} >
+    <Link href={`/cases/${card.id}`} className="bc-link" draggable={false}>{body}</Link>
   </article>;
 }

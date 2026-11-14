@@ -14,10 +14,10 @@ import { assessmentSchema, marketLabel, supplierChange, supplierDocuments, type 
 // Model IDs come from the live list at https://ai-gateway.vercel.sh/v1/models (checked 13 Nov 2026).
 // gpt-5.4-nano is the primary because it is available on AI Gateway free credits and handles tool calls well.
 // Haiku 5.5 is cheaper per token but needs paid credits; set ASSESSMENT_MODEL to switch once credits are topped up.
-const PRIMARY_MODEL = process.env.ASSESSMENT_MODEL ?? "openai/gpt-5.4-nano";
+export const PRIMARY_MODEL = process.env.ASSESSMENT_MODEL ?? "openai/gpt-5.4-nano";
 // Gateway tries these in order if the primary model errors, is degraded or is not available to the account.
 // One provider outage should not stop a supplier-change review.
-const FALLBACK_MODELS = ["google/gemini-3.8-flash", "anthropic/claude-haiku-5.5"].filter(id => id !== PRIMARY_MODEL);
+export const FALLBACK_MODELS = ["google/gemini-3.8-flash", "anthropic/claude-haiku-5.5"].filter(id => id !== PRIMARY_MODEL);
 
 // USD per million tokens, from the live model list (13 Nov 2026). Used only for the on-page estimate; the exact
 // billed cost is in AI Gateway's usage view, which is updated about 90 seconds after a request.
@@ -29,7 +29,7 @@ const PRICES: Record<string, { input: number; output: number }> = {
 
 // On Vercel, functions authenticate to AI Gateway with the deployment's OIDC token, which arrives per request
 // rather than as an environment variable, so being on Vercel is enough. Locally it comes from `vercel env pull`.
-const aiAvailable = () => Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || process.env.VERCEL);
+export const aiAvailable = () => Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || process.env.VERCEL);
 
 // Spend guards inside the app. The hard ceiling is the AI Gateway budget on the Vercel project; these keep a
 // public demo with shared test logins from burning through it with repeated clicks.

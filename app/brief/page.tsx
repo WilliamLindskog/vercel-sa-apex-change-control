@@ -16,12 +16,12 @@ const evals = evalResults.summary;
 const sections = [
   ["problem", "Problem"],
   ["architecture", "Architecture"],
-  ["choices", "Vercel choices"],
+  ["choices", "Why Vercel"],
   ["demo", "Demo"],
   ["rollout", "Rollout"],
-  ["success", "Success and pilot"],
+  ["success", "Success"],
   ["risks", "Risks"],
-  ["validation", "AI validation"],
+  ["validation", "AI checks"],
   ["feedback", "Feedback"],
 ] as const;
 
@@ -35,11 +35,11 @@ export default function Brief() {
 
     <main className="brief-main">
       <section className="brief-hero">
-        <p className="brief-for">For Apex Additives · Product Change Control, Quality, Regulatory Affairs</p>
-        <h1>Supplier changes decided in days, with every answer traceable to a record.</h1>
+        <p className="brief-for">For Apex Additives · Change Control, Quality, Regulatory</p>
+        <h1>Supplier changes decided in days, not weeks.</h1>
         <div className="value-pair">
-          <div><strong>Add trustworthy AI to the systems Apex already runs.</strong><p>SAP, the quality system and the regulatory service stay where they are. Vercel adds the workspace and an AI that reads across them, cites every record and gets corrected when it is wrong.</p></div>
-          <div><strong>Every decision is durable, auditable and approved by people.</strong><p>Each case is a durable workflow that waits for Quality and Regulatory sign-off, survives restarts and deploys, and keeps a full history.</p></div>
+          <div><strong>AI on top of the systems you already run</strong><p>SAP, Veeva and the regulatory service stay. Every AI answer cites a record.</p></div>
+          <div><strong>People still decide</strong><p>Each case waits for Quality and Regulatory sign-off, and keeps a full history.</p></div>
         </div>
       </section>
 
@@ -47,188 +47,140 @@ export default function Brief() {
 
       <section id="problem" className="brief-section">
         <h2>1 · The problem</h2>
-        <p className="lede">A supplier discontinues Binder X-17. Before the last order date, Apex must know which products and markets use it, whether each is qualified, and which customers must be told and when.</p>
-        <div className="cols">
-          <div>
-            <h3>Today</h3>
-            <ul className="ticks">
-              <li>The notice arrives as a PDF in one buyer's inbox.</li>
-              <li>Someone exports a where-used list from SAP, checks qualifications in Veeva, finds notice rules in the regulatory system and joins it all in Excel.</li>
-              <li>Sign-offs happen over email. Missing records go unnoticed.</li>
-            </ul>
-          </div>
-          <div>
-            <h3>What it costs</h3>
-            <ul className="ticks">
-              <li>1 to 3 weeks from notice to a documented decision.</li>
-              <li>Late or missed customer notices: contract penalties and stopped lines at customers.</li>
-              <li>Audit findings, because no single record shows who decided what, on which evidence.</li>
-            </ul>
-          </div>
-        </div>
+        <p className="lede">A supplier ends Binder X-17. Apex must find every affected product, check it is qualified, and tell customers on time.</p>
+        <ul className="ticks">
+          <li>Today this is SAP exports, Veeva look-ups, Excel and email sign-offs.</li>
+          <li>Late notices mean penalties; missing records mean audit findings.</li>
+        </ul>
         <div className="bars" aria-label="Time from supplier notice to documented decision, estimated">
-          <div><span>Today, manual</span><i style={{ width: "100%" }} /><b>1 to 3 weeks</b></div>
-          <div><span>With the workspace</span><i style={{ width: "8%" }} /><b>Assessment in under a minute; sign-offs in 1 to 2 days</b></div>
+          <div><span>Today</span><i style={{ width: "100%" }} /><b>1 to 3 weeks</b></div>
+          <div><span>With the workspace</span><i style={{ width: "8%" }} /><b>1 to 2 days</b></div>
         </div>
-        <p className="note">Today's figure is the customer's own estimate. The pilot measures both against a baseline Apex agrees before kickoff.</p>
+        <p className="note">Today's figure is Apex's own estimate; the pilot measures both.</p>
       </section>
 
       <section id="architecture" className="brief-section">
-        <h2>2 · Architecture: Vercel augments and connects</h2>
+        <h2>2 · Architecture</h2>
         <div className="arch">
           <div className="arch-col stays">
             <h3>Stays at Apex</h3>
             <ul>
-              <li><strong>SAP S/4HANA</strong><span>materials, recipes, where-used</span></li>
-              <li><strong>Veeva Vault QMS</strong><span>qualification records</span></li>
-              <li><strong>Regulatory service</strong><span>customer notice rules per market</span></li>
-              <li><strong>Apex SSO and audit store</strong><span>identity, record of decisions</span></li>
+              <li><strong>SAP S/4HANA</strong><span>where-used</span></li>
+              <li><strong>Veeva Vault QMS</strong><span>qualifications</span></li>
+              <li><strong>Regulatory service</strong><span>notice rules</span></li>
+              <li><strong>SSO and audit store</strong><span>identity, decisions</span></li>
             </ul>
           </div>
           <div className="arch-boundary">
-            <span>Read-only service API</span>
+            <span>Read-only API</span>
             <i aria-hidden="true" />
-            <small>Production: Secure Compute (static egress IPs, VPC peering). Demo: mock deployed as its own project, token protected.</small>
+            <small>Production: Secure Compute. Demo: a token-protected mock.</small>
           </div>
           <div className="arch-col vercel">
             <h3>On Vercel</h3>
             <ul>
-              <li><strong>Next.js workspace</strong><span>case page, sign-offs, Fluid Compute functions</span></li>
-              <li><strong>Workflows</strong><span>one durable run per case, human-in-the-loop hooks</span></li>
-              <li><strong>AI SDK agent</strong><span>five read-only tools, schema-checked output</span></li>
-              <li><strong>AI Gateway</strong><span>model fallback, per-run cost, $5/month budget</span></li>
+              <li><strong>Next.js workspace</strong><span>board, case page, Helper</span></li>
+              <li><strong>Workflows</strong><span>one durable run per case</span></li>
+              <li><strong>AI SDK agent</strong><span>read-only tools, checked output</span></li>
+              <li><strong>AI Gateway</strong><span>fallback, cost, budget</span></li>
             </ul>
           </div>
         </div>
-        <h3>Why each system stays</h3>
-        <ul className="ticks">
-          <li><strong>SAP, Veeva and the regulatory service</strong> are the systems of record, validated and audited. The workspace only reads them; nothing is copied or migrated.</li>
-          <li><strong>Identity</strong> stays with Apex SSO. The demo uses directory accounts without passwords.</li>
-          <li><strong>The audit record</strong> stays with Apex: each sign-off is written back as an event, de-duplicated on case and time.</li>
-        </ul>
+        <p className="note">Nothing is copied or migrated. Systems of record stay validated where they are.</p>
       </section>
 
       <section id="choices" className="brief-section">
-        <h2>3 · Vercel choices and trade-offs</h2>
+        <h2>3 · Why Vercel, and the trade-offs</h2>
         <table className="brief-table">
-          <thead><tr><th>Choice</th><th>Why</th><th>Trade-off accepted</th></tr></thead>
+          <thead><tr><th>Choice</th><th>Why</th><th>Trade-off</th></tr></thead>
           <tbody>
-            <tr><td>AI SDK + AI Gateway</td><td>One API for every model, automatic fallback if a provider fails, cost and usage per run, a hard budget.</td><td>The model is not trusted on its own: a policy check re-derives every status from the records and corrects it.</td></tr>
-            <tr><td>Workflows</td><td>A case waits days for people. The run is the record: it survives crashes and deploys, and enforces the sign-off rules.</td><td>Runs stay on the code they started with, so a deploy needs a new case run to pick up changes.</td></tr>
-            <tr><td>Next.js on Fluid Compute</td><td>The app mostly waits on the model and Apex's systems; Fluid bills active CPU, not waiting time.</td><td>Long requests are avoided: the assessment runs in the workflow, and the page polls for the result.</td></tr>
-            <tr><td>Secure Compute (production)</td><td>Apex's systems sit in a private network. Static egress IPs and VPC peering cross that boundary safely.</td><td>Not in the demo: a token-protected mock stands in for it.</td></tr>
-            <tr><td>Rolling Releases</td><td>Canary new prompts or model changes to a share of traffic, with instant rollback.</td><td>Requires the Git-connected release path described in section 5.</td></tr>
+            <tr><td>AI SDK + Gateway</td><td>Any model, automatic fallback, cost per run, hard budget.</td><td>The model is checked by policy, not trusted.</td></tr>
+            <tr><td>Workflows</td><td>Cases wait days for people; runs survive crashes and deploys.</td><td>Open runs keep the code they started on.</td></tr>
+            <tr><td>Fluid Compute</td><td>Mostly waiting on AI and SAP; billed for active CPU only.</td><td>Long work moves into the workflow.</td></tr>
+            <tr><td>Rolling Releases</td><td>Try new prompts on 10% of users first.</td><td>Needs the Git release path.</td></tr>
+            <tr><td>Secure Compute</td><td>Private link into Apex's network.</td><td>Production only; mocked in the demo.</td></tr>
           </tbody>
         </table>
       </section>
 
       <section id="demo" className="brief-section">
-        <h2>4 · Try the demo</h2>
+        <h2>4 · Try it</h2>
         <div className="cols">
-          <div>
-            <h3>Links</h3>
-            <ul className="links">
-              <li><a href={`${APP}/signin`}>Live workspace</a></li>
-              <li><a href={REPO}>Public repository</a></li>
-              <li><a href="https://apex-systems-mock.vercel.app/health">Mock of Apex's systems</a></li>
-            </ul>
-          </div>
-          <div>
-            <h3>Test accounts (Sign in → Use a demo account)</h3>
-            <ul className="ticks">
-              <li><strong>Dana Okafor</strong>, Product Change Lead: runs the assessment, receives the plan</li>
-              <li><strong>Priya Raman</strong>, Quality: signs off the technical scope</li>
-              <li><strong>Marcus Lindqvist</strong>, Regulatory Affairs: signs off customer notices</li>
-            </ul>
-          </div>
+          <ul className="links">
+            <li><a href={`${APP}/signin`}>Live workspace</a></li>
+            <li><a href={REPO}>Public repository</a></li>
+            <li><a href="https://apex-systems-mock.vercel.app/health">Mock of Apex's systems</a></li>
+          </ul>
+          <ul className="ticks">
+            <li><strong>Dana</strong>, Change Lead: runs the assessment</li>
+            <li><strong>Priya</strong>, Quality: signs off scope</li>
+            <li><strong>Marcus</strong>, Regulatory: signs off notices</li>
+          </ul>
         </div>
         <ol className="steps-list">
-          <li>Sign in as Dana, open case SCC-2026-041 and run the assessment.</li>
-          <li>Switch to Priya, then Marcus, using the button on each sign-off card.</li>
-          <li>Route the plan to Dana.</li>
-          <li>Set the demo scenario to <em>EU record missing</em> or <em>Quality system down</em> and run it again.</li>
+          <li>As Dana, open Binder X-17 and run the assessment.</li>
+          <li>Sign off as Priya, then Marcus; send the plan.</li>
+          <li>Pick a failure scenario and run it again.</li>
         </ol>
       </section>
 
       <section id="rollout" className="brief-section">
-        <h2>5 · Rollout plan</h2>
+        <h2>5 · Rollout</h2>
         <ol className="timeline">
-          <li><strong>Preview</strong><span>Every change gets its own preview deployment, connected to the mock or a QA copy of Apex's systems.</span></li>
-          <li><strong>Validate</strong><span>The AI test set runs against the preview; the policy tests must pass.</span></li>
-          <li><strong>Canary</strong><span>Rolling Release to 10%, then 50% of users, watching cost, policy corrections and fallback rate.</span></li>
-          <li><strong>Cut over</strong><span>100% of traffic; the pilot team works only in the workspace.</span></li>
-          <li><strong>Roll back</strong><span>Instant rollback to the previous deployment. Open case runs continue on the code they started with.</span></li>
+          <li><strong>Preview</strong><span>Every change gets its own link.</span></li>
+          <li><strong>Validate</strong><span>AI tests must pass.</span></li>
+          <li><strong>Canary</strong><span>10%, then 50% of users.</span></li>
+          <li><strong>Cut over</strong><span>100%; pilot team moves in.</span></li>
+          <li><strong>Roll back</strong><span>One click; open cases keep running.</span></li>
         </ol>
       </section>
 
       <section id="success" className="brief-section">
-        <h2>6 · Success measures and pilot</h2>
+        <h2>6 · Success and pilot</h2>
         <div className="cols">
-          <div>
-            <h3>Measures</h3>
-            <ul className="ticks">
-              <li><strong>Business:</strong> time from notice to documented decision; customer notices sent on time; audit findings.</li>
-              <li><strong>Technical:</strong> every finding cites a record a system returned; correct answer after policy check on every run; cost per assessment; fallback rate.</li>
-            </ul>
-          </div>
-          <div>
-            <h3>Pilot</h3>
-            <ul className="ticks">
-              <li><strong>Entry:</strong> read access to one product line through Secure Compute, named Quality and Regulatory reviewers, 10 past supplier changes as a baseline.</li>
-              <li><strong>Exit:</strong> decisions in days, not weeks; 100% valid citations; no missed notices across the 10 cases.</li>
-              <li><strong>Commercial:</strong> a paid pilot that converts to an annual agreement when the exit criteria are met.</li>
-            </ul>
-          </div>
+          <ul className="ticks">
+            <li><strong>Business:</strong> days to decision, notices on time, audit findings.</li>
+            <li><strong>Technical:</strong> valid citations, cost per run, fallback rate.</li>
+          </ul>
+          <ul className="ticks">
+            <li><strong>Pilot:</strong> one product line, 10 past cases as baseline.</li>
+            <li><strong>Exit:</strong> decisions in days, 100% valid citations, no missed notices.</li>
+          </ul>
         </div>
-        <h3>Chosen not to build</h3>
-        <p className="note">Case creation, writing back to SAP or Veeva, autonomous approval, more workflows. Each is valuable later; none is needed to prove the decision pattern.</p>
       </section>
 
       <section id="risks" className="brief-section">
-        <h2>7 · Known limitations and risks</h2>
+        <h2>7 · Risks</h2>
         <ul className="ticks">
-          <li>The model makes mistakes: it invented record IDs in testing. The policy check catches these, and people still sign off. A model is never the last word.</li>
-          <li>The demo reads a mock, not SAP or Veeva. Real integration needs Apex's API gateway, Secure Compute and test data.</li>
-          <li>Demo sign-in has no passwords. Production uses Apex SSO.</li>
-          <li>AI Gateway free credits are rate limited; when the model is unavailable the policy answers alone and says so.</li>
-          <li>Regional data rules (for example EU data staying in the EU) need function region and provider routing set before production.</li>
+          <li>The model makes mistakes. A policy check corrects it, and people sign off.</li>
+          <li>The demo reads a mock; real systems need Secure Compute and test data.</li>
+          <li>Demo sign-in has no passwords; production uses Apex SSO.</li>
+          <li>EU data rules need regions and providers set before go-live.</li>
         </ul>
       </section>
 
       <section id="validation" className="brief-section">
-        <h2>8 · How the AI was validated</h2>
+        <h2>8 · How the AI was checked</h2>
         <div className="stats">
-          <div><strong>{evals.finalAnswerCorrect}</strong><span>runs with the correct final answer after the policy check</span></div>
-          <div><strong>{evals.modelStatusAccuracy.replace(" findings", "")}</strong><span>findings the model got right on its own</span></div>
-          <div><strong>{evals.inventedCitations}</strong><span>invented citations caught and removed</span></div>
-          <div><strong>${evals.averageCostUsd.toFixed(4)}</strong><span>average cost per assessment ({evals.models.join(", ")})</span></div>
+          <div><strong>{evals.finalAnswerCorrect}</strong><span>correct after the policy check</span></div>
+          <div><strong>{evals.modelStatusAccuracy.replace(" findings", "")}</strong><span>right from the model alone</span></div>
+          <div><strong>{evals.inventedCitations}</strong><span>invented citations caught</span></div>
+          <div><strong>${evals.averageCostUsd.toFixed(4)}</strong><span>average cost per run</span></div>
         </div>
-        <ul className="ticks">
-          <li><strong>Policy tests</strong> (<code>npm test</code>): 8 tests run the mock in-process and check every scenario and every kind of correction, without a model.</li>
-          <li><strong>AI test set</strong> (<code>npm run eval</code>): {evals.runs} real assessments across three scenarios, checked against answers written by hand from the records. Last run {new Date(evals.ranAt).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}.</li>
-          <li><strong>Built with</strong> Claude Code and Codex in the terminal, the Vercel CLI, and the Next.js, AI SDK and Workflow docs shipped in <code>node_modules</code>. Every change was checked in a browser and with a production build.</li>
-        </ul>
+        <p className="note">{evals.runs} real runs across three scenarios (<code>npm run eval</code>), plus policy tests without a model (<code>npm test</code>). Last run {new Date(evals.ranAt).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}. Built with Claude Code, Codex and the Vercel CLI.</p>
       </section>
 
       <section id="feedback" className="brief-section">
         <h2>9 · Feedback on Vercel</h2>
         <div className="cols">
-          <div>
-            <h3>Worked well</h3>
-            <ul className="ticks">
-              <li>OIDC for AI Gateway: no API key in the app at all, locally or deployed.</li>
-              <li>Workflow hooks made human-in-the-loop sign-off a few lines of code, with durability for free.</li>
-              <li>Version-matched docs inside <code>node_modules</code> kept the AI coding tools on current APIs.</li>
-            </ul>
-          </div>
-          <div>
-            <h3>Could be better</h3>
-            <ul className="ticks">
-              <li>The free-tier rate limit returns "Free tier users do not have access to this model", which reads like a model restriction.</li>
-              <li><code>response.modelId</code> echoes the requested model after a Gateway fallback; the served model is only in routing metadata.</li>
-              <li>A card is required before Gateway answers at all; the error links to billing, but a dashboard hint before the first request would help.</li>
-            </ul>
-          </div>
+          <ul className="ticks">
+            <li><strong>Good:</strong> OIDC for AI Gateway, so no API keys.</li>
+            <li><strong>Good:</strong> Workflow hooks made sign-off a few lines.</li>
+          </ul>
+          <ul className="ticks">
+            <li><strong>Better:</strong> free-tier rate limit reads like a model ban.</li>
+            <li><strong>Better:</strong> <code>modelId</code> hides which model served after fallback.</li>
+          </ul>
         </div>
       </section>
     </main>
