@@ -35,6 +35,39 @@ export function HelperAvatar({ size = 32, thinking = false }: { size?: number; t
   </svg>;
 }
 
+// Helper standing in the lower-right corner: the same monkey, full body. It breathes and blinks, swings its
+// tail, waves when you point at it, and scratches its head while it thinks.
+export function HelperBuddy({ thinking = false }: { thinking?: boolean }) {
+  const fur = "#9a6440", dark = "#7d4e31", skin = "#f6d8b6", inner = "#f4c9a2";
+  return <svg className={`helper-buddy ${thinking ? "is-thinking" : ""}`} width="66" height="84" viewBox="0 0 66 84" aria-hidden="true">
+    <ellipse className="hb-shadow" cx="33" cy="80" rx="15" ry="2.6" fill="rgba(74,50,38,.22)" />
+    <g className="hb-all">
+      <path className="hb-tail" d="M42 64c9 2 14-4 13-11c-1-6-7-7-9-3" fill="none" stroke={fur} strokeWidth="3.4" strokeLinecap="round" />
+      <ellipse cx="26.5" cy="74" rx="4.6" ry="4" fill={fur} /><ellipse cx="26" cy="77" rx="4.4" ry="2.2" fill={inner} />
+      <ellipse cx="39.5" cy="74" rx="4.6" ry="4" fill={fur} /><ellipse cx="40" cy="77" rx="4.4" ry="2.2" fill={inner} />
+      <ellipse cx="33" cy="60" rx="12.5" ry="13.5" fill={fur} />
+      <ellipse cx="33" cy="62" rx="8" ry="9.5" fill={skin} />
+      <g className="hb-arm is-left"><path d="M22.5 53c-4 4-5.5 8-5 12" fill="none" stroke={fur} strokeWidth="4.6" strokeLinecap="round" /><circle cx="17.6" cy="66" r="2.8" fill={inner} /></g>
+      <g className="hb-arm is-right"><path d="M43.5 53c4 4 5.5 8 5 12" fill="none" stroke={fur} strokeWidth="4.6" strokeLinecap="round" /><circle cx="48.4" cy="66" r="2.8" fill={inner} /></g>
+      <g className="hb-head">
+        <g className="ha-ear"><circle cx="16.5" cy="27" r="6" fill={fur} /><circle cx="16.5" cy="27" r="3.5" fill={inner} /></g>
+        <g className="ha-ear is-right"><circle cx="49.5" cy="27" r="6" fill={fur} /><circle cx="49.5" cy="27" r="3.5" fill={inner} /></g>
+        <circle cx="33" cy="26" r="15" fill={fur} />
+        <path d="M30 11.4q3-3.4 5.6-.4q-2.4-.6-3 1.6z" fill={dark} />
+        <ellipse cx="29" cy="22" rx="6.4" ry="6.8" fill={skin} /><ellipse cx="37" cy="22" rx="6.4" ry="6.8" fill={skin} />
+        <ellipse cx="33" cy="31.5" rx="10.2" ry="7.6" fill={skin} />
+        <g className="ha-eyes">
+          <ellipse cx="29" cy="23.4" rx="2.2" ry="2.8" fill="#3b2a20" /><ellipse cx="37" cy="23.4" rx="2.2" ry="2.8" fill="#3b2a20" />
+          <circle cx="29.8" cy="22.3" r=".85" fill="#fff" /><circle cx="37.8" cy="22.3" r=".85" fill="#fff" />
+        </g>
+        <circle cx="23.8" cy="29.6" r="2.1" fill="#ec8f7a" opacity=".5" /><circle cx="42.2" cy="29.6" r="2.1" fill="#ec8f7a" opacity=".5" />
+        <circle cx="31.7" cy="29" r=".75" fill={dark} /><circle cx="34.3" cy="29" r=".75" fill={dark} />
+        <path className="hb-mouth" d="M29.6 32.4q3.4 3 6.8 0" fill="none" stroke={dark} strokeWidth="1.5" strokeLinecap="round" />
+      </g>
+    </g>
+  </svg>;
+}
+
 const starters = (user: User) => [
   "What should I focus on today?",
   "Who is holding things up?",
@@ -108,7 +141,8 @@ export function Assistant({ user }: { user: User }) {
 
   // A chat window that opens above the page from a round button in the lower right. The chat stays in memory when closed.
   const launcher = <button className={`as-launcher ${open ? "is-open" : ""}`} onClick={onToggle} aria-label={open ? "Close Helper" : "Open Helper"} aria-expanded={open} aria-controls="helper-window">
-    <HelperAvatar size={44} thinking={busy} />
+    {!open && <span className="as-hello" aria-hidden="true">Ask Helper</span>}
+    <HelperBuddy thinking={busy} />
     {!open && messages.length > 0 && <i className="as-dot" aria-hidden="true" />}
   </button>;
   if (!open) return launcher;
