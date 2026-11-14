@@ -1,7 +1,8 @@
-import { convertToModelMessages, createUIMessageStreamResponse, stepCountIs, streamText, tool, toUIMessageStream, type UIMessage } from "ai";
+import { convertToModelMessages, createUIMessageStreamResponse, hasToolCall, stepCountIs, streamText, tool, toUIMessageStream, type UIMessage } from "ai";
 import type { GatewayProviderOptions } from "@ai-sdk/gateway";
 import { z } from "zod";
 import { aiAvailable, FALLBACK_MODELS, PRIMARY_MODEL } from "@/lib/assessment";
+import { analytics, periods, productLines } from "@/lib/analytics";
 import { boardCards } from "@/lib/board";
 import { stages } from "@/lib/cases";
 import { currentUser } from "@/lib/session";
@@ -11,8 +12,8 @@ export const maxDuration = 30;
 
 // Spend guards. The AI Gateway budget ($5/month) is the hard cap; these keep one person from using it up.
 const MAX_HISTORY = 12;          // only the latest turns go to the model
-const MAX_OUTPUT_TOKENS = 700;
-const MAX_STEPS = 4;             // read the board, maybe draft a check-in, answer
+const MAX_OUTPUT_TOKENS = 900;
+const MAX_STEPS = 5;             // read the board or analytics, maybe draft something, answer
 const PER_USER_PER_HOUR = 30;    // best effort: counted per function instance
 const recent = new Map<string, number[]>();
 
@@ -39,11 +40,13 @@ export async function POST(request: Request) {
       "Always call getBoard before talking about cases; never guess a case, person, stage or date.",
       "To prioritise: cases where isYourTurn is true come first, ordered by fewest daysLeft; then blocked cases; then other open cases by fewest daysLeft. Give at most 3 items, one line each: the material in bold, then the action and why.",
       "To check in with someone, call draftCheckIn with a short, friendly message (2-3 sentences) in the sender's voice. You only draft it; the person sends it. After drafting, reply with one short line at most and do not repeat the message.",
+      "For numbers on time saved, cost, notices or problems caught, call getAnalytics. To write a report, call getAnalytics for that period and product line, then call draftReport using only those numbers; never invent figures.",
       "Be brief and plain. Use short bullet lists. No headings, no italics, no case IDs. Refer to cases by material name, e.g. 'Wax W-210'.",
     ].join("\n"),
     messages: await convertToModelMessages(messages.slice(-MAX_HISTORY)),
     maxOutputTokens: MAX_OUTPUT_TOKENS,
-    stopWhen: stepCountIs(MAX_STEPS),
+    // A drafted card is the answer: stop there so the model never repeats it as text.
+    stopWhen: [stepCountIs(MAX_STEPS), hasToolCall("draftReport"), hasToolCall("draftCheckIn")],
     abortSignal: AbortSignal.timeout(25_000),
     providerOptions: {
       gateway: { models: FALLBACK_MODELS, user: user.id, tags: ["assistant"] } satisfies GatewayProviderOptions,
@@ -67,6 +70,31 @@ export async function POST(request: Request) {
         }))
           // Already in priority order (your turn, then blocked, then the rest; soonest first), so small models don't have to sort.
           .sort((a, b) => Number(b.isYourTurn) - Number(a.isYourTurn) || Number(b.blocked) - Number(a.blocked) || (a.daysLeft ?? 1e9) - (b.daysLeft ?? 1e9)),
+      }),
+      // The same numbers the Analytics page shows.
+      getAnalytics: tool({
+        description: "Supplier-change analytics for a period and product line: days to decision vs before, time and cost saved, notices on time, problems caught, AI spend, cases in flight.",
+        inputSchema: z.object({
+          period: z.enum(Object.keys(periods) as [keyof typeof periods, ...(keyof typeof periods)[]]).describe("q3 = Q3 2026, q4 = Q4 2026, ytd = 2026 to date"),
+          line: z.enum(productLines).optional().describe("Product line; leave out for all lines"),
+        }),
+        execute: async ({ period, line }) => {
+          const { months, ...rest } = await analytics({ period, line });
+          return { ...rest, note: "Sample history before Aug 2026 was manual; AI cost and mistakes are measured in the AI test set." };
+        },
+      }),
+      // A short report the user can copy into an email or deck. Drafted from getAnalytics numbers only.
+      draftReport: tool({
+        description: "Draft a short supplier-change report for a period and product line. Shown to the user as a card they can copy.",
+        inputSchema: z.object({
+          title: z.string().max(80).describe("e.g. 'Coatings · Q4 2026'"),
+          period: z.enum(Object.keys(periods) as [keyof typeof periods, ...(keyof typeof periods)[]]),
+          line: z.enum(productLines).optional(),
+          summary: z.string().max(400).describe("Two sentences: the headline result"),
+          highlights: z.array(z.string().max(160)).min(2).max(4).describe("Numbers from getAnalytics, one per line"),
+          watch: z.array(z.string().max(160)).max(3).describe("Risks or cases to watch"),
+        }),
+        execute: async report => ({ ok: true as const, ...report }),
       }),
       // Drafts only. Sending would go through Apex's own messaging (e.g. Teams), outside Vercel.
       draftCheckIn: tool({

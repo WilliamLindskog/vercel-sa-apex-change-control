@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { AccountMenu } from "@/app/ui/account-menu";
 import { Assistant } from "@/app/ui/assistant";
 import { ApexLogo, ApexMark } from "@/app/ui/apex-mark";
-import { BoardIcon, BriefIcon, CalendarIcon, ChevronIcon } from "@/app/ui/icons";
+import { BoardIcon, BriefIcon, CalendarIcon, ChartIcon, ChevronIcon } from "@/app/ui/icons";
 import type { User } from "@/lib/users";
 
 // Small per-browser preferences: which panels are open.
@@ -48,6 +48,7 @@ export function AppShell({ user, accounts, children }: { user: User; accounts: U
         {/* Two views of the same cases: the board for daily work, the calendar for long-range planning. */}
         {link("/cases", "Board", <BoardIcon />, pathname.startsWith("/cases") && !calendar)}
         {link("/cases?view=calendar", "Calendar", <CalendarIcon />, calendar)}
+        {link("/analytics", "Analytics", <ChartIcon />, pathname.startsWith("/analytics"))}
         <button className="sidebar-heading sidebar-fold" onClick={toggleTeam} aria-expanded={teamOpen} aria-controls="sidebar-team">Team<ChevronIcon /></button>
         {teamOpen && <ul className="sidebar-team" id="sidebar-team">
           {accounts.map(person => <li key={person.id} title={collapsed ? `${person.name}, ${person.role}` : undefined}>

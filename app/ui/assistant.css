@@ -29,6 +29,10 @@
 .as-draft p { color: var(--ink); font-size: 13.5px; }
 .as-draft-actions { display: flex; align-items: center; gap: 12px; }
 .as-draft-actions .btn { padding: 5px 12px; font-size: 13px; }
+.as-report { gap: 6px; }
+.as-report-title { font: 500 16px/1.25 var(--serif); font-variation-settings: "SOFT" 100, "opsz" 36; }
+.as-report ul { display: grid; gap: 3px; margin: 0; padding-left: 18px; font-size: 13.5px; }
+.as-report-sub { color: var(--marigold-ink); font-size: 12px; font-weight: 700; }
 .as-link { color: var(--marigold-ink); font-size: 13px; font-weight: 600; }
 
 .as-typing { display: inline-flex; gap: 4px; padding: 6px 0; }

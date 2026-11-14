@@ -40,6 +40,7 @@ const starters = (user: User) => [
   "What should I focus on today?",
   "Who is holding things up?",
   user.id === "priya" ? "Check in with Marcus on Binder X-17" : "Check in with Priya on Wax W-210",
+  "Draft a Q4 report for Coatings",
 ];
 
 // Just enough formatting for short answers: bullet lines and **bold**.
@@ -58,6 +59,25 @@ function Formatted({ text }: { text: string }) {
 }
 
 type Draft = { ok: true; caseId: string; material: string; to: { id: string; name: string; role: string }; message: string } | { ok: false; error: string };
+
+type Report = { ok: true; title: string; period: string; line?: string; summary: string; highlights: string[]; watch: string[] };
+
+// A report the user can paste into an email or a deck, plus a link to the same numbers on the Analytics page.
+function ReportCard({ report }: { report: Report }) {
+  const [copied, setCopied] = useState(false);
+  const text = [report.title, "", report.summary, "", ...report.highlights.map(h => `• ${h}`), ...(report.watch.length ? ["", "To watch:", ...report.watch.map(w => `• ${w}`)] : [])].join("\n");
+  const copy = async () => { try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1600); } catch {} };
+  return <div className="as-draft as-report">
+    <strong className="as-report-title">{report.title}</strong>
+    <p>{report.summary}</p>
+    <ul>{report.highlights.map((h, i) => <li key={i}>{h}</li>)}</ul>
+    {report.watch.length > 0 && <><span className="as-report-sub">To watch</span><ul>{report.watch.map((w, i) => <li key={i}>{w}</li>)}</ul></>}
+    <div className="as-draft-actions">
+      <button className="btn btn-primary" onClick={copy}>{copied ? "Copied" : "Copy report"}</button>
+      <Link className="as-link" href={`/analytics?period=${report.period}${report.line ? `&line=${report.line}` : ""}`}>Open analytics</Link>
+    </div>
+  </div>;
+}
 
 function DraftCard({ draft }: { draft: Draft }) {
   const [copied, setCopied] = useState(false);
@@ -107,7 +127,7 @@ export function Assistant({ user, open, onToggle }: { user: User; open: boolean;
     <div className="as-body" aria-live="polite">
       {messages.length === 0 && <div className="as-empty">
         <HelperAvatar size={64} />
-        <p>Hi {user.name.split(" ")[0]}. I can sort your day or draft a check-in.</p>
+        <p>Hi {user.name.split(" ")[0]}. I can sort your day, draft a check-in or write a report.</p>
         <div className="as-starters">{starters(user).map(text => <button key={text} onClick={() => send(text)}>{text}</button>)}</div>
       </div>}
 
@@ -115,6 +135,8 @@ export function Assistant({ user, open, onToggle }: { user: User; open: boolean;
         {message.parts.map((part, i) => {
           if (part.type === "text") return message.role === "user" ? <p key={i}>{part.text}</p> : <Formatted key={i} text={part.text} />;
           if (part.type === "tool-getBoard") return <span key={i} className="as-tool">{part.state === "output-available" ? "Checked the board" : "Checking the board…"}</span>;
+          if (part.type === "tool-getAnalytics") return <span key={i} className="as-tool">{part.state === "output-available" ? "Checked analytics" : "Checking analytics…"}</span>;
+          if (part.type === "tool-draftReport") return part.state === "output-available" ? <ReportCard key={i} report={part.output as Report} /> : <span key={i} className="as-tool">Drafting a report…</span>;
           if (part.type === "tool-draftCheckIn") return part.state === "output-available" ? <DraftCard key={i} draft={part.output as Draft} /> : <span key={i} className="as-tool">Drafting a check-in…</span>;
           return null;
         })}
