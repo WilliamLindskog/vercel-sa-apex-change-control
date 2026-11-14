@@ -145,6 +145,12 @@ export default function Brief() {
           <li><strong>Cut over</strong><span>100%; pilot team moves in.</span></li>
           <li><strong>Roll back</strong><span>One click; open cases keep running.</span></li>
         </ol>
+        <h3>Phase 2: more sources, same pattern</h3>
+        <ul className="ticks">
+          <li><strong>Supplier email</strong> opens the case on its own: a webhook starts the case workflow, so no notice waits in an inbox.</li>
+          <li><strong>Teams or Slack</strong> through Chat SDK: Helper sends the check-ins it drafts, and the workflow waits for the reply.</li>
+          <li><strong>CRM</strong> as one more read-only tool: which customers must be told, so the notice plan names them.</li>
+        </ul>
       </section>
 
       <section id="success" className="brief-section">
