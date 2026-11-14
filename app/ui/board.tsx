@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { stages, type CaseSummary, type Stage } from "@/lib/cases";
+import type { User } from "@/lib/users";
 
 export type BoardCard = CaseSummary & { stage: Stage; blocked: boolean; step: number; version?: number; runId?: string };
 
@@ -20,8 +21,13 @@ const whyNot = (from: Stage, to: Stage) =>
   : to === "assessing" && from !== "new" ? "This case has already been assessed. Run it again from the case page."
   : "Cases only move forward.";
 
-export function Board({ cards, userId }: { cards: BoardCard[]; userId: string }) {
+export function Board({ cards: allCards, user, directory }: { cards: BoardCard[]; user: User; directory: User[] }) {
   const router = useRouter();
+  const userId = user.id;
+  const [onlyMine, setOnlyMine] = useState(false);
+  const mine = allCards.filter(c => c.waitingOn === userId);
+  const cards = onlyMine ? mine : allCards;
+  const nameOf = (id?: string) => directory.find(d => d.id === id)?.name.split(" ")[0];
   const [dragging, setDragging] = useState<string | null>(null);
   const [over, setOver] = useState<Stage | null>(null);
   const [notice, setNotice] = useState<{ text: string; tone: "info" | "warn" } | null>(null);
@@ -53,6 +59,13 @@ export function Board({ cards, userId }: { cards: BoardCard[]; userId: string })
   }
 
   return <>
+    <div className="board-head">
+      <div>
+        <h1>Supplier changes</h1>
+        <p>{mine.length ? <><strong>{mine.length} {mine.length === 1 ? "case needs" : "cases need"} you</strong>, marked “Your turn”.</> : "Nothing is waiting for you right now."} Drag a case forward; the case rules decide what is allowed.</p>
+      </div>
+      <label className="board-filter"><input type="checkbox" checked={onlyMine} onChange={event => setOnlyMine(event.target.checked)} /> Only mine</label>
+    </div>
     {notice && <p className={`board-notice is-${notice.tone}`} role="status">{notice.text}<button onClick={() => setNotice(null)} aria-label="Dismiss">×</button></p>}
     <div className="board">
       {stages.map(stage => {
@@ -63,7 +76,7 @@ export function Board({ cards, userId }: { cards: BoardCard[]; userId: string })
           onDrop={event => { event.preventDefault(); setOver(null); const card = cards.find(c => c.id === dragging); setDragging(null); if (card) move(card, stage.id); }}>
           <header><span className={`board-dot is-${stage.id}`} aria-hidden="true" /><h2>{stage.label}</h2><span className="board-count">{column.length}</span></header>
           <div className="board-cards">
-            {column.map(card => <CardView key={card.id} card={card} userId={userId} pending={pending === card.id}
+            {column.map(card => <CardView key={card.id} card={card} userId={userId} waitingName={nameOf(card.waitingOn)} pending={pending === card.id}
               onDragStart={() => { setDragging(card.id); setNotice(null); }} onDragEnd={() => { setDragging(null); setOver(null); }} />)}
             {column.length === 0 && <p className="board-empty">Nothing here</p>}
           </div>
@@ -73,23 +86,26 @@ export function Board({ cards, userId }: { cards: BoardCard[]; userId: string })
   </>;
 }
 
-function CardView({ card, userId, pending, onDragStart, onDragEnd }: { card: BoardCard; userId: string; pending: boolean; onDragStart: () => void; onDragEnd: () => void }) {
+function CardView({ card, userId, waitingName, pending, onDragStart, onDragEnd }: { card: BoardCard; userId: string; waitingName?: string; pending: boolean; onDragStart: () => void; onDragEnd: () => void }) {
   const days = daysUntil(card.due);
+  const mine = card.waitingOn === userId;
   const body = <>
     <div className="bc-top">
-      <span className="bc-id">{card.id}</span>
+      <span className="bc-id" title={card.id}>#{card.id.split("-").pop()}</span>
       {card.blocked ? <span className="pill pill-blocked">Blocked</span> : card.stage !== "done" && days >= 0 ? <span className={`bc-due ${days < 30 ? "is-soon" : ""}`}>{days} days</span> : null}
     </div>
     <h3>{card.material}</h3>
     <p className="bc-supplier">{card.supplier}</p>
     <div className="bc-progress" aria-label={`Step ${card.step} of 5`}>{[1, 2, 3, 4, 5].map(n => <i key={n} className={n <= card.step ? "is-on" : undefined} />)}</div>
+    {/* Whose turn it is: the one thing a person scanning the board needs from each card. */}
     <div className="bc-foot">
-      <span className="bc-people">{card.people.map(id => <span key={id} className={`avatar tiny tone-${id} ${id === userId ? "is-me" : ""}`} aria-hidden="true">{id.slice(0, 2).toUpperCase()}</span>)}</span>
-      <span className="bc-meta">{card.products} products{card.note ? ` · ${card.note}` : ""}</span>
+      {mine ? <span className="bc-turn">Your turn</span>
+        : card.waitingOn ? <span className="bc-waiting"><span className={`avatar tiny tone-${card.waitingOn}`} aria-hidden="true" />Waiting for {waitingName}</span>
+        : <span className="bc-waiting">{card.stage === "done" ? card.note ?? "Closed" : "Running…"}</span>}
     </div>
     {pending && <span className="bc-pending" aria-hidden="true" />}
   </>;
-  return <article className={`board-card ${card.live ? "is-live" : "is-sample"} ${pending ? "is-pending" : ""}`} draggable onDragStart={onDragStart} onDragEnd={onDragEnd} aria-busy={pending}>
+  return <article className={`board-card ${card.live ? "is-live" : "is-sample"} ${mine ? "is-mine" : ""} ${pending ? "is-pending" : ""}`} draggable onDragStart={onDragStart} onDragEnd={onDragEnd} aria-busy={pending} title={card.live ? undefined : "Sample case (view only)"}>
     {card.live ? <Link href={`/cases/${card.id}`} className="bc-link" draggable={false}>{body}</Link> : <div className="bc-link">{body}</div>}
   </article>;
 }
