@@ -8,8 +8,8 @@ const short = (time: number) => new Date(time).toLocaleDateString("en-GB", { day
 
 // Long-range view of the same cases: each one is a bar from the day the notice arrived to the day supply ends.
 // Same cards, same whose-turn rules and filter as the board; only the layout changes.
-export function CalendarView({ cards, userId, nameOf }: { cards: BoardCard[]; userId: string; nameOf: (id?: string) => string | undefined }) {
-  const today = Date.now();
+export function CalendarView({ cards, userId, nameOf, now }: { cards: BoardCard[]; userId: string; nameOf: (id?: string) => string | undefined; now: number }) {
+  const today = now;
   const first = new Date(Math.min(today, ...cards.map(c => parse(c.opened))));
   const last = new Date(Math.max(today, ...cards.map(c => parse(c.due))));
   const start = new Date(first.getFullYear(), first.getMonth(), 1).getTime();

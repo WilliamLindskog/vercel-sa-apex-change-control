@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { ApexLogo } from "@/app/ui/apex-mark";
 import brickMill from "@/app/ui/images/brick-mill-tower.jpg";
 import paintSwatches from "@/app/ui/images/binder-paint-swatches.jpg";
@@ -8,7 +8,6 @@ import rotterdamLab from "@/app/ui/images/rotterdam-lab-flasks.jpg";
 import singapore from "@/app/ui/images/singapore-marina-bay.jpg";
 import labReview from "@/app/ui/images/culture-lab-review.jpg";
 import sandstone from "@/app/ui/images/sandstone-striated.jpg";
-import { currentUser } from "@/lib/session";
 import { users } from "@/lib/users";
 import { SignInMenu } from "./signin-menu";
 import "./landing.css";
@@ -49,9 +48,14 @@ const credits = [
   { name: "Danny Postma", href: "https://unsplash.com/@dannypostma" },
 ];
 
-export default async function SignInPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string }> }) {
-  if (await currentUser()) redirect("/cases");
+// The landing page is fully static (prerendered at build). Only the sign-in menu reads the URL, so it
+// streams in behind a boundary; until then the same menu shows with defaults.
+async function Menu({ searchParams }: { searchParams: Promise<{ next?: string; error?: string }> }) {
   const { next, error } = await searchParams;
+  return <SignInMenu accounts={users} next={next ?? "/cases"} error={Boolean(error)} />;
+}
+
+export default function SignInPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string }> }) {
 
   return <div className="landing">
     <header className="lp-bar">
@@ -61,7 +65,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
         <a href="#history">History</a>
         <a href="#culture">Culture</a>
       </nav>
-      <SignInMenu accounts={users} next={next ?? "/cases"} error={Boolean(error)} />
+      <Suspense fallback={<SignInMenu accounts={users} next="/cases" error={false} />}><Menu searchParams={searchParams} /></Suspense>
     </header>
 
     <main>
