@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { CalendarView } from "@/app/ui/calendar";
 import type { BoardCard } from "@/lib/board";
 import { stages, type Stage } from "@/lib/cases";
 import type { User } from "@/lib/users";
@@ -24,6 +25,10 @@ export function Board({ cards: allCards, user, directory }: { cards: BoardCard[]
   const router = useRouter();
   const userId = user.id;
   const [onlyMine, setOnlyMine] = useState(false);
+  // Board for day-to-day work, calendar for long-range planning. Remembered per browser.
+  const [view, setView] = useState<"board" | "calendar">("board");
+  useEffect(() => { try { if (localStorage.getItem("apex-view") === "calendar") setView("calendar"); } catch {} }, []);
+  const pickView = (next: "board" | "calendar") => { setView(next); try { localStorage.setItem("apex-view", next); } catch {} };
   const mine = allCards.filter(c => c.waitingOn === userId);
   const cards = onlyMine ? mine : allCards;
   const nameOf = (id?: string) => directory.find(d => d.id === id)?.name.split(" ")[0];
@@ -61,11 +66,17 @@ export function Board({ cards: allCards, user, directory }: { cards: BoardCard[]
     <div className="board-head">
       <div>
         <h1>Supplier changes</h1>
-        <p>{mine.length ? <><strong>{mine.length} {mine.length === 1 ? "case needs" : "cases need"} you</strong>, marked “Your turn”.</> : "Nothing is waiting for you right now."} Drag a case forward; the case rules decide what is allowed.</p>
+        <p>{mine.length ? <><strong>{mine.length} {mine.length === 1 ? "case needs" : "cases need"} you</strong>, marked “Your turn”.</> : "Nothing is waiting for you right now."} {view === "board" ? "Drag a case forward; the case rules decide what is allowed." : "Each bar runs from the supplier's notice to the day supply ends."}</p>
+      </div>
+      <div className="board-tools">
+      <div className="view-switch" role="tablist" aria-label="View">
+        {(["board", "calendar"] as const).map(v => <button key={v} role="tab" aria-selected={view === v} onClick={() => pickView(v)}>{v === "board" ? "Board" : "Calendar"}</button>)}
       </div>
       <label className="board-filter"><input type="checkbox" checked={onlyMine} onChange={event => setOnlyMine(event.target.checked)} /> Only mine</label>
+      </div>
     </div>
     {notice && <p className={`board-notice is-${notice.tone}`} role="status">{notice.text}<button onClick={() => setNotice(null)} aria-label="Dismiss">×</button></p>}
+    {view === "calendar" ? <CalendarView cards={cards} userId={userId} nameOf={nameOf} /> :
     <div className="board">
       {stages.map(stage => {
         const column = cards.filter(c => c.stage === stage.id);
@@ -81,7 +92,7 @@ export function Board({ cards: allCards, user, directory }: { cards: BoardCard[]
           </div>
         </section>;
       })}
-    </div>
+    </div>}
   </>;
 }
 
