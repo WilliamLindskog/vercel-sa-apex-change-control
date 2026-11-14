@@ -162,7 +162,15 @@ export function CaseWorkspace({ user, directory }: { user: User; directory: User
       <section className={`cw-verdict is-${view}`} aria-live="polite" aria-busy={assessing}>
         <div className="cw-verdict-main">
           <h2>{assessing ? "Checking Apex's systems…" : headline}</h2>
-          <p>{assessing ? "SAP, the quality system and regulatory rules, one record at a time." : nextLine}</p>
+          <p>{assessing ? "Each lookup is saved as it completes, so a restart resumes here." : nextLine}</p>
+          {/* Live progress: one line per durable lookup, published by the workflow as each step completes. */}
+          {assessing && state && state.progress.length > 0 && <ol className="cw-progress" aria-label="Lookups so far">
+            {state.progress.map((item, i) => <li key={i} className={item.ok ? undefined : "is-bad"}>
+              <span className="cw-progress-system">{item.system === "ERP" ? "SAP" : item.system === "QMS" ? "Quality" : item.system}</span>
+              <span>{item.label}</span>
+              {item.ms !== undefined && <em>{item.ms} ms</em>}
+            </li>)}
+          </ol>}
           {questions.length > 0 && !assessing && <ul className="cw-questions">{questions.map(q => <li key={`${q.finishedGood}-${q.owner}`}><strong>{q.owner}</strong>{q.detail}</li>)}</ul>}
         </div>
         <div className="cw-verdict-side">

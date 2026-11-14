@@ -160,93 +160,130 @@ export function enforcePolicy(draft: Assessment, facts: Fact[], known: Set<strin
   return { assessment: { summary: draft.summary, findings, openQuestions }, corrections };
 }
 
-// Layer 1: the agent. Tools are read-only and scoped to the three systems; the model never gets a write path.
-async function runAgent(session: ApexSession, requestedBy: string) {
-  const safe = <T>(fn: () => Promise<T>) => fn().catch(error => {
+// Layer 1: the agent. Prompt, tools and output shape are defined once and used by both runners:
+// the durable one inside the case workflow (workflows/assessment.ts) and the direct one below (used by the evals).
+// Tools are read-only and scoped to the three systems; the model never gets a write path.
+
+export const AGENT_INSTRUCTIONS = [
+  "You assess supplier changes for Apex Additives' Product Change Control team. You never approve or route a change; people do.",
+  "Use the tools to check every flagged product: whether it uses the material (ERP), whether it has an effective qualification (QMS), and the customer notice rule for its market (Regulatory).",
+  "Every finding must cite the IDs of records the tools returned, or the supplier documents SUP-01 and SUP-02. Never invent IDs.",
+  "If a record is missing or a system is unavailable, the disposition is 'uncertain' and you add an open question with an owner. Do not guess.",
+].join("\n");
+
+export const agentPrompt = () => [
+  `Case ${supplierChange.id}: ${supplierChange.change} ${supplierChange.materialImpact}`,
+  `Raw material: ${supplierChange.material}. Supply ends ${supplierChange.deadline}.`,
+  `Products flagged by Purchasing: ${supplierChange.candidates.join(", ")}.`,
+  `Supplier documents: ${supplierDocuments.map(d => `${d.id} (${d.detail})`).join(" ")}`,
+].join("\n");
+
+export const agentTools = {
+  lookupMaterial: { description: "ERP material master: supplier and supply end date for a raw material.", inputSchema: z.object({ material: z.string() }) },
+  findWhereUsed: { description: "ERP where-used: every finished good whose recipe contains a raw material, with its market.", inputSchema: z.object({ material: z.string() }) },
+  getBillOfMaterials: { description: "ERP bill of materials for a finished good. Use to confirm a product does NOT use a material.", inputSchema: z.object({ finishedGood: z.string() }) },
+  findQualifications: { description: "QMS qualification records for a finished good. An empty list means no record exists.", inputSchema: z.object({ finishedGood: z.string() }) },
+  getNotificationRules: { description: "Regulatory customer-notification rules for formulation changes in a market.", inputSchema: z.object({ market: z.enum(["US", "EU"]) }) },
+} as const;
+export type AgentToolName = keyof typeof agentTools;
+
+// Runs one tool against Apex's systems. A system outage becomes data the model can reason about, not a crash.
+export async function runAgentTool(session: ApexSession, name: AgentToolName, input: Record<string, string>) {
+  try {
+    switch (name) {
+      case "lookupMaterial": return await session.material(input.material);
+      case "findWhereUsed": return await session.whereUsed(input.material);
+      case "getBillOfMaterials": return await session.finishedGood(input.finishedGood);
+      case "findQualifications": return await session.qualifications(input.finishedGood);
+      case "getNotificationRules": return await session.notificationRules(input.market);
+    }
+  } catch (error) {
     if (error instanceof ApexSystemError) return { error: `${error.system} unavailable (HTTP ${error.status}). Treat the affected data as unknown.` };
     throw error;
-  });
-
-  const tools = {
-    lookupMaterial: tool({ description: "ERP material master: supplier and supply end date for a raw material.", inputSchema: z.object({ material: z.string() }), execute: ({ material }) => safe(() => session.material(material)) }),
-    findWhereUsed: tool({ description: "ERP where-used: every finished good whose recipe contains a raw material, with its market.", inputSchema: z.object({ material: z.string() }), execute: ({ material }) => safe(() => session.whereUsed(material)) }),
-    getBillOfMaterials: tool({ description: "ERP bill of materials for a finished good. Use to confirm a product does NOT use a material.", inputSchema: z.object({ finishedGood: z.string() }), execute: ({ finishedGood }) => safe(() => session.finishedGood(finishedGood)) }),
-    findQualifications: tool({ description: "QMS qualification records for a finished good. An empty list means no record exists.", inputSchema: z.object({ finishedGood: z.string() }), execute: ({ finishedGood }) => safe(() => session.qualifications(finishedGood)) }),
-    getNotificationRules: tool({ description: "Regulatory customer-notification rules for formulation changes in a market.", inputSchema: z.object({ market: z.enum(["US", "EU"]) }), execute: ({ market }) => safe(() => session.notificationRules(market)) }),
-  };
-
-  return generateText({
-    model: gateway(PRIMARY_MODEL),
-    providerOptions: {
-      gateway: {
-        models: FALLBACK_MODELS,
-        // Reporting dimensions: spend per person and per feature shows up in AI Gateway usage.
-        user: requestedBy,
-        tags: ["supplier-change-assessment", `case:${supplierChange.id}`],
-      } satisfies GatewayProviderOptions,
-    },
-    // No temperature: the reasoning models used here ignore it. Consistency comes from the policy check instead.
-    maxOutputTokens: MAX_OUTPUT_TOKENS,
-    tools,
-    stopWhen: stepCountIs(MAX_AGENT_STEPS),
-    abortSignal: AbortSignal.timeout(60_000),
-    output: Output.object({ schema: assessmentSchema }),
-    system: [
-      "You assess supplier changes for Apex Additives' Product Change Control team. You never approve or route a change; people do.",
-      "Use the tools to check every flagged product: whether it uses the material (ERP), whether it has an effective qualification (QMS), and the customer notice rule for its market (Regulatory).",
-      "Every finding must cite the IDs of records the tools returned, or the supplier documents SUP-01 and SUP-02. Never invent IDs.",
-      "If a record is missing or a system is unavailable, the disposition is 'uncertain' and you add an open question with an owner. Do not guess.",
-    ].join("\n"),
-    prompt: [
-      `Case ${supplierChange.id}: ${supplierChange.change} ${supplierChange.materialImpact}`,
-      `Raw material: ${supplierChange.material}. Supply ends ${supplierChange.deadline}.`,
-      `Products flagged by Purchasing: ${supplierChange.candidates.join(", ")}.`,
-      `Supplier documents: ${supplierDocuments.map(d => `${d.id} (${d.detail})`).join(" ")}`,
-    ].join("\n"),
-  });
+  }
 }
 
-export async function assessSupplierChange(scenario: Scenario, options: { requestedBy: string; aiRunsToday: number }): Promise<AssessmentRun> {
-  const started = performance.now();
-  const session = apexSession(scenario);
-  const finish = (partial: Omit<AssessmentRun, "sources" | "calls" | "latencyMs" | "completedAt">): AssessmentRun => ({
-    ...partial,
-    sources: [...supplierDocuments, ...session.sources.values()] as SourceRecord[],
-    calls: session.calls,
-    latencyMs: Math.round(performance.now() - started),
+export const agentGatewayOptions = (requestedBy: string) => ({
+  gateway: {
+    models: FALLBACK_MODELS,
+    // Reporting dimensions: spend per person and per feature shows up in AI Gateway usage.
+    user: requestedBy,
+    tags: ["supplier-change-assessment", `case:${supplierChange.id}`],
+  } satisfies GatewayProviderOptions,
+});
+
+// Decides, outside any workflow, whether this run may use a model at all.
+export function modelPlan(aiRunsToday: number): { useModel: true; model: string; maxSteps: number; maxOutputTokens: number } | { useModel: false; model: string; reason: string } {
+  if (!aiAvailable()) return { useModel: false, model: "Policy rules (no model configured)", reason: "No AI Gateway credentials in this environment." };
+  if (aiRunsToday >= AI_RUNS_PER_CASE_PER_DAY) return { useModel: false, model: "Policy rules (daily AI limit reached)", reason: `This case has used its ${AI_RUNS_PER_CASE_PER_DAY} AI runs for today. The policy rules still give a complete, cited answer.` };
+  return { useModel: true, model: PRIMARY_MODEL, maxSteps: MAX_AGENT_STEPS, maxOutputTokens: MAX_OUTPUT_TOKENS };
+}
+
+// Layer 2 as a finished run: re-read the records independently, hold the model's draft to them, and price the run.
+export async function policyCheckedRun(input: { scenario: Scenario; draft: Assessment; agentSources: SourceRecord[]; agentCalls: ApexSession["calls"]; steps: StepMeta[]; startedAt: number }): Promise<AssessmentRun> {
+  const session = apexSession(input.scenario);
+  const facts = await establishFacts(session);
+  const known = new Set([...supplierDocuments.map(d => d.id), ...input.agentSources.map(s => s.id), ...session.sources.keys()]);
+  const { assessment, corrections } = enforcePolicy(input.draft, facts, known);
+  const { costUsd, servedBy } = servedAndCost(input.steps);
+  const sources = new Map<string, SourceRecord>([...supplierDocuments, ...input.agentSources, ...session.sources.values()].map(s => [s.id, s]));
+  const generationIds = input.steps.map(step => (step.providerMetadata?.gateway as { generationId?: string } | undefined)?.generationId).filter((id): id is string => Boolean(id));
+  return {
+    assessment, corrections, mode: "ai-gateway",
+    model: `${servedBy.join(", ")} via AI Gateway`,
+    requestedModel: PRIMARY_MODEL,
+    usage: input.steps.reduce((sum, step) => ({ inputTokens: (sum.inputTokens ?? 0) + (step.usage.inputTokens ?? 0), outputTokens: (sum.outputTokens ?? 0) + (step.usage.outputTokens ?? 0) }), { inputTokens: 0, outputTokens: 0 } as { inputTokens?: number; outputTokens?: number }),
+    modelCalls: input.steps.length,
+    costUsd,
+    generationId: generationIds.at(-1),
+    sources: [...sources.values()],
+    calls: [...input.agentCalls, ...session.calls],
+    latencyMs: Date.now() - input.startedAt,
     completedAt: new Date().toISOString(),
-  });
+  };
+}
 
-  if (!aiAvailable()) {
-    const facts = await establishFacts(session);
-    return finish({ assessment: rulesAssessment(facts), mode: "rules-only", model: "Policy rules (no model configured)", fallbackReason: "No AI Gateway credentials in this environment.", corrections: [] });
-  }
-  if (options.aiRunsToday >= AI_RUNS_PER_CASE_PER_DAY) {
-    const facts = await establishFacts(session);
-    return finish({ assessment: rulesAssessment(facts), mode: "rules-only", model: "Policy rules (daily AI limit reached)", fallbackReason: `This case has used its ${AI_RUNS_PER_CASE_PER_DAY} AI runs for today. The policy rules still give a complete, cited answer.`, corrections: [] });
-  }
+// The safe answer without a model: the policy alone, fully cited, and saying plainly why no model was used.
+export async function rulesOnlyRun(scenario: Scenario, model: string, reason: string, startedAt = Date.now()): Promise<AssessmentRun> {
+  const session = apexSession(scenario);
+  const facts = await establishFacts(session);
+  return {
+    assessment: rulesAssessment(facts), mode: "rules-only", model, fallbackReason: reason, corrections: [],
+    sources: [...supplierDocuments, ...session.sources.values()], calls: session.calls,
+    latencyMs: Date.now() - startedAt, completedAt: new Date().toISOString(),
+  };
+}
 
+// Direct runner: one call, no workflow. Used by the AI test set (evals/run.mts), which exercises the same prompt,
+// tools and policy as the durable runner without needing a Workflow world.
+export async function assessSupplierChange(scenario: Scenario, options: { requestedBy: string; aiRunsToday: number }): Promise<AssessmentRun> {
+  const startedAt = Date.now();
+  const plan = modelPlan(options.aiRunsToday);
+  if (!plan.useModel) return rulesOnlyRun(scenario, plan.model, plan.reason, startedAt);
+
+  const session = apexSession(scenario);
+  const tools = Object.fromEntries((Object.keys(agentTools) as AgentToolName[]).map(name => [name, tool({
+    ...agentTools[name],
+    execute: (input: Record<string, string>) => runAgentTool(session, name, input),
+  } as never)]));
   try {
-    const result = await runAgent(session, options.requestedBy);
-    const facts = await establishFacts(session); // reuses the agent's cached lookups; fills any gaps
-    const known = new Set([...supplierDocuments.map(d => d.id), ...session.sources.keys()]);
-    const { assessment, corrections } = enforcePolicy(result.output, facts, known);
-    const generationIds = result.steps.map(step => (step.providerMetadata?.gateway as { generationId?: string } | undefined)?.generationId).filter((id): id is string => Boolean(id));
-    const { costUsd, servedBy } = servedAndCost(result.steps as StepMeta[]);
-    return finish({
-      assessment, corrections, mode: "ai-gateway",
-      model: `${servedBy.join(", ")} via AI Gateway`,
-      requestedModel: PRIMARY_MODEL,
-      usage: { inputTokens: result.totalUsage.inputTokens, outputTokens: result.totalUsage.outputTokens },
-      modelCalls: result.steps.length,
-      costUsd,
-      generationId: generationIds.at(-1),
+    const result = await generateText({
+      model: gateway(plan.model),
+      providerOptions: agentGatewayOptions(options.requestedBy),
+      // No temperature: the reasoning models used here ignore it. Consistency comes from the policy check instead.
+      maxOutputTokens: plan.maxOutputTokens,
+      tools,
+      stopWhen: stepCountIs(plan.maxSteps),
+      abortSignal: AbortSignal.timeout(60_000),
+      output: Output.object({ schema: assessmentSchema }),
+      system: AGENT_INSTRUCTIONS,
+      prompt: agentPrompt(),
     });
+    return policyCheckedRun({ scenario, draft: result.output, agentSources: [...session.sources.values()], agentCalls: session.calls, steps: result.steps as StepMeta[], startedAt });
   } catch (error) {
-    // Every model in the fallback chain failed, or the output did not match the schema. The policy still
-    // produces a safe, fully cited assessment, and the run says plainly that no model was involved.
     console.error("assessment_model_failed", { case: supplierChange.id, error: error instanceof Error ? error.message : String(error) });
-    const facts = await establishFacts(session);
-    return finish({ assessment: rulesAssessment(facts), mode: "rules-only", model: "Policy rules (model unavailable)", fallbackReason: error instanceof Error ? error.message.slice(0, 200) : "Model call failed.", corrections: [] });
+    return rulesOnlyRun(scenario, "Policy rules (model unavailable)", error instanceof Error ? error.message.slice(0, 200) : "Model call failed.", startedAt);
   }
 }
+
+export type { StepMeta };
