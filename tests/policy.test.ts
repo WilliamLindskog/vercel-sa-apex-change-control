@@ -80,7 +80,7 @@ describe("policy corrects the model", () => {
     assert.equal(corrections.filter(c => c.includes("changed")).length, 2);
   });
 
-  test("removes citations no Apex system returned, and falls back to the policy's sources", async () => {
+  test("removes citations no Apex system returned, and always keeps the policy's sources", async () => {
     const { facts, known } = await base();
     const { assessment, corrections } = enforcePolicy(draft([
       finding("FG-420-US", "requalification_required", ["QLF-US-14", "BOM:FG-420-US"]),
@@ -88,7 +88,9 @@ describe("policy corrects the model", () => {
       finding("FG-088-US", "unaffected", ["FG-088-US"]),
     ]), facts, known);
     const cited = Object.fromEntries(assessment.findings.map(f => [f.finishedGood, f.evidenceIds]));
-    assert.deepEqual(cited["FG-420-US"], ["QLF-US-14"]);
+    assert.ok(cited["FG-420-US"].includes("QLF-US-14"));
+    assert.ok(!cited["FG-420-US"].includes("BOM:FG-420-US"));
+    assert.ok(cited["FG-420-US"].includes("REG-US-02"), "the policy's own sources are always cited");
     assert.ok(!cited["FG-420-EU"].includes("QLF-EU-03"));
     assert.ok(cited["FG-420-EU"].length > 0);
     assert.equal(corrections.filter(c => c.includes("removed citation")).length, 2);

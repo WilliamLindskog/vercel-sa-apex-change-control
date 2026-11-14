@@ -4,6 +4,7 @@ import { CaseWorkspace } from "@/app/ui/case-workspace";
 import { openCaseId } from "@/lib/cases";
 import { requireUser } from "@/lib/session";
 import { users } from "@/lib/users";
+import "./case.css";
 
 export const metadata: Metadata = { title: openCaseId };
 

@@ -143,7 +143,9 @@ export function enforcePolicy(draft: Assessment, facts: Fact[], known: Set<strin
     }
     const cited = proposed.evidenceIds.filter(id => known.has(id));
     for (const id of proposed.evidenceIds.filter(id => !known.has(id))) corrections.push(`${fact.finishedGood}: removed citation ${id}, which no Apex system returned.`);
-    findings.push({ ...proposed, product: fact.product, market: fact.market, disposition, rationale, evidenceIds: cited.length ? cited : fact.evidence, noticeDays: fact.noticeDays });
+    // The records the policy relied on are always cited, alongside any valid ones the model chose,
+    // so every finding carries its key evidence (for example the qualification record) whatever the model cited.
+    findings.push({ ...proposed, product: fact.product, market: fact.market, disposition, rationale, evidenceIds: [...new Set([...cited, ...fact.evidence])], noticeDays: fact.noticeDays });
   }
   for (const extra of draft.findings.filter(f => !facts.some(fact => fact.finishedGood === f.finishedGood))) {
     corrections.push(`Dropped ${extra.finishedGood}: it is not in scope for this material.`);

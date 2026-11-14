@@ -4,23 +4,30 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { switchAccount } from "@/app/actions";
-import type { Scenario } from "@/lib/apex-systems";
+import type { Scenario, SourceRecord } from "@/lib/apex-systems";
 import type { CaseState, Disposition, Finding } from "@/lib/case";
-import { marketLabel, supplierChange, supplierDocuments } from "@/lib/case";
+import { supplierChange, supplierDocuments } from "@/lib/case";
 import type { ReviewRole, User } from "@/lib/users";
 
+// The case page answers five questions, in this order, with as few words as possible:
+// what changed, what is affected, what is the evidence, what is uncertain, and what happens next (and who owns it).
+// Detail lives one click away: product cards open a panel, records and run data sit in their own tabs.
+
 type View = "unassessed" | "review" | "ready" | "routed" | "blocked";
+type Tab = "overview" | "evidence" | "activity";
 type Command = { type: "assess" } | { type: "sign"; role: ReviewRole; note: string } | { type: "route" } | { type: "scenario"; scenario: Scenario };
 
-const statusLabel: Record<Disposition, string> = { qualified: "Qualified", requalification_required: "Requalification required", unaffected: "Unaffected", uncertain: "Evidence missing" };
-const viewLabel: Record<View, string> = { unassessed: "Not assessed", review: "In review", ready: "Ready to route", routed: "Routed", blocked: "Blocked" };
+const statusLabel: Record<Disposition, string> = { qualified: "Qualified", requalification_required: "Re-test needed", unaffected: "Not affected", uncertain: "Can't decide" };
+const viewLabel: Record<View, string> = { unassessed: "Not assessed", review: "In review", ready: "Ready to send", routed: "Plan sent", blocked: "Blocked" };
 const scenarioLabel: Record<Scenario, string> = { normal: "All systems normal", "missing-eu-qualification": "EU record missing", "qms-outage": "Quality system down" };
 const defaultNotes: Record<ReviewRole, string> = {
   Quality: "Requalification required for AeroShield 420 before X-17R is used.",
-  "Regulatory Affairs": "Customer notices required: 90 days for EMEA (REG-EU-07), 60 days for the US (REG-US-02).",
+  "Regulatory Affairs": "Customer notices: 90 days EMEA (REG-EU-07), 60 days US (REG-US-02).",
 };
+const systemOrder: SourceRecord["system"][] = ["ERP", "QMS", "Regulatory", "Supplier notice"];
+const systemLabel: Record<SourceRecord["system"], string> = { ERP: "SAP (ERP)", QMS: "Quality system", Regulatory: "Regulatory rules", "Supplier notice": "Supplier documents" };
+const marketTag = (market: string) => (market === "EU" ? "EU" : "US");
 const time = (iso: string) => new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-// Days left until the current material runs out: the deadline the whole case is working against.
 const daysUntil = (date: string) => Math.max(0, Math.ceil((new Date(date).getTime() - Date.now()) / 86_400_000));
 
 // The case lives in a durable workflow on the server. This hook reads its latest snapshot and, after each
@@ -48,7 +55,6 @@ function useCase(caseId: string) {
     try {
       const response = await fetch(`/api/cases/${caseId}/commands`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(command) });
       if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error ?? "That action didn't go through. Try again.");
-      // Wait for the workflow to apply it: a newer version, or a new run after a scenario change.
       for (let i = 0; i < 180; i++) {
         await new Promise(resolve => setTimeout(resolve, i < 10 ? 300 : 700));
         const next = await load();
@@ -73,39 +79,44 @@ export function CaseWorkspace({ user, directory }: { user: User; directory: User
   const router = useRouter();
   const [switching, startSwitch] = useTransition();
   const { state, error, busy, send } = useCase(supplierChange.id);
-  const [notes, setNotes] = useState(defaultNotes);
-  const [highlight, setHighlight] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>("overview");
+  const [open, setOpen] = useState<string | null>(null);
 
   const person = (role: User["role"]) => directory.find(entry => entry.role === role)!;
   const lead = person("Product Change Lead");
   const run = state?.assessment ?? null;
   const findings = run?.assessment.findings ?? [];
   const uncertain = findings.filter(f => f.disposition === "uncertain");
+  const retest = findings.filter(f => f.disposition === "requalification_required");
   const quality = state?.signOffs.Quality ?? null;
   const regulatory = state?.signOffs["Regulatory Affairs"] ?? null;
   const assessing = Boolean(state?.assessing) || (busy && !run);
-
-  // One derived view drives the badge, the decision panel and the hand-off line, so they can't disagree.
   const view: View = !run ? "unassessed" : uncertain.length ? "blocked" : state?.routed ? "routed" : quality && regulatory ? "ready" : "review";
-  const blocker = run?.assessment.openQuestions[0];
-  const blockerOwner = blocker ? person(blocker.owner) : lead;
-
-  const rawSteps: { label: string; detail: string; done: boolean; blocked?: boolean; person?: User }[] = [
-    { label: "Notice received", detail: supplierChange.received, done: true },
-    { label: "Assessment", detail: run ? (run.mode === "ai-gateway" ? "AI, checked by policy" : "Policy rules") : lead.name, done: Boolean(run), person: lead },
-    { label: "Quality", detail: person("Quality").name, done: Boolean(quality), person: person("Quality") },
-    { label: "Regulatory", detail: person("Regulatory Affairs").name, done: Boolean(regulatory), blocked: uncertain.length > 0, person: person("Regulatory Affairs") },
-    { label: "Plan routed", detail: lead.name, done: Boolean(state?.routed), person: lead },
-  ];
-  const firstOpen = rawSteps.findIndex(step => !step.done);
-  const steps = rawSteps.map((step, index) => ({ ...step, current: index === firstOpen }));
-
+  const questions = run?.assessment.openQuestions ?? [];
+  const blockerOwner = questions[0] ? person(questions[0].owner) : lead;
   const sources = run?.sources ?? supplierDocuments;
-  function cite(id: string) {
-    setHighlight(id);
-    document.getElementById(`source-${id}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }
+  const sourceById = new Map(sources.map(s => [s.id, s]));
+  const selected = findings.find(f => f.finishedGood === open) ?? null;
   const switchTo = (target: User) => startSwitch(async () => { await switchAccount(target.id); router.refresh(); });
+
+  const steps: { label: string; done: boolean; blocked?: boolean; person?: User }[] = [
+    { label: "Notice", done: true },
+    { label: "Assessment", done: Boolean(run), person: lead },
+    { label: "Quality", done: Boolean(quality), person: person("Quality") },
+    { label: "Regulatory", done: Boolean(regulatory), blocked: uncertain.length > 0, person: person("Regulatory Affairs") },
+    { label: "Plan sent", done: Boolean(state?.routed), person: lead },
+  ];
+  const current = steps.findIndex(step => !step.done);
+
+  const headline = !run ? "Not assessed yet"
+    : view === "blocked" ? `${uncertain.map(f => `${f.product.replace(/ \(eu\)$/i, "")} ${marketTag(f.market)}`).join(", ")} can't be decided`
+    : view === "routed" ? `Plan sent to ${state!.routed!.to}`
+    : `${retest.length} need re-testing · ${findings.length - retest.length - uncertain.length} not affected`;
+  const nextLine = !run ? `Checks ${supplierChange.candidates.length} flagged products against SAP, the quality system and notice rules.`
+    : view === "blocked" ? `${blockerOwner.name} resolves the open question first.`
+    : view === "review" ? "Next: Quality and Regulatory sign off."
+    : view === "ready" ? `Both signed. Send the plan to ${lead.name}.`
+    : `Sent at ${time(state!.routed!.at)}. ${lead.name} owns the next step.`;
 
   return <>
     <header className="topbar">
@@ -121,207 +132,199 @@ export function CaseWorkspace({ user, directory }: { user: User; directory: User
       </div>
     </header>
 
-    <main className="page case-page">
-      <div className="case-head">
-        <div className="case-title-row">
-          <div>
-            <p className="eyebrow">{supplierChange.id} · {supplierChange.supplier}</p>
-            <h1>{supplierChange.title}</h1>
-          </div>
-          <span className={`badge badge-lg badge-${view}`}>{viewLabel[view]}</span>
+    <main className="page cw">
+      {/* 1. What changed */}
+      <header className="cw-head">
+        <div>
+          <p className="cw-meta">{supplierChange.id} · {supplierChange.supplier}</p>
+          <h1>{supplierChange.title}</h1>
         </div>
-
-        {/* The change itself, compressed to one line: what is going away, what replaces it, and the proof. */}
-        <div className="change-strip">
-          <span className="material"><span className="material-role">Current</span><strong>Binder X-17</strong></span>
-          <span className="material-arrow" aria-label="replaced by" />
-          <span className="material is-proposed"><span className="material-role">Proposed</span><strong>Binder X-17R</strong></span>
-          <p>{supplierChange.materialImpact} <Cite ids={["SUP-01", "SUP-02"]} onCite={cite} /></p>
-          <div className="countdown"><strong>{daysUntil(supplierChange.deadline)}</strong><span>days until X-17 supply ends<br />{supplierChange.deadline}</span></div>
-        </div>
-
-        <ol className="handoff-line" aria-label="Who the case moves between">
-          {steps.map(step => <li key={step.label} className={step.done ? "is-done" : step.blocked ? "is-blocked" : step.current ? "is-current" : undefined}>
-            {step.person
-              ? <span className={`avatar tone-${step.person.id}`} aria-hidden="true">{step.person.initials}</span>
-              : <span className="avatar tone-supplier" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3.5 2.5h6l3 3v8h-9z M9.5 2.5v3h3" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" /></svg></span>}
-            <span className="handoff-text"><strong>{step.label}</strong><span>{step.blocked && !step.done ? "Blocked" : step.detail}</span></span>
-            {step.done && <span className="handoff-check" aria-label="Done"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="m2 5.2 2 2L8 3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></span>}
-          </li>)}
-        </ol>
+        <span className={`pill pill-${view}`}>{viewLabel[view]}</span>
+      </header>
+      <div className="cw-change">
+        <span className="cw-material">Binder X-17</span>
+        <span className="cw-arrow" aria-label="replaced by" />
+        <span className="cw-material is-new">Binder X-17R</span>
+        <span className="cw-change-note">Revised stabilizer, not certified equivalent</span>
+        <span className="cw-days"><strong>{daysUntil(supplierChange.deadline)}</strong> days until supply ends</span>
       </div>
+
+      <ol className="cw-steps" aria-label="Case progress">
+        {steps.map((step, i) => <li key={step.label} className={step.done ? "is-done" : step.blocked ? "is-blocked" : i === current ? "is-current" : undefined}>
+          {step.person ? <span className={`avatar small tone-${step.person.id}`} aria-hidden="true">{step.person.initials}</span> : <span className="avatar small tone-supplier" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 16 16"><path d="M3.5 2.5h6l3 3v8h-9z M9.5 2.5v3h3" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" /></svg></span>}
+          <span>{step.label}</span>
+        </li>)}
+      </ol>
 
       {error && <p className="form-error" role="alert">{error}</p>}
 
-      <div className="case-layout">
-        <div className="case-main">
-          {/* Decision first: the answer the Product Change Lead needs sits at the top; everything else is supporting evidence. */}
-          <section className={`decision decision-${view}`} aria-labelledby="decision-h" aria-busy={assessing}>
-            <div className="decision-top">
-              <p className="eyebrow">Decision</p>
-              {run && <span className="decision-mode">{run.mode === "ai-gateway" ? "AI Gateway" : "Policy rules"} · {run.latencyMs} ms</span>}
-            </div>
-
-            {!state ? <div className="decision-loading" role="status"><h2 id="decision-h">Opening the case…</h2><span className="skeleton" /><span className="skeleton short" /></div>
-            : assessing ? <div className="decision-loading" role="status">
-              <h2 id="decision-h">Checking SAP, the quality system and regulatory rules…</h2>
-              <span className="skeleton" /><span className="skeleton short" />
-            </div> : !run ? <div className="decision-empty">
-              <div>
-                <h2 id="decision-h">No assessment yet</h2>
-                <p>Purchasing flagged {supplierChange.candidates.length} products. The assessment checks each one against SAP, the quality system and regional notice rules, and cites every record it uses.</p>
-              </div>
-              <button className="btn btn-primary" onClick={() => send({ type: "assess" })} disabled={busy}>Run assessment</button>
-            </div> : <>
-              <h2 id="decision-h">{uncertain.length ? `${uncertain.map(f => `${f.product} (${marketLabel(f.market)})`).join(", ")} can't be decided yet` : "X-17R needs requalification before use"}</h2>
-              <p className="decision-summary">{run.assessment.summary}</p>
-
-              {run.assessment.openQuestions.map(item => <div className="open-question" key={`${item.finishedGood}-${item.owner}`}><strong>Open question · {item.owner}</strong><p>{item.detail}</p></div>)}
-
-              <div className="next-action">
-                <div>
-                  <p className="eyebrow">Next action</p>
-                  {view === "blocked" && <p><strong>{blockerOwner.name}</strong> resolves the open question. Nothing can be routed until then.</p>}
-                  {view === "review" && <p>Quality and Regulatory Affairs sign off, then the plan goes to <strong>{lead.name}</strong>.</p>}
-                  {view === "ready" && <p>Route the requalification and customer-notice plan to <strong>{lead.name}</strong>.</p>}
-                  {view === "routed" && state.routed && <p>Plan routed to <strong>{state.routed.to}</strong> at {time(state.routed.at)}. {user.id === lead.id ? "It's in your queue." : `${lead.name} owns the next step.`}</p>}
-                </div>
-                {view === "ready"
-                  ? <button className="btn btn-primary" onClick={() => send({ type: "route" })} disabled={busy}>Route plan to {lead.name}</button>
-                  : <Owner user={view === "blocked" ? blockerOwner : lead} />}
-              </div>
-
-              <div className="decision-foot">
-                <button className="btn btn-quiet" onClick={() => send({ type: "assess" })} disabled={busy || Boolean(state.routed)}>Run again</button>
-                <p>The assessment cites Apex records. It can't approve or route a change.</p>
-              </div>
-            </>}
-          </section>
-
-          <section className="block" aria-labelledby="impact-h">
-            <div className="block-head"><h2 id="impact-h">Impact by product and market</h2><span className="block-meta">{run ? `${findings.length} products checked` : `${supplierChange.candidates.length} flagged by Purchasing`}</span></div>
-            <div className="table-wrap">
-              <table className="impact-table">
-                <thead><tr><th scope="col">Product and market</th><th scope="col">Status</th><th scope="col">Finding</th><th scope="col">Sources</th></tr></thead>
-                <tbody>
-                  {run ? findings.map(f => <FindingRow key={f.finishedGood} finding={f} onCite={cite} />)
-                    : supplierChange.candidates.map(id => <tr key={id} className="is-quiet">
-                      <td><strong>{id}</strong><span className="cell-sub">Flagged by Purchasing</span></td>
-                      <td><span className="badge badge-neutral">Not checked</span></td>
-                      <td className="cell-text">Not yet checked against SAP and the quality system.</td>
-                      <td />
-                    </tr>)}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <section className="block" aria-labelledby="review-h">
-            <div className="block-head"><h2 id="review-h">Sign-offs</h2><span className="block-meta">Both required before routing</span></div>
-            <div className="signoffs">
-              {(["Quality", "Regulatory Affairs"] as const).map(role => <SignOffCard key={role}
-                role={role}
-                scope={role === "Quality" ? "Technical scope and requalification plan" : "Regional qualification and customer notices"}
-                assignee={person(role)}
-                user={user}
-                signed={state?.signOffs[role] ?? null}
-                note={notes[role]}
-                waitingOn={!run ? "Waiting for the assessment." : role === "Regulatory Affairs" && uncertain.length ? "Blocked until the missing record is resolved." : null}
-                busy={busy}
-                switching={switching}
-                onNote={note => setNotes(current => ({ ...current, [role]: note }))}
-                onSign={() => send({ type: "sign", role, note: notes[role] })}
-                onSwitch={() => switchTo(person(role))} />)}
-            </div>
-          </section>
+      {/* 4 + 5. The answer, what is uncertain, and what happens next */}
+      <section className={`cw-verdict is-${view}`} aria-live="polite" aria-busy={assessing}>
+        <div className="cw-verdict-main">
+          <h2>{assessing ? "Checking Apex's systems…" : headline}</h2>
+          <p>{assessing ? "SAP, the quality system and regulatory rules, one record at a time." : nextLine}</p>
+          {questions.length > 0 && !assessing && <ul className="cw-questions">{questions.map(q => <li key={`${q.finishedGood}-${q.owner}`}><strong>{q.owner}</strong>{q.detail}</li>)}</ul>}
         </div>
+        <div className="cw-verdict-side">
+          {!state ? null
+            : !run ? <button className="btn btn-primary" onClick={() => send({ type: "assess" })} disabled={busy}>{assessing ? "Running…" : "Run assessment"}</button>
+            : view === "ready" ? <button className="btn btn-primary" onClick={() => send({ type: "route" })} disabled={busy}>Send plan to {lead.name.split(" ")[0]}</button>
+            : <Owner user={view === "blocked" ? blockerOwner : view === "routed" ? lead : lead} compact />}
+          {run && <span className="cw-run-meta">{run.mode === "ai-gateway" ? "AI, checked by policy" : "Policy rules"} · {(run.latencyMs / 1000).toFixed(1)} s{run.costUsd ? ` · $${run.costUsd.toFixed(4)}` : ""}</span>}
+          {run && !state?.routed && <button className="btn-text" onClick={() => send({ type: "assess" })} disabled={busy}>Run again</button>}
+        </div>
+      </section>
 
-        <aside className="case-aside" aria-label="Sources and run record">
-          <section className="aside-block">
-            <div className="aside-head"><h2>Sources</h2><span>{run ? `${sources.length} records` : "Supplier documents"}</span></div>
-            <ol className="sources">
-              {sources.map(item => <li key={item.id} id={`source-${item.id}`} className={highlight === item.id ? "is-highlighted" : undefined}>
-                <span className="source-id">{item.id}<em>{item.system}</em></span>
-                <strong>{item.title.split(" | ")[1] ?? item.title}</strong>
-                <p>{item.detail}</p>
-              </li>)}
-              {uncertain.map(f => <li key={`gap-${f.finishedGood}`} className="is-missing">
-                <span className="source-id">{f.finishedGood}<em>QMS</em></span>
-                <strong>No qualification record</strong>
-                <p>{f.rationale}</p>
-              </li>)}
-            </ol>
-            {!run && <p className="aside-empty">Apex records appear here once the assessment reads them.</p>}
-          </section>
+      <nav className="cw-tabs" role="tablist" aria-label="Case views">
+        {(["overview", "evidence", "activity"] as Tab[]).map(t => <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)}>
+          {t === "overview" ? "Overview" : t === "evidence" ? `Evidence${run ? ` ${sources.length}` : ""}` : "Activity"}
+        </button>)}
+      </nav>
 
-          <section className="aside-block">
-            <div className="aside-head"><h2>Run record</h2>{state && <span className="live-dot">Durable</span>}</div>
-            {state ? <dl className="run">
+      {tab === "overview" && <div className="cw-overview" role="tabpanel">
+        {/* 2. What is affected */}
+        <section aria-labelledby="products-h">
+          <h3 id="products-h" className="cw-label">Products</h3>
+          <div className="cw-products">
+            {run ? findings.map(f => <ProductCard key={f.finishedGood} finding={f} onOpen={() => setOpen(f.finishedGood)} />)
+              : supplierChange.candidates.map(id => <div key={id} className={`cw-product is-pending ${assessing ? "is-loading" : ""}`}>
+                <div className="cw-product-top"><strong>{id}</strong><span className="pill pill-unassessed">Not checked</span></div>
+                <p className="cw-product-sub">Flagged by Purchasing</p>
+              </div>)}
+          </div>
+        </section>
+
+        <section aria-labelledby="signoffs-h">
+          <h3 id="signoffs-h" className="cw-label">Sign-offs</h3>
+          <div className="cw-signoffs">
+            {(["Quality", "Regulatory Affairs"] as const).map(role => <SignOffCard key={role}
+              role={role} assignee={person(role)} user={user} signed={state?.signOffs[role] ?? null}
+              waitingOn={!run ? "After assessment" : role === "Regulatory Affairs" && uncertain.length ? "Blocked by missing record" : null}
+              busy={busy} switching={switching}
+              onSign={note => send({ type: "sign", role, note })}
+              onSwitch={() => switchTo(person(role))} />)}
+          </div>
+        </section>
+      </div>}
+
+      {/* 3. The evidence */}
+      {tab === "evidence" && <div className="cw-evidence" role="tabpanel">
+        {!run && <p className="cw-empty">Apex records appear here once the assessment reads them.</p>}
+        {systemOrder.map(system => {
+          const items = sources.filter(s => s.system === system);
+          const gaps = system === "QMS" ? uncertain : [];
+          if (!items.length && !gaps.length) return null;
+          return <section key={system} className="cw-system">
+            <h3 className="cw-label">{systemLabel[system]}</h3>
+            <ul>
+              {items.map(s => <li key={s.id}><code>{s.id}</code><div><strong>{s.title.split(" | ")[1] ?? s.title}</strong><p>{s.detail}</p></div></li>)}
+              {gaps.map(f => <li key={`gap-${f.finishedGood}`} className="is-gap"><code>{f.finishedGood}</code><div><strong>No qualification record returned</strong><p>{f.rationale}</p></div></li>)}
+            </ul>
+          </section>;
+        })}
+      </div>}
+
+      {tab === "activity" && <div className="cw-activity" role="tabpanel">
+        {state ? <>
+          <section className="cw-card">
+            <h3 className="cw-label">This assessment</h3>
+            {run ? <dl className="cw-facts">
+              <div><dt>Answered by</dt><dd>{run.model}</dd></div>
+              <div><dt>Time</dt><dd>{(run.latencyMs / 1000).toFixed(1)} s{run.modelCalls ? ` · ${run.modelCalls} model calls` : ""}</dd></div>
+              {run.mode === "ai-gateway" && <div><dt>Cost</dt><dd>About ${run.costUsd?.toFixed(4) ?? "n/a"} · {state.aiRuns?.count ?? 0} AI runs today</dd></div>}
+              {run.fallbackReason && <div><dt>Why no AI</dt><dd>{run.fallbackReason}</dd></div>}
               <div><dt>Case workflow</dt><dd className="mono">{state.runId}</dd></div>
-              {run && <>
-                <div><dt>Assessed by</dt><dd>{run.model}</dd></div>
-                {run.fallbackReason && <div><dt>Why no model</dt><dd>{run.fallbackReason}</dd></div>}
-                <div><dt>Time</dt><dd>{run.latencyMs} ms{run.usage?.inputTokens ? ` · ${run.usage.inputTokens + (run.usage.outputTokens ?? 0)} tokens` : ""}{run.modelCalls ? ` · ${run.modelCalls} model calls` : ""}</dd></div>
-                {run.mode === "ai-gateway" && <div><dt>Cost</dt><dd>{run.costUsd !== undefined ? `About $${run.costUsd.toFixed(4)}` : "Not available"} · AI runs today {state.aiRuns?.count ?? 0}{run.requestedModel && !run.model.startsWith(run.requestedModel) ? ` · fell back from ${run.requestedModel}` : ""}</dd></div>}
-                <div><dt>Apex system calls</dt><dd>
-                  <ul className="calls">{run.calls.map((call, i) => <li key={i}><span>{call.system}</span><code>{call.endpoint.split("?")[0].replace(/^\/\w+\/v\d/, "")}</code><em className={call.status >= 400 ? "is-error" : undefined}>{call.status} · {call.ms} ms</em></li>)}</ul>
-                </dd></div>
-                {run.mode === "ai-gateway" && <div><dt>Policy corrections</dt><dd>{run.corrections.length ? <ul className="corrections">{run.corrections.map(c => <li key={c}>{c}</li>)}</ul> : "None. The model matched the records."}</dd></div>}
-              </>}
-              <div><dt>History</dt><dd><ol className="history">{state.log.slice(-6).map((entry, i) => <li key={i}><time>{time(entry.at)}</time>{entry.text}</li>)}</ol></dd></div>
-            </dl> : <p className="aside-empty">Opening the case workflow…</p>}
+            </dl> : <p className="cw-empty">Not assessed yet.</p>}
           </section>
-
-          <section className="aside-note">
-            <h2>System boundary</h2>
-            <p>Reads SAP, the quality system and regulatory rules through Apex's service API. It never writes to them, and only people can approve a change.</p>
+          {run?.mode === "ai-gateway" && <section className="cw-card">
+            <h3 className="cw-label">Corrected by policy <span className="cw-count">{run.corrections.length}</span></h3>
+            {run.corrections.length ? <ul className="corrections">{run.corrections.map(c => <li key={c}>{c}</li>)}</ul> : <p className="cw-empty">None. The AI matched the records.</p>}
+          </section>}
+          {run && <section className="cw-card">
+            <h3 className="cw-label">Calls to Apex's systems <span className="cw-count">{run.calls.length}</span></h3>
+            <ul className="calls">{run.calls.map((call, i) => <li key={i}><span>{call.system}</span><code>{call.endpoint.split("?")[0].replace(/^\/\w+\/v\d/, "")}</code><em className={call.status >= 400 ? "is-error" : undefined}>{call.status} · {call.ms} ms</em></li>)}</ul>
+          </section>}
+          <section className="cw-card">
+            <h3 className="cw-label">History</h3>
+            <ol className="history">{state.log.slice(-8).map((entry, i) => <li key={i}><time>{time(entry.at)}</time>{entry.text}</li>)}</ol>
           </section>
-        </aside>
-      </div>
+          <p className="cw-boundary">Reads SAP, the quality system and regulatory rules through Apex's service API. Never writes to them. Only people approve a change.</p>
+        </> : <p className="cw-empty">Opening the case…</p>}
+      </div>}
     </main>
+
+    {selected && <ProductPanel finding={selected} sourceById={sourceById} onClose={() => setOpen(null)} />}
   </>;
 }
 
-function FindingRow({ finding: f, onCite }: { finding: Finding; onCite: (id: string) => void }) {
-  return <tr className={f.disposition === "uncertain" ? "is-uncertain" : f.disposition === "unaffected" ? "is-quiet" : undefined}>
-    <td><strong>{f.product}</strong><span className="cell-sub">{marketLabel(f.market)}<span className="record-id">{f.finishedGood}</span></span></td>
-    <td><span className={`badge badge-${f.disposition}`}>{statusLabel[f.disposition]}</span>{f.noticeDays && f.disposition !== "unaffected" ? <span className="cell-note">{f.noticeDays}-day customer notice</span> : null}</td>
-    <td className="cell-text">{f.rationale}</td>
-    <td><Cite ids={f.evidenceIds} onCite={onCite} /></td>
-  </tr>;
+// A product at a glance: status and three facts. The reasoning is one click away.
+function ProductCard({ finding: f, onOpen }: { finding: Finding; onOpen: () => void }) {
+  const record = f.evidenceIds.find(id => id.startsWith("QLF"));
+  const approval = f.disposition === "unaffected" ? "Not needed" : record ?? (f.rationale.includes("unavailable") ? "System down" : "Missing");
+  return <button className={`cw-product is-${f.disposition}`} onClick={onOpen} aria-label={`${f.product}, ${statusLabel[f.disposition]}. Open details`}>
+    <div className="cw-product-top">
+      <strong>{f.product.replace(/ \(eu\)$/i, "")}</strong>
+      <span className="cw-market">{marketTag(f.market)}</span>
+    </div>
+    <span className={`pill pill-${f.disposition}`}>{statusLabel[f.disposition]}</span>
+    <dl className="cw-mini">
+      <div><dt>Approval</dt><dd className={approval === "Missing" || approval === "System down" ? "is-bad" : undefined}>{approval}</dd></div>
+      <div><dt>Customer notice</dt><dd>{f.disposition === "unaffected" ? "None" : f.noticeDays ? `${f.noticeDays} days` : "Unknown"}</dd></div>
+      <div><dt>Sources</dt><dd>{f.evidenceIds.length}</dd></div>
+    </dl>
+  </button>;
 }
 
-function Cite({ ids, onCite }: { ids: string[]; onCite: (id: string) => void }) {
-  return <span className="cites">{ids.map(id => <button key={id} className="cite" onClick={() => onCite(id)} aria-label={`Show source ${id}`}>{id}</button>)}</span>;
+function ProductPanel({ finding: f, sourceById, onClose }: { finding: Finding; sourceById: Map<string, SourceRecord>; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return <div className="cw-panel-backdrop" onClick={onClose}>
+    <aside className="cw-panel" role="dialog" aria-modal="true" aria-labelledby="panel-h" onClick={event => event.stopPropagation()}>
+      <header>
+        <div><p className="cw-meta">{f.finishedGood} · {marketTag(f.market)}</p><h2 id="panel-h">{f.product.replace(/ \(eu\)$/i, "")}</h2></div>
+        <button className="cw-close" onClick={onClose} aria-label="Close">×</button>
+      </header>
+      <span className={`pill pill-${f.disposition}`}>{statusLabel[f.disposition]}</span>
+      <p className="cw-panel-why">{f.rationale}</p>
+      {f.noticeDays && f.disposition !== "unaffected" ? <p className="cw-panel-notice"><strong>{f.noticeDays} days</strong> customer notice before X-17R ships</p> : null}
+      <h3 className="cw-label">Sources</h3>
+      <ul className="cw-panel-sources">
+        {f.evidenceIds.map(id => { const s = sourceById.get(id); return <li key={id}><code>{id}</code><div><strong>{s ? s.title.split(" | ")[1] ?? s.title : "Record"}</strong>{s && <p>{s.system === "Supplier notice" ? "Supplier document" : s.system} · {s.detail}</p>}</div></li>; })}
+      </ul>
+    </aside>
+  </div>;
 }
 
-function Owner({ user }: { user: User }) {
-  return <p className="owner"><span className={`avatar small tone-${user.id}`} aria-hidden="true">{user.initials}</span><span><strong>{user.name}</strong><span>{user.title}</span></span></p>;
+function Owner({ user, compact = false }: { user: User; compact?: boolean }) {
+  return <p className={`owner ${compact ? "is-compact" : ""}`}><span className={`avatar small tone-${user.id}`} aria-hidden="true">{user.initials}</span><span><strong>{user.name}</strong><span>{user.role}</span></span></p>;
 }
 
-function SignOffCard({ role, scope, assignee, user, signed, note, waitingOn, busy, switching, onNote, onSign, onSwitch }: {
-  role: ReviewRole; scope: string; assignee: User; user: User; signed: CaseState["signOffs"][ReviewRole]; note: string; waitingOn: string | null;
-  busy: boolean; switching: boolean; onNote: (note: string) => void; onSign: () => void; onSwitch: () => void;
+function SignOffCard({ role, assignee, user, signed, waitingOn, busy, switching, onSign, onSwitch }: {
+  role: ReviewRole; assignee: User; user: User; signed: CaseState["signOffs"][ReviewRole]; waitingOn: string | null;
+  busy: boolean; switching: boolean; onSign: (note: string) => void; onSwitch: () => void;
 }) {
+  const [writing, setWriting] = useState(false);
+  const [note, setNote] = useState(defaultNotes[role]);
   const isAssignee = user.id === assignee.id;
   const blocked = Boolean(waitingOn) && !signed;
-  const hardBlock = blocked && Boolean(waitingOn?.startsWith("Blocked"));
-  return <article className={`signoff ${signed ? "is-signed" : ""} ${hardBlock ? "is-uncertain" : ""}`}>
-    <header>
-      <div><h3>{role}</h3><p>{scope}</p></div>
-      <span className={`badge ${signed ? "badge-unaffected" : hardBlock ? "badge-uncertain" : "badge-neutral"}`}>{signed ? "Signed off" : hardBlock ? "Blocked" : "Pending"}</span>
-    </header>
-    <Owner user={assignee} />
-    {signed ? <div className="signed">
-      <p className="signed-note">{signed.note}</p>
-      <p className="signed-meta">Signed by {signed.reviewer} at {time(signed.at)}</p>
-    </div> : blocked ? <p className="waiting">{waitingOn}</p> : isAssignee ? <div className="sign-form">
-      <label htmlFor={`note-${role}`}>Decision note</label>
-      <textarea id={`note-${role}`} value={note} onChange={event => onNote(event.target.value)} rows={3} />
-      <button className="btn btn-primary" onClick={onSign} disabled={busy || note.trim().length < 3}>{busy ? "Recording…" : `Sign off as ${role}`}</button>
-    </div> : <div className="handoff">
-      <p>You're signed in as {user.name}. Only {assignee.name} can sign off for {role}.</p>
-      <button className="btn btn-secondary" onClick={onSwitch} disabled={switching}>{switching ? "Switching…" : `Switch to ${assignee.name}`}</button>
-    </div>}
+  const hard = blocked && waitingOn!.startsWith("Blocked");
+  return <article className={`cw-signoff ${signed ? "is-signed" : hard ? "is-blocked" : ""}`}>
+    <div className="cw-signoff-top">
+      <span className={`avatar small tone-${assignee.id}`} aria-hidden="true">{assignee.initials}</span>
+      <div><strong>{role}</strong><span>{assignee.name}</span></div>
+      <span className={`pill ${signed ? "pill-unaffected" : hard ? "pill-uncertain" : "pill-unassessed"}`}>{signed ? `Signed ${time(signed.at)}` : hard ? "Blocked" : "Pending"}</span>
+    </div>
+    {signed ? <p className="cw-signoff-note">{signed.note}</p>
+      : blocked ? <p className="cw-signoff-wait">{waitingOn}</p>
+      : !isAssignee ? <button className="btn btn-secondary" onClick={onSwitch} disabled={switching}>{switching ? "Switching…" : `Sign in as ${assignee.name.split(" ")[0]}`}</button>
+      : writing ? <div className="cw-sign-form">
+          <label htmlFor={`note-${role}`} className="visually-hidden">Decision note</label>
+          <textarea id={`note-${role}`} value={note} onChange={event => setNote(event.target.value)} rows={2} autoFocus />
+          <div><button className="btn btn-primary" onClick={() => onSign(note)} disabled={busy || note.trim().length < 3}>{busy ? "Recording…" : "Confirm sign-off"}</button><button className="btn-text" onClick={() => setWriting(false)}>Cancel</button></div>
+        </div>
+      : <button className="btn btn-primary" onClick={() => setWriting(true)}>Sign off</button>}
   </article>;
 }
