@@ -40,6 +40,7 @@ export default function Brief() {
         <div className="value-pair">
           <div><strong>AI on top of the systems you already run</strong><p>SAP, Veeva and the regulatory service stay. Every AI answer cites a record.</p></div>
           <div><strong>People still decide</strong><p>Each case waits for Quality and Regulatory sign-off, and keeps a full history.</p></div>
+          <div><strong>A Helper for the team</strong><p>Plans the day, drafts check-ins and reports from the same live numbers.</p></div>
         </div>
       </section>
 
@@ -97,7 +98,8 @@ export default function Brief() {
             <tr><td>AI SDK + Gateway</td><td>Any model, automatic fallback, cost per run, hard budget.</td><td>The model is checked by policy, not trusted.</td></tr>
             <tr><td>Workflows</td><td>Cases wait days for people; runs survive crashes and deploys.</td><td>Open runs keep the code they started on.</td></tr>
             <tr><td>Fluid Compute</td><td>Mostly waiting on AI and SAP; billed for active CPU only.</td><td>Long work moves into the workflow.</td></tr>
-            <tr><td>Rolling Releases</td><td>Try new prompts on 10% of users first.</td><td>Needs the Git release path.</td></tr>
+            <tr><td>Rolling Releases</td><td>Every release goes to 10%, then 50%, then everyone, with approval.</td><td>Needs the Git release path.</td></tr>
+            <tr><td>Runtime Cache</td><td>Helper's per-person limit, shared by all instances.</td><td>Best effort; the Gateway budget is the hard cap.</td></tr>
             <tr><td>Secure Compute</td><td>Private link into Apex's network.</td><td>Production only; mocked in the demo.</td></tr>
           </tbody>
         </table>
@@ -121,6 +123,7 @@ export default function Brief() {
           <li>As Dana, open Binder X-17 and run the assessment.</li>
           <li>Sign off as Priya, then Marcus; send the plan.</li>
           <li>Pick a failure scenario and run it again.</li>
+          <li>Open Analytics, then ask Helper for a Q4 report.</li>
         </ol>
       </section>
 
@@ -129,7 +132,7 @@ export default function Brief() {
         <ol className="timeline">
           <li><strong>Preview</strong><span>Every change gets its own link.</span></li>
           <li><strong>Validate</strong><span>AI tests must pass.</span></li>
-          <li><strong>Canary</strong><span>10%, then 50% of users.</span></li>
+          <li><strong>Canary</strong><span>10%, then 50% of users. Used for this demo.</span></li>
           <li><strong>Cut over</strong><span>100%; pilot team moves in.</span></li>
           <li><strong>Roll back</strong><span>One click; open cases keep running.</span></li>
         </ol>
@@ -139,7 +142,7 @@ export default function Brief() {
         <h2>6 · Success and pilot</h2>
         <div className="cols">
           <ul className="ticks">
-            <li><strong>Business:</strong> days to decision, notices on time, audit findings.</li>
+            <li><strong>Business:</strong> days to decision, notices on time, audit findings. Tracked on the Analytics page.</li>
             <li><strong>Technical:</strong> valid citations, cost per run, fallback rate.</li>
           </ul>
           <ul className="ticks">

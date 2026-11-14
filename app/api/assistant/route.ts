@@ -1,5 +1,6 @@
 import { convertToModelMessages, createUIMessageStreamResponse, hasToolCall, stepCountIs, streamText, tool, toUIMessageStream, type UIMessage } from "ai";
 import type { GatewayProviderOptions } from "@ai-sdk/gateway";
+import { getCache } from "@vercel/functions";
 import { z } from "zod";
 import { aiAvailable, FALLBACK_MODELS, PRIMARY_MODEL } from "@/lib/assessment";
 import { analytics, periods, productLines } from "@/lib/analytics";
@@ -14,8 +15,19 @@ export const maxDuration = 30;
 const MAX_HISTORY = 12;          // only the latest turns go to the model
 const MAX_OUTPUT_TOKENS = 900;
 const MAX_STEPS = 5;             // read the board or analytics, maybe draft something, answer
-const PER_USER_PER_HOUR = 30;    // best effort: counted per function instance
-const recent = new Map<string, number[]>();
+const PER_USER_PER_HOUR = 30;
+
+// Questions per person per clock hour, kept in Vercel's Runtime Cache so every function instance in the region
+// sees the same count (an in-memory counter resets per instance). The cache has no atomic increment, so two
+// requests at the same moment can both pass; that's fine for a spend guard, and the Gateway budget is the hard cap.
+async function overLimit(userId: string) {
+  const cache = getCache({ namespace: "assistant-rate" });
+  const key = `${userId}:${Math.floor(Date.now() / 3_600_000)}`;
+  const used = Number(await cache.get(key) ?? 0);
+  if (used >= PER_USER_PER_HOUR) return true;
+  await cache.set(key, used + 1, { ttl: 3600, tags: ["assistant-rate"] });
+  return false;
+}
 
 const daysUntil = (date: string) => Math.ceil((new Date(date).getTime() - Date.now()) / 86_400_000);
 
@@ -24,10 +36,7 @@ export async function POST(request: Request) {
   if (!user) return Response.json({ error: "Sign in first." }, { status: 401 });
   if (!aiAvailable()) return Response.json({ error: "The assistant needs AI Gateway, which isn't set up in this environment." }, { status: 503 });
 
-  const now = Date.now();
-  const calls = (recent.get(user.id) ?? []).filter(t => now - t < 3_600_000);
-  if (calls.length >= PER_USER_PER_HOUR) return Response.json({ error: "That's a lot of questions for one hour. Try again a little later." }, { status: 429 });
-  recent.set(user.id, [...calls, now]);
+  if (await overLimit(user.id)) return Response.json({ error: "That's a lot of questions for one hour. Try again a little later." }, { status: 429 });
 
   const { messages }: { messages: UIMessage[] } = await request.json();
   const nameOf = (id?: string) => users.find(u => u.id === id);
