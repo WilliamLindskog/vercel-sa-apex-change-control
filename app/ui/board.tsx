@@ -3,10 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { stages, type CaseSummary, type Stage } from "@/lib/cases";
+import type { BoardCard } from "@/lib/board";
+import { stages, type Stage } from "@/lib/cases";
 import type { User } from "@/lib/users";
-
-export type BoardCard = CaseSummary & { stage: Stage; blocked: boolean; step: number; version?: number; runId?: string };
 
 const daysUntil = (date: string) => Math.ceil((new Date(date).getTime() - Date.now()) / 86_400_000);
 
@@ -105,7 +104,7 @@ function CardView({ card, userId, waitingName, pending, onDragStart, onDragEnd }
     </div>
     {pending && <span className="bc-pending" aria-hidden="true" />}
   </>;
-  return <article className={`board-card ${card.live ? "is-live" : "is-sample"} ${mine ? "is-mine" : ""} ${pending ? "is-pending" : ""}`} draggable onDragStart={onDragStart} onDragEnd={onDragEnd} aria-busy={pending} title={card.live ? undefined : "Sample case (view only)"}>
-    {card.live ? <Link href={`/cases/${card.id}`} className="bc-link" draggable={false}>{body}</Link> : <div className="bc-link">{body}</div>}
+  return <article className={`board-card ${card.live ? "is-live" : "is-sample"} ${mine ? "is-mine" : ""} ${pending ? "is-pending" : ""}`} draggable onDragStart={onDragStart} onDragEnd={onDragEnd} aria-busy={pending} >
+    <Link href={`/cases/${card.id}`} className="bc-link" draggable={false}>{body}</Link>
   </article>;
 }
