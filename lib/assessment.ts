@@ -54,7 +54,7 @@ function servedAndCost(steps: StepMeta[]) {
   return { servedBy: [...servedBy], costUsd };
 }
 
-type Fact = {
+export type Fact = {
   finishedGood: string;
   product: string;
   market: "US" | "EU";
@@ -67,7 +67,7 @@ type Fact = {
 };
 
 // The policy, written as code so it can be read, tested and defended. It only uses what the systems returned.
-async function establishFacts(session: ApexSession): Promise<Fact[]> {
+export async function establishFacts(session: ApexSession): Promise<Fact[]> {
   await session.material(supplierChange.material);
   const used = await session.whereUsed(supplierChange.material);
   // Purchasing's list and the ERP where-used list can disagree. Check the union of both.
@@ -111,7 +111,7 @@ async function establishFacts(session: ApexSession): Promise<Fact[]> {
   return facts;
 }
 
-function rulesAssessment(facts: Fact[]): Assessment {
+export function rulesAssessment(facts: Fact[]): Assessment {
   const affected = facts.filter(f => f.usesMaterial);
   const uncertain = facts.filter(f => f.expected === "uncertain");
   return {
@@ -124,7 +124,7 @@ function rulesAssessment(facts: Fact[]): Assessment {
 }
 
 // Layer 2: hold the model to the records. Every correction is kept and shown, so reviewers can see where the model was overruled.
-function enforcePolicy(draft: Assessment, facts: Fact[], known: Set<string>) {
+export function enforcePolicy(draft: Assessment, facts: Fact[], known: Set<string>) {
   const corrections: string[] = [];
   const findings: Finding[] = [];
 
@@ -183,7 +183,7 @@ async function runAgent(session: ApexSession, requestedBy: string) {
         tags: ["supplier-change-assessment", `case:${supplierChange.id}`],
       } satisfies GatewayProviderOptions,
     },
-    temperature: 0,
+    // No temperature: the reasoning models used here ignore it. Consistency comes from the policy check instead.
     maxOutputTokens: MAX_OUTPUT_TOKENS,
     tools,
     stopWhen: stepCountIs(MAX_AGENT_STEPS),

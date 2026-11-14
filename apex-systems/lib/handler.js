@@ -26,7 +26,8 @@ export async function handle(request) {
   }
 
   // Real back-office systems are not instant. A little latency keeps the demo honest about network cost.
-  await sleep(120 + Math.floor(Math.random() * 380));
+  // Tests set APEX_SYSTEMS_LATENCY=0 to run without it.
+  if (process.env.APEX_SYSTEMS_LATENCY !== "0") await sleep(120 + Math.floor(Math.random() * 380));
 
   let match;
 
