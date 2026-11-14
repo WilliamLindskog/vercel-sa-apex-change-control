@@ -25,10 +25,8 @@ export function AppShell({ user, accounts, children }: { user: User; accounts: U
   useEffect(() => {
     setCollapsed(recall("apex-sidebar") === "collapsed");
     setTeamOpen(recall("apex-team") !== "closed");
-    // The helper starts open on wide screens and remembers the person's choice. On phones it is a sheet, so it starts closed.
-    const saved = recall("apex-helper");
-    const roomy = window.matchMedia("(min-width: 861px)").matches;
-    setHelperOpen(roomy && (saved ? saved === "open" : window.matchMedia("(min-width: 1360px)").matches));
+    // The helper window floats over the page, so it starts closed unless the person left it open.
+    setHelperOpen(recall("apex-helper") === "open" && window.matchMedia("(min-width: 861px)").matches);
   }, []);
   const toggleSidebar = () => { setCollapsed(!collapsed); remember("apex-sidebar", collapsed ? "open" : "collapsed"); };
   const toggleTeam = () => { setTeamOpen(!teamOpen); remember("apex-team", teamOpen ? "closed" : "open"); };
@@ -37,7 +35,7 @@ export function AppShell({ user, accounts, children }: { user: User; accounts: U
   const link = (href: string, label: string, icon: React.ReactNode, active: boolean) =>
     <Link key={href} href={href} aria-current={active ? "page" : undefined} title={collapsed ? label : undefined}>{icon}<span className="nav-label">{label}</span></Link>;
 
-  return <div className="app" data-collapsed={collapsed || undefined} data-helper={helperOpen || undefined}>
+  return <div className="app" data-collapsed={collapsed || undefined}>
     <aside className="sidebar">
       <div className="sidebar-top">
         <Link href="/cases" className="sidebar-brand" aria-label="Apex, case board">{collapsed ? <ApexMark size={26} /> : <ApexLogo size={26} />}</Link>

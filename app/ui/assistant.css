@@ -1,6 +1,7 @@
 /* Assistant panel: docked on the right, warm and quiet. */
 
-.assistant { position: sticky; top: 0; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100vh; border-left: 1px solid var(--line); background: var(--surface); }
+.assistant { position: fixed; right: 24px; bottom: 96px; z-index: 30; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; width: 380px; height: min(620px, calc(100vh - 128px)); overflow: hidden; border-radius: 20px; background: var(--surface); box-shadow: 0 0 0 1px var(--line), 0 24px 60px -20px rgba(74, 50, 38, .45); transform-origin: bottom right; animation: as-pop .22s cubic-bezier(.16, 1, .3, 1); }
+@keyframes as-pop { from { opacity: 0; transform: translateY(10px) scale(.96); } }
 .as-head { display: flex; align-items: center; gap: 10px; padding: 14px 14px 12px 16px; border-bottom: 1px solid var(--line); }
 .as-head div { flex: 1; min-width: 0; }
 .as-head strong { display: block; font: 500 17px/1.2 var(--serif); font-variation-settings: "SOFT" 100, "opsz" 36; }
@@ -47,33 +48,31 @@
 .as-send { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border: 0; border-radius: 50%; background: var(--action); color: #fff8ef; }
 .as-send:disabled { background: var(--line-strong); }
 
-/* Collapsed rail: the avatar and a label, standing on the right edge */
-.assistant.is-collapsed { display: block; background: var(--shell); }
-.as-rail { position: relative; display: grid; justify-items: center; align-content: start; gap: 10px; width: 100%; height: 100%; padding: 18px 0; border: 0; background: transparent; color: var(--shell-ink); font-size: 12.5px; font-weight: 700; letter-spacing: .04em; }
-.as-rail:hover { background: var(--shell-hover); color: var(--ink); }
-.as-rail span { writing-mode: vertical-rl; }
-.as-rail-dot { position: absolute; top: 16px; right: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--rose); box-shadow: 0 0 0 2px var(--shell); }
+/* Round launcher in the lower right; stays put while the window is open */
+.as-launcher { position: fixed; right: 24px; bottom: 24px; z-index: 31; display: grid; place-items: center; width: 60px; height: 60px; padding: 0; border: 0; border-radius: 50%; background: var(--marigold-bg); box-shadow: 0 0 0 1px var(--marigold-line), 0 14px 30px -12px rgba(74, 50, 38, .55); transition: transform .2s cubic-bezier(.16, 1, .3, 1); }
+.as-launcher:hover { transform: translateY(-2px) scale(1.04); }
+.as-launcher.is-open { background: var(--surface); }
+.as-dot { position: absolute; top: 4px; right: 4px; width: 11px; height: 11px; border-radius: 50%; background: var(--rose); box-shadow: 0 0 0 2px var(--surface); }
 
 /* Helper avatar motion */
 .helper-avatar { flex: none; overflow: visible; }
-.ha-rays { transform-origin: 24px 24px; animation: ha-spin 24s linear infinite; }
-.ha-body { transform-origin: 24px 24px; animation: ha-float 3.2s ease-in-out infinite; }
-.ha-eyes { transform-box: fill-box; transform-origin: center; animation: ha-blink 4.6s infinite; }
-.is-thinking .ha-rays { animation-duration: 3s; }
-.is-thinking .ha-eyes { animation: ha-look 1.6s ease-in-out infinite; }
-.is-thinking .ha-mouth { d: path("M22 29.5q2 1.2 4 0"); }
+.ha-body { transform-origin: 24px 40px; animation: ha-bob 3.4s ease-in-out infinite; }
+.ha-eyes { transform-box: fill-box; transform-origin: center; animation: ha-blink 4.8s infinite; }
+.ha-ear { transform-box: fill-box; transform-origin: center; animation: ha-ear 5s ease-in-out infinite; }
+.ha-ear.is-right { animation-delay: .25s; }
+.is-thinking .ha-body { animation: ha-tilt 1.2s ease-in-out infinite; }
+.is-thinking .ha-eyes { animation: ha-look 1.4s ease-in-out infinite; }
+.is-thinking .ha-mouth { d: path("M22.3 30.6q1.7 1.4 3.4 0"); }
 .ha-mouth { transition: d .3s; }
-.as-rail:hover .ha-body, .as-head:hover .ha-body { animation-duration: 1.4s; }
-@keyframes ha-spin { to { transform: rotate(360deg); } }
-@keyframes ha-float { 50% { transform: translateY(-1.5px) scale(1.03); } }
-@keyframes ha-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
-@keyframes ha-look { 0%, 100% { transform: translateX(0); } 30% { transform: translateX(-2px); } 70% { transform: translateX(2px); } }
+.as-launcher:hover .ha-ear { animation-duration: .7s; }
+@keyframes ha-bob { 50% { transform: translateY(-1.5px); } }
+@keyframes ha-blink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
+@keyframes ha-ear { 0%, 80%, 100% { transform: rotate(0); } 86% { transform: rotate(-12deg); } 92% { transform: rotate(8deg); } }
+@keyframes ha-tilt { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(6deg); } }
+@keyframes ha-look { 0%, 100% { transform: translateX(0); } 30% { transform: translateX(-1.6px); } 70% { transform: translateX(1.6px); } }
 
 @media (max-width: 860px) {
-  .assistant.is-collapsed { position: fixed; inset: auto 18px 18px auto; z-index: 20; width: 58px; height: 58px; border: 0; border-radius: 50%; background: var(--surface); box-shadow: 0 0 0 1px var(--line), 0 14px 30px -14px rgba(74, 50, 38, .5); }
-  .as-rail { place-content: center; padding: 0; border-radius: 50%; }
-  .as-rail span { display: none; }
-  .as-rail-dot { top: 6px; right: 6px; }
-  .assistant:not(.is-collapsed) { position: fixed; inset: auto 0 0 0; z-index: 30; height: min(80vh, 640px); border: 0; border-radius: 20px 20px 0 0; box-shadow: 0 -20px 40px -20px rgba(74, 50, 38, .45); }
+  .assistant { right: 8px; left: 8px; bottom: 88px; width: auto; height: min(70vh, 600px); }
+  .as-launcher { right: 16px; bottom: 16px; }
 }
-@media (prefers-reduced-motion: reduce) { .as-typing i, .ha-rays, .ha-body, .ha-eyes { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .as-typing i, .ha-body, .ha-eyes, .ha-ear, .assistant { animation: none !important; } }
