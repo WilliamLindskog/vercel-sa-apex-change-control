@@ -2,16 +2,14 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { CaseWorkspace } from "@/app/ui/case-workspace";
-import { SampleCase } from "@/app/ui/sample-case";
-import { boardCards } from "@/lib/board";
-import { cases, openCaseId } from "@/lib/cases";
+import { openCaseId } from "@/lib/cases";
 import { requireUser } from "@/lib/session";
 import { users } from "@/lib/users";
 import "./case.css";
 
-// The case IDs are known at build time, so each case page gets its own prerendered frame.
+// Only the live case has a page: it runs on the durable workflow. Example cases stay on the board.
 export function generateStaticParams() {
-  return cases.map(c => ({ caseId: c.id }));
+  return [{ caseId: openCaseId }];
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ caseId: string }> }): Promise<Metadata> {
@@ -24,11 +22,8 @@ export default function CasePage({ params }: { params: Promise<{ caseId: string 
 
 async function Case({ params }: { params: Promise<{ caseId: string }> }) {
   const [{ caseId }, user] = await Promise.all([params, requireUser()]);
-  if (caseId === openCaseId) return <CaseWorkspace user={user} directory={users} />;
-  // Sample cases fill the board; they open read-only.
-  const card = (await boardCards()).find(c => c.id === caseId && !c.live);
-  if (!card) notFound();
-  return <SampleCase card={card} user={user} directory={users} />;
+  if (caseId !== openCaseId) notFound();
+  return <CaseWorkspace user={user} directory={users} />;
 }
 
 function CaseSkeleton() {

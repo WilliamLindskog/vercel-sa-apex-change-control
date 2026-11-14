@@ -57,9 +57,9 @@ async function Dashboard({ searchParams }: { searchParams: Promise<{ period?: st
 
       <section className="an-tiles" aria-label="Headline numbers">
         <div><span>Days to decision</span><strong>{a.cases ? a.daysToDecision.workspace : "—"}</strong><small>was {a.daysToDecision.before} days before the workspace</small></div>
-        <div><span>Specialist time saved</span><strong>{a.effort.hoursSaved} h</strong><small>{a.cases} {a.cases === 1 ? "case" : "cases"} decided · {a.daysToDecision.daysSaved} calendar days sooner</small></div>
+        <div><span>Specialist time saved</span><strong>{a.effort.hoursSaved} h</strong><small>{a.cases} {a.cases === 1 ? "case" : "cases"} decided | {a.daysToDecision.daysSaved} calendar days sooner</small></div>
         <div><span>Cost saved</span><strong>{usd(a.effort.costSavedUsd)}</strong><small>after {usd(a.ai.costUsd, 3)} of AI</small></div>
-        <div><span>Customer notices on time</span><strong>{pct(a.notices.onTimeShare)}</strong><small>{a.notices.onTime} of {a.notices.total} · was {pct(a.notices.beforeOnTimeShare)}</small></div>
+        <div><span>Customer notices on time</span><strong>{pct(a.notices.onTimeShare)}</strong><small>{a.notices.onTime} of {a.notices.total} | was {pct(a.notices.beforeOnTimeShare)}</small></div>
       </section>
 
       <section className="an-card" aria-labelledby="trend">
@@ -68,7 +68,7 @@ async function Dashboard({ searchParams }: { searchParams: Promise<{ period?: st
           <i className="an-base" style={{ bottom: `calc(22px + (100% - 22px) * ${a.daysToDecision.before / maxDays})` }} />
           {a.months.map(m => <div key={m.month} className={`an-bar ${m.inPeriod ? "" : "is-out"}`}>
             {m.days !== null
-              ? <span className={`is-${m.mode}`} style={{ height: `${(m.days / maxDays) * 100}%` }} data-tip={`${m.label}: ${m.days} days · ${m.cases} ${m.cases === 1 ? "case" : "cases"}`} tabIndex={0} />
+              ? <span className={`is-${m.mode}`} style={{ height: `${(m.days / maxDays) * 100}%` }} data-tip={`${m.label}: ${m.days} days | ${m.cases} ${m.cases === 1 ? "case" : "cases"}`} tabIndex={0} />
               : <span className="is-none" data-tip={`${m.label}: no cases`} tabIndex={0} />}
             <b>{m.label}</b>
           </div>)}

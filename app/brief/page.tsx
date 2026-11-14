@@ -29,13 +29,13 @@ export default function Brief() {
   return <div className="brief">
     <header className="brief-bar">
       <Link href="/signin" className="brief-brand" aria-label="Apex"><ApexLogo size={26} /></Link>
-      <span>Solution brief · November 2026</span>
+      <span>Solution brief | November 2026</span>
       <a className="brief-cta" href={`${APP}/signin`}>Open the demo</a>
     </header>
 
     <main className="brief-main">
       <section className="brief-hero">
-        <p className="brief-for">For Apex Additives · Change Control, Quality, Regulatory</p>
+        <p className="brief-for">For Apex Additives | Change Control, Quality, Regulatory</p>
         <h1>Supplier changes decided in days, not weeks.</h1>
         <div className="value-pair">
           <div><strong>AI on top of the systems you already run</strong><p>SAP, Veeva and the regulatory service stay. Every AI answer cites a record.</p></div>
@@ -47,7 +47,7 @@ export default function Brief() {
       <nav className="brief-toc" aria-label="Sections">{sections.map(([id, label], i) => <a key={id} href={`#${id}`}><span>{i + 1}</span>{label}</a>)}</nav>
 
       <section id="problem" className="brief-section">
-        <h2>1 · The problem</h2>
+        <h2>1 | The problem</h2>
         <p className="lede">A supplier ends Binder X-17. Apex must find every affected product, check it is qualified, and tell customers on time.</p>
         <ul className="ticks">
           <li>Today this is SAP exports, Veeva look-ups, Excel and email sign-offs.</li>
@@ -61,7 +61,7 @@ export default function Brief() {
       </section>
 
       <section id="architecture" className="brief-section">
-        <h2>2 · Architecture</h2>
+        <h2>2 | Architecture</h2>
         <h3>Today</h3>
         <ol className="flow" aria-label="Current state">
           <li><strong>Supplier notice</strong><span>PDF in one buyer's inbox</span></li>
@@ -99,7 +99,7 @@ export default function Brief() {
       </section>
 
       <section id="choices" className="brief-section">
-        <h2>3 · Why Vercel, and the trade-offs</h2>
+        <h2>3 | Why Vercel, and the trade-offs</h2>
         <table className="brief-table">
           <thead><tr><th>Choice</th><th>Why</th><th>Trade-off</th></tr></thead>
           <tbody>
@@ -115,7 +115,7 @@ export default function Brief() {
       </section>
 
       <section id="demo" className="brief-section">
-        <h2>4 · Try it</h2>
+        <h2>4 | Try it</h2>
         <div className="cols">
           <ul className="links">
             <li><a href={`${APP}/signin`}>Live workspace</a></li>
@@ -137,7 +137,7 @@ export default function Brief() {
       </section>
 
       <section id="rollout" className="brief-section">
-        <h2>5 · Rollout</h2>
+        <h2>5 | Rollout</h2>
         <ol className="timeline">
           <li><strong>Preview</strong><span>Every change gets its own link.</span></li>
           <li><strong>Validate</strong><span>AI tests must pass.</span></li>
@@ -148,7 +148,7 @@ export default function Brief() {
       </section>
 
       <section id="success" className="brief-section">
-        <h2>6 · Success and pilot</h2>
+        <h2>6 | Success and pilot</h2>
         <div className="cols">
           <ul className="ticks">
             <li><strong>Business:</strong> days to decision, notices on time, audit findings. Tracked on the Analytics page.</li>
@@ -162,7 +162,7 @@ export default function Brief() {
       </section>
 
       <section id="risks" className="brief-section">
-        <h2>7 · Risks</h2>
+        <h2>7 | Risks</h2>
         <ul className="ticks">
           <li>The model makes mistakes. A policy check corrects it, and people sign off.</li>
           <li>The demo reads a mock; real systems need Secure Compute and test data.</li>
@@ -172,7 +172,7 @@ export default function Brief() {
       </section>
 
       <section id="validation" className="brief-section">
-        <h2>8 · How the AI was checked</h2>
+        <h2>8 | How the AI was checked</h2>
         <div className="stats">
           <div><strong>{evals.finalAnswerCorrect}</strong><span>correct after the policy check</span></div>
           <div><strong>{evals.modelStatusAccuracy.replace(" findings", "")}</strong><span>right from the model alone</span></div>
@@ -183,7 +183,7 @@ export default function Brief() {
       </section>
 
       <section id="feedback" className="brief-section">
-        <h2>9 · Feedback on Vercel</h2>
+        <h2>9 | Feedback on Vercel</h2>
         <div className="cols">
           <ul className="ticks">
             <li><strong>Good:</strong> OIDC for AI Gateway, so no API keys.</li>

@@ -147,3 +147,10 @@ button.cw-node:hover { transform: translateX(3px); box-shadow: 0 0 0 1px var(--l
   .cw-node-notice { grid-column: 1 / -1; text-align: left; }
   .cw-system li, .cw-panel-sources li { grid-template-columns: 1fr; gap: 2px; }
 }
+
+/* "Latest" in the next-step card: the last few case events, so a waiting person sees what happened. */
+.cw-latest { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.cw-latest ol { display: grid; gap: 6px; margin-top: 6px; }
+.cw-latest li { display: grid; grid-template-columns: 64px 1fr; gap: 8px; font-size: 13px; line-height: 1.4; }
+.cw-latest time { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.cw-latest span { color: var(--ink-2); }

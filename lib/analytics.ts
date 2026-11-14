@@ -53,12 +53,12 @@ const workspace: Row[] = [
   ["SCC-2026-034", "UV absorber U-3", "Plastics", "2026-09-21", "2026-09-22", 2, 0, 0],
   ["SCC-2026-035", "Varnish V-12", "Inks", "2026-10-05", "2026-10-08", 3, 0, 1],
   ["SCC-2026-036", "Talc T-9", "Plastics", "2026-10-14", "2026-10-15", 1, 0, 0],
-  ["SCC-2026-037", "Resin R-44", "Coatings", "2026-10-26", "2026-10-28", 2, 0, 0],
+  ["SCC-2026-037", "Resin R-44", "Coatings", "2026-10-16", "2026-10-18", 2, 0, 0],
   ["SCC-2026-039", "Pigment PY-83", "Inks", "2026-11-02", "2026-11-04", 2, 0, 1],
 ];
 // Product line of the cases on the board, for the "in flight" numbers.
 const boardLine: Record<string, ProductLine> = {
-  "SCC-2026-041": "Coatings", "SCC-2026-042": "Coatings", "SCC-2026-044": "Inks", "SCC-2026-038": "Plastics",
+  "SCC-2026-041": "Coatings", "SCC-2026-040": "Coatings", "SCC-2026-044": "Inks", "SCC-2026-038": "Plastics",
 };
 
 const DAY = 86_400_000;

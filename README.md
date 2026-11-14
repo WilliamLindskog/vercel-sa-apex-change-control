@@ -20,7 +20,7 @@ The demo uses directory accounts without passwords; production would use Apex SS
 
 ## What's in it
 
-- **Board and Calendar:** every case by stage, with whose turn it is. The board is drag-to-advance where the case rules allow it, and the calendar runs from notice to end of supply. Binder X-17 is the live case; the others are read-only samples.
+- **Board and Calendar:** every case by stage, with whose turn it is. The board is drag-to-advance where the case rules allow it, and the calendar runs from notice to end of supply. Binder X-17 is the live case and the one that opens; the others are example cases that fill out the board. A bell lists the cases waiting on you.
 - **Case page:** the answer first (affected products, what needs re-testing, what can't be decided), then sign-offs and the evidence behind each finding.
 - **Analytics:** days to decision against the manual baseline, time and cost saved, notices on time, problems caught and AI spend, filtered by period and product line.
 - **Helper:** a chat assistant (lower right) that reads the same board and analytics data. It prioritises your day, drafts check-ins and drafts reports. It only drafts; people send.
@@ -52,7 +52,7 @@ Cache Components is on (`next.config.ts`), with Partial Prefetching.
 | Solution brief | Static, built once | The same for everyone |
 | Sign-in landing | Static shell; only the menu reads the URL | Fast first impression |
 | Workspace frame (sidebar) | Static shell; account menu and Helper stream in | Who you are is a request-time cookie |
-| Sample cases, analytics history | `"use cache"`, tagged `cases` / `analytics`, `cacheLife("hours")` | Shared reference data that changes rarely |
+| Example cases, analytics history | `"use cache"`, tagged `cases` / `analytics`, `cacheLife("hours")` | Shared reference data that changes rarely |
 | Live case (Binder X-17), "in flight" | Request time (`connection()`), streamed behind `<Suspense>` | Workflow state changes on its own schedule; a sign-off must never be stale |
 
 - **Sign-in gate:** `proxy.ts`, before any page renders. That is what lets the pages keep a static shell.
@@ -109,6 +109,6 @@ Without `APEX_SYSTEMS_URL` and `APEX_SYSTEMS_TOKEN`, local runs use the mock on 
 ## Known limits
 
 - The mock stands in for SAP, Veeva and the regulatory service; real integration needs Apex's API gateway and Secure Compute.
-- Only Binder X-17 runs on a live workflow; the other board cases and the analytics history before it are sample data, labelled as such.
+- Only Binder X-17 runs on a live workflow; the other board cases and the analytics history are example data, labelled as such.
 - Demo sign-in has no passwords.
 - EU data rules need function regions and provider routing set before production.

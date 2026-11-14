@@ -45,7 +45,8 @@ export function CalendarView({ cards, userId, nameOf, now }: { cards: BoardCard[
           const opened = parse(card.opened), due = parse(card.due);
           const daysLeft = Math.ceil((due - today) / DAY);
           const stage = stages.find(s => s.id === card.stage)!;
-          return <Link key={card.id} href={`/cases/${card.id}`} role="row" className={`cal-row is-${card.stage} ${mine ? "is-mine" : ""}`}>
+          const rowClass = `cal-row is-${card.stage} ${mine ? "is-mine" : ""} ${card.live ? "is-live" : "is-example"}`;
+          const cells = <>
             <span className="cal-name" role="cell">
               <strong>{card.material}</strong>
               <span>{mine ? <span className="bc-turn">Your turn</span>
@@ -53,14 +54,18 @@ export function CalendarView({ cards, userId, nameOf, now }: { cards: BoardCard[
                 : stage.label}</span>
             </span>
             <span className="cal-track" role="cell">
-              <span className="cal-bar" style={{ left: at(opened), width: `calc(${at(due)} - ${at(opened)})` }} title={`${short(opened)} → ${short(due)} · ${stage.label}`}>
+              <span className="cal-bar" style={{ left: at(opened), width: `calc(${at(due)} - ${at(opened)})` }} title={`${short(opened)} → ${short(due)} | ${stage.label}`}>
                 <span className="cal-fill" style={{ width: `${(card.step / 5) * 100}%` }} />
               </span>
               <span className={`cal-due ${card.stage !== "done" && daysLeft < 30 ? "is-soon" : ""}`} style={{ left: at(due) }}>
-                {card.stage === "done" ? short(due) : `${short(due)} · ${daysLeft}d`}
+                {card.stage === "done" ? short(due) : `${short(due)} | ${daysLeft}d`}
               </span>
             </span>
-          </Link>;
+          </>;
+          // Only the live case opens; example rows sit in the plan for context.
+          return card.live
+            ? <Link key={card.id} href={`/cases/${card.id}`} role="row" data-case={card.id} className={rowClass}>{cells}</Link>
+            : <div key={card.id} role="row" data-case={card.id} className={rowClass} title="Example case">{cells}</div>;
         })}
       </div>
     </div>
