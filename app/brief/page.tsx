@@ -92,7 +92,7 @@ export default function Brief() {
               <li><strong>Next.js workspace</strong><span>board, case page, Mango</span></li>
               <li><strong>Workflows</strong><span>one durable run per case</span></li>
               <li><strong>AI SDK agent</strong><span>read-only tools, checked output</span></li>
-              <li><strong>AI Gateway</strong><span>fallback, cost, budget</span></li>
+              <li><strong>AI Gateway</strong><span>fallback, cost, budget, zero data retention</span></li>
               <li><strong>Vercel Connect</strong><span>phase 2: Outlook, Teams, Salesforce</span></li>
             </ul>
           </div>
@@ -113,6 +113,7 @@ export default function Brief() {
             <tr><td>Runtime Cache</td><td>Mango's per-person limit, shared by all instances.</td><td>Best effort; the Gateway budget is the hard cap.</td></tr>
             <tr><td>Vercel Connect (phase 2)</td><td>Per-person access to Outlook, Teams and Salesforce, through connectors IT approves.</td><td>Each person consents once per tool.</td></tr>
             <tr><td>Secure Compute</td><td>Private link into Apex's network.</td><td>Production only; mocked in the demo.</td></tr>
+            <tr><td>Open source core</td><td>Next.js, the AI SDK and the Workflow SDK are open source; the app is plain TypeScript in Apex's repo.</td><td>Vercel runs it best, but nothing is locked in.</td></tr>
           </tbody>
         </table>
       </section>
@@ -167,9 +168,32 @@ export default function Brief() {
           </ul>
           <ul className="ticks">
             <li><strong>Pilot:</strong> one product line, 10 past cases as baseline.</li>
-            <li><strong>Exit:</strong> decisions in days, 100% valid citations, no missed notices.</li>
+            <li><strong>Owner:</strong> Change Control, with one Quality and one Regulatory reviewer.</li>
           </ul>
         </div>
+        <table className="brief-table gates">
+          <thead><tr><th>Entry: before the pilot</th><th>Gates: to widen the rollout</th><th>Exit: pilot succeeded</th></tr></thead>
+          <tbody><tr>
+            <td><ul className="ticks">
+              <li>Read-only test access to SAP, Veeva and regulatory, over Secure Compute</li>
+              <li>Apex SSO on; roles from directory groups</li>
+              <li>All 10 past cases match their real outcome</li>
+              <li>Security and data review signed off</li>
+            </ul></td>
+            <td><ul className="ticks">
+              <li><strong>Preview → 10%:</strong> tests and AI checks pass; a reviewer approves</li>
+              <li><strong>10% → 50%:</strong> no workflow errors or invalid citations; cost and fallback in budget</li>
+              <li><strong>50% → 100%:</strong> pilot users agree with the decisions</li>
+              <li><strong>Roll back:</strong> any invalid citation or error spike</li>
+            </ul></td>
+            <td><ul className="ticks">
+              <li>Decisions in days, not weeks</li>
+              <li>100% valid citations</li>
+              <li>No missed customer notices</li>
+              <li>Users prefer it to the spreadsheet</li>
+            </ul></td>
+          </tr></tbody>
+        </table>
       </section>
 
       <section id="risks" className="brief-section">
@@ -178,7 +202,7 @@ export default function Brief() {
           <li>The model makes mistakes. A policy check corrects it, and people sign off.</li>
           <li>The demo reads a mock; real systems need Secure Compute and test data.</li>
           <li>Demo sign-in is a role switcher. Production: Apex SSO over OIDC, roles from directory groups, every sign-off tied to the real person, and Vercel Passport in front of every deployment.</li>
-          <li>EU data rules need regions and providers set before go-live.</li>
+          <li>EU data rules need regions and providers set before go-live. AI Gateway supports zero data retention and Apex's own provider keys.</li>
         </ul>
       </section>
 
