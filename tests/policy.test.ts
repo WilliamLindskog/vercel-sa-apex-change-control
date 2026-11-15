@@ -3,7 +3,7 @@ import { beforeEach, describe, test } from "node:test";
 import { handle } from "../apex-systems/lib/handler.js";
 import { apexSession, type Scenario } from "../lib/apex-systems";
 import { enforcePolicy, establishFacts, type Fact } from "../lib/assessment";
-import type { Assessment } from "../lib/case";
+import { getChange, supplierChanges, type Assessment } from "../lib/case";
 
 // The policy is what makes the AI safe to use, so it is tested without the AI and without the network:
 // the mock of Apex's systems runs in-process behind a stubbed fetch.
@@ -52,6 +52,48 @@ describe("policy reads Apex's systems correctly", () => {
       await assert.rejects(factsFor("normal"), /401/);
     } finally {
       globalThis.fetch = realFetch;
+    }
+  });
+});
+
+// Each kind of supplier change means something different for an existing qualification.
+describe("policy depends on the kind of change", () => {
+  const factsForCase = async (caseId: string, scenario: Scenario = "normal") => byId(await establishFacts(apexSession(scenario), getChange(caseId)));
+
+  test("site change (Wax W-210 moves plant): every use needs requalification, with the longer site notice", async () => {
+    const f = await factsForCase("SCC-2026-040");
+    assert.equal(f["FG-440-US"].expected, "requalification_required");
+    assert.equal(f["FG-440-EU"].expected, "requalification_required");
+    assert.equal(f["FG-440-US"].noticeDays, 90);
+    assert.equal(f["FG-440-EU"].noticeDays, 120);
+    assert.ok(f["FG-440-EU"].evidence.includes("REG-EU-09"));
+  });
+
+  test("packaging-only change (Talc T-12 bags): qualifications stay valid; notice only where the market asks", async () => {
+    const f = await factsForCase("SCC-2026-046");
+    assert.equal(f["FG-150-US"].expected, "qualified");
+    assert.equal(f["FG-150-EU"].expected, "qualified");
+    assert.equal(f["FG-150-US"].noticeDays, 0);
+    assert.equal(f["FG-150-EU"].noticeDays, 30);
+  });
+
+  test("Purchasing's list is checked against ERP: a flagged product that does not use the material is unaffected", async () => {
+    const f = await factsForCase("SCC-2026-044");
+    assert.equal(f["FG-725-US"].expected, "unaffected");
+    assert.equal(f["FG-710-US"].expected, "requalification_required");
+  });
+
+  test("the missing-EU scenario blocks any case with an EMEA product", async () => {
+    const f = await factsForCase("SCC-2026-042", "missing-eu-qualification");
+    assert.equal(f["FG-170-EU"].expected, "uncertain");
+    assert.equal(f["FG-170-EU"].openQuestion?.owner, "Regulatory Affairs");
+    assert.equal(f["FG-170-US"].expected, "requalification_required");
+  });
+
+  test("every case finds its material in ERP and at least one product in scope", async () => {
+    for (const change of supplierChanges) {
+      const facts = await establishFacts(apexSession("normal"), change);
+      assert.ok(facts.some(f => f.usesMaterial), `${change.id} (${change.materialName}) has no product using ${change.material}`);
     }
   });
 });
