@@ -95,3 +95,17 @@
   .brief-bar > span { display: none; }
   .brief-table td:first-child { white-space: normal; }
 }
+
+/* Entry, gates and exit side by side */
+.gates { margin-top: 20px; table-layout: fixed; }
+.gates th { width: 33.3%; }
+.gates td, .gates td:first-child { white-space: normal; color: var(--ink-2); font-weight: 400; }
+.gates .ticks li { font-size: 13.5px; }
+@media (max-width: 760px) {
+  .gates, .gates tbody, .gates tr, .gates td { display: block; width: auto; }
+  .gates thead { display: none; }
+  .gates td::before { display: block; margin-bottom: 6px; color: var(--ink-3); font-size: 12px; font-weight: 700; }
+  .gates td:nth-child(1)::before { content: "Entry"; }
+  .gates td:nth-child(2)::before { content: "Gates"; }
+  .gates td:nth-child(3)::before { content: "Exit"; }
+}
