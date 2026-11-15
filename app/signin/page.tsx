@@ -1,27 +1,19 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { Suspense } from "react";
 import { ApexLogo } from "@/app/ui/apex-mark";
 import brickMill from "@/app/ui/images/brick-mill-tower.jpg";
-import paintSwatches from "@/app/ui/images/binder-paint-swatches.jpg";
-import rotterdamLab from "@/app/ui/images/rotterdam-lab-flasks.jpg";
-import singapore from "@/app/ui/images/singapore-marina-bay.jpg";
 import labReview from "@/app/ui/images/culture-lab-review.jpg";
 import sandstone from "@/app/ui/images/sandstone-striated.jpg";
 import { users } from "@/lib/users";
+import { news } from "./news";
 import { SignInMenu } from "./signin-menu";
 import "./landing.css";
 
 export const metadata: Metadata = { title: "Apex" };
 
-// Apex is fictional. News, history, sites and figures below are demo copy.
-const news = [
-  { date: "12 Nov 2026", title: "Binder X-17 change review opens", image: paintSwatches, position: "center 18%" },
-  { date: "28 Oct 2026", title: "Rotterdam lab finishes REACH update", image: rotterdamLab, position: "center" },
-  { date: "30 Sep 2026", title: "Cleveland marks 198 years", image: brickMill, position: "center" },
-  { date: "4 Sep 2026", title: "Singapore technical service expands", image: singapore, position: "58% center" },
-];
-
+// Apex is fictional. News (see news.ts), history, sites and figures below are demo copy.
 const eras = [
   { year: "1828", title: "Pigment works" },
   { year: "1871", title: "First laboratory" },
@@ -84,9 +76,11 @@ export default function SignInPage({ searchParams }: { searchParams: Promise<{ n
         <div className="chapter-body">
           <h2 id="news-title">News</h2>
           <ul className="rail news-rail">
-            {news.map((item, i) => <li key={item.title} style={{ "--i": i } as React.CSSProperties}>
-              <Image src={item.image} alt="" placeholder="blur" sizes="(max-width: 700px) 80vw, 30vw" style={{ objectPosition: item.position }} />
-              <div><time>{item.date}</time><strong>{item.title}</strong></div>
+            {news.map((item, i) => <li key={item.slug} style={{ "--i": i } as React.CSSProperties}>
+              <Link href={`/news/${item.slug}`}>
+                <Image src={item.image} alt="" placeholder="blur" sizes="(max-width: 700px) 80vw, 30vw" style={{ objectPosition: item.position }} />
+                <div><time>{item.date}</time><strong>{item.title}</strong><p>{item.summary}</p><span className="news-more" aria-hidden="true">Read more</span></div>
+              </Link>
             </li>)}
           </ul>
         </div>

@@ -176,7 +176,7 @@ export default function Brief() {
         <ul className="ticks">
           <li>The model makes mistakes. A policy check corrects it, and people sign off.</li>
           <li>The demo reads a mock; real systems need Secure Compute and test data.</li>
-          <li>Demo sign-in has no passwords; production uses Apex SSO.</li>
+          <li>Demo sign-in is a role switcher. Production: Apex SSO over OIDC, roles from directory groups, every sign-off tied to the real person, and Vercel Passport in front of every deployment.</li>
           <li>EU data rules need regions and providers set before go-live.</li>
         </ul>
       </section>
