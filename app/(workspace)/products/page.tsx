@@ -5,6 +5,7 @@ import { DemoScenario } from "@/app/ui/demo-scenario";
 import { boardCards } from "@/lib/board";
 import { supplierChanges } from "@/lib/case";
 import { productRegistry } from "@/lib/products";
+import { whatMaterialDoes, whatProductIs } from "@/lib/catalogue";
 import { requireUser } from "@/lib/session";
 import "./products.css";
 
@@ -43,9 +44,9 @@ async function Registry() {
           {rows.map(product => {
             const cases = casesFor(product.markets.map(m => m.finishedGood));
             return <div key={product.family} className="pr-row" role="row">
-              <span role="cell" className="pr-name"><strong>{product.name}</strong><code>{product.family}</code></span>
+              <span role="cell" className="pr-name"><strong>{product.name}</strong>{whatProductIs(product.family) && <span className="pr-use">{whatProductIs(product.family)}</span>}<code>{product.family}</code></span>
               <span role="cell" className="pr-markets">{product.markets.map(m => <em key={m.market} title={`${m.finishedGood}, plant ${m.plant}`}>{m.market}</em>)}</span>
-              <span role="cell" className="pr-materials">{product.materials.map(m => m.name).join(", ")}</span>
+              <span role="cell" className="pr-materials">{product.materials.map((m, i) => <span key={m.material} title={whatMaterialDoes(m.material) ? `${m.name}: ${whatMaterialDoes(m.material)}` : m.name}>{i ? ", " : ""}{m.name}</span>)}</span>
               <span role="cell" className="pr-cases">
                 {cases.length === 0 ? <span className="pr-none">None</span> : cases.map(change => {
                   const done = stageOf.get(change.id) === "done";

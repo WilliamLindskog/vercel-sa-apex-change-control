@@ -1,4 +1,5 @@
 import { displayDate, supplierChanges, type ProductLine } from "./case";
+import { whatMaterialDoes } from "./catalogue";
 
 export type Stage = "new" | "assessing" | "review" | "ready" | "done";
 export const stages: { id: Stage; label: string }[] = [
@@ -16,6 +17,7 @@ export type CaseSummary = {
   title: string;
   supplier: string;
   material: string;
+  does?: string;          // what the raw material does, in plain words
   line: ProductLine;
   opened: string;
   due: string;
@@ -26,7 +28,7 @@ export type CaseSummary = {
 };
 
 export const cases: CaseSummary[] = supplierChanges.map(c => ({
-  id: c.id, title: c.title, supplier: c.supplier, material: c.materialName, line: c.line,
+  id: c.id, title: c.title, supplier: c.supplier, material: c.materialName, does: whatMaterialDoes(c.material), line: c.line,
   opened: displayDate(c.received), due: displayDate(c.deadline), deadline: c.deadline,
   people: [c.team.lead, c.team.lab, c.team.quality, c.team.regulatory],
 }));

@@ -7,6 +7,7 @@ import type { AssessmentRun, CaseState, Disposition, Finding } from "@/lib/case"
 import { defaultNote, displayDate, getChange, type SupplierChange } from "@/lib/case";
 import { reviewLabel, reviewOrder, type ReviewRole, type User } from "@/lib/users";
 import { askMango, HelperAvatar } from "@/app/ui/assistant";
+import { whatMaterialDoes, whatProductIs } from "@/lib/catalogue";
 import { DemoScenario, useDemoScenario } from "@/app/ui/demo-scenario";
 import { scenarioLabel } from "@/lib/demo-scenario";
 
@@ -138,6 +139,7 @@ export function CaseWorkspace({ caseId, user, directory }: { caseId: string; use
         <div>
           <p className="cw-meta">{change.id} | Raw material from {change.supplier} | {changeLabel[change.changeType]}</p>
           <h1>{change.materialName} <span className="cw-arrow" aria-label="becomes" /> {change.becomes}</h1>
+          {whatMaterialDoes(change.material) && <p className="cw-plain"><strong>Raw material:</strong> {whatMaterialDoes(change.material)}. {change.change}</p>}
         </div>
         <div className="cw-head-side">
           {!state?.routed && <span className="cw-days"><strong>{daysUntil(change.deadline)}</strong> days until the change</span>}
@@ -180,7 +182,7 @@ export function CaseWorkspace({ caseId, user, directory }: { caseId: string; use
           </ol> : <div className="as-table" role="table" aria-label="Final products the change could touch">
             <div className="as-row is-head" role="row"><span role="columnheader">Final product</span><span role="columnheader">Status</span><span role="columnheader">Notice</span><span role="columnheader">Records</span></div>
             {run ? findings.map(f => <button key={f.finishedGood} className={`as-row is-${f.disposition}`} role="row" onClick={() => setOpen(f.finishedGood)} title="Open the reasoning">
-              <span role="cell" className="as-product"><strong>{shortName(f.product)}</strong><em>{marketTag(f.market)}</em></span>
+              <span role="cell" className="as-product"><span className="as-name"><span><strong>{shortName(f.product)}</strong><em>{marketTag(f.market)}</em></span>{whatProductIs(f.finishedGood) && <small>{whatProductIs(f.finishedGood)}</small>}</span></span>
               <span role="cell"><span className={`pill pill-${f.disposition}`}>{statusLabel[f.disposition]}</span></span>
               <span role="cell" className="as-notice">{f.disposition === "unaffected" || f.noticeDays === 0 ? "None" : f.noticeDays ? `${f.noticeDays} days` : "Unknown"}</span>
               <span role="cell" className="as-records">
@@ -188,7 +190,7 @@ export function CaseWorkspace({ caseId, user, directory }: { caseId: string; use
                 {f.disposition === "uncertain" && <span className="ev-chip is-gap">Missing</span>}
               </span>
             </button>) : change.candidates.map(id => <div key={id} className="as-row is-pending" role="row">
-              <span role="cell" className="as-product"><strong>{id}</strong></span>
+              <span role="cell" className="as-product"><span className="as-name"><span><strong>{id}</strong></span>{whatProductIs(id) && <small>{whatProductIs(id)}</small>}</span></span>
               <span role="cell"><span className="pill">Not checked</span></span>
               <span role="cell" className="as-notice">–</span>
               <span role="cell" className="as-records"><span className="ev-none">Flagged by Purchasing</span></span>
@@ -300,6 +302,7 @@ function ProductPanel({ finding: f, sourceById, onClose }: { finding: Finding; s
         <div><p className="cw-meta">{f.finishedGood} | {marketTag(f.market)}</p><h2 id="panel-h">{shortName(f.product)}</h2></div>
         <button className="cw-close" onClick={onClose} aria-label="Close">×</button>
       </header>
+      {whatProductIs(f.finishedGood) && <p className="cw-plain">Final product: {whatProductIs(f.finishedGood)}.</p>}
       <span className={`pill pill-${f.disposition}`}>{statusLabel[f.disposition]}</span>
       <p className="cw-panel-why">{f.rationale}</p>
       {f.noticeDays && f.disposition !== "unaffected" ? <p className="cw-panel-notice"><strong>{f.noticeDays} days</strong> customer notice before the change</p> : null}
