@@ -8,6 +8,7 @@ import labReview from "@/app/ui/images/culture-lab-review.jpg";
 import sandstone from "@/app/ui/images/sandstone-striated.jpg";
 import { users } from "@/lib/users";
 import { news } from "./news";
+import { DemoReset } from "./demo-reset";
 import { SignInMenu } from "./signin-menu";
 import "./landing.css";
 
@@ -108,6 +109,7 @@ export default function SignInPage({ searchParams }: { searchParams: Promise<{ n
 
     <footer className="lp-footer">
       <span>Apex is a fictional company created for a product demo. <a href="/brief">Read the solution brief</a>.</span>
+      <DemoReset />
       <span>Photos on <a href="https://unsplash.com">Unsplash</a> by {credits.map((c, i) => <span key={c.name}>{i ? (i === credits.length - 1 ? " and " : ", ") : ""}<a href={c.href}>{c.name}</a></span>)}.</span>
     </footer>
   </div>;

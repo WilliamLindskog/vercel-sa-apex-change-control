@@ -2,7 +2,10 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { timingSafeEqual } from "node:crypto";
 import { boardCards } from "@/lib/board";
+import { supplierChanges } from "@/lib/case";
+import { restartCase } from "@/lib/case-store";
 import { SESSION_COOKIE } from "@/lib/session";
 import { signSession } from "@/lib/session-token";
 import { findUser } from "@/lib/users";
@@ -44,4 +47,23 @@ export async function switchAccount(userId: string) {
 export async function signOut() {
   (await cookies()).delete(SESSION_COOKIE);
   redirect("/signin");
+}
+
+// Demo reset, from the landing footer: puts every case back where its story starts, so a reviewer
+// (or a rehearsal) begins fresh. Needs the reset code (DEMO_RESET_CODE), so visitors can't wipe each other's work.
+export type ResetResult = { ok: boolean; message: string } | null;
+
+function resetCodeMatches(given: string) {
+  const code = process.env.DEMO_RESET_CODE ?? (process.env.VERCEL ? "" : "local-reset");
+  const a = Buffer.from(given), b = Buffer.from(code);
+  return code.length > 0 && a.length === b.length && timingSafeEqual(a, b);
+}
+
+export async function resetDemo(_previous: ResetResult, formData: FormData): Promise<ResetResult> {
+  if (!resetCodeMatches(String(formData.get("code") ?? ""))) return { ok: false, message: "That code isn't right." };
+  const results = await Promise.allSettled(supplierChanges.map(change => restartCase(change.id, change.start.scenario ?? "normal", "Demo reset")));
+  const failed = results.filter(r => r.status === "rejected").length;
+  return failed
+    ? { ok: false, message: `${supplierChanges.length - failed} of ${supplierChanges.length} cases reset. Try again for the rest.` }
+    : { ok: true, message: `All ${supplierChanges.length} cases are back at their start.` };
 }
