@@ -82,7 +82,7 @@ Cache Components is on (`next.config.ts`), with Partial Prefetching.
 
 ## How the AI was checked
 
-- `npm test`: policy tests run the mock in-process and check every scenario and correction, without a model.
+- `npm test`: 13 policy tests run the mock in-process and check every scenario, every kind of change (formulation, site, packaging) and every correction, without a model.
 - `npm run eval`: real assessments across three scenarios (normal, missing EU qualification, quality system down), checked against hand-written answers. Latest results are in `evals/results/latest.json`: 15/15 correct after the policy check, 42/45 findings right from the model alone, and every invented citation caught.
 
 ## Release and rollback

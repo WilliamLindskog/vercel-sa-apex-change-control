@@ -11,7 +11,6 @@ import type { ReviewRole, User } from "@/lib/users";
 // (impact map), and what you should do now (next step). Evidence and run detail sit in tabs below.
 
 type View = "unassessed" | "review" | "ready" | "routed" | "blocked";
-type Tab = "evidence" | "activity";
 type Command = { type: "assess" } | { type: "sign"; role: ReviewRole; note: string } | { type: "route" } | { type: "scenario"; scenario: Scenario };
 
 const statusLabel: Record<Disposition, string> = { qualified: "Qualified", requalification_required: "Re-test", unaffected: "Not affected", uncertain: "Can't decide" };
@@ -76,7 +75,6 @@ function useCase(caseId: string) {
 export function CaseWorkspace({ caseId, user, directory }: { caseId: string; user: User; directory: User[] }) {
   const change = getChange(caseId);
   const { state, error, busy, send } = useCase(change.id);
-  const [tab, setTab] = useState<Tab | null>(null);
   const [open, setOpen] = useState<string | null>(null);
 
   // Each case has its own lead and reviewers.
@@ -89,6 +87,8 @@ export function CaseWorkspace({ caseId, user, directory }: { caseId: string; use
   const findings = run?.assessment.findings ?? [];
   const uncertain = findings.filter(f => f.disposition === "uncertain");
   const retest = findings.filter(f => f.disposition === "requalification_required");
+  const qualified = findings.filter(f => f.disposition === "qualified");
+  const unaffected = findings.filter(f => f.disposition === "unaffected");
   const assessing = Boolean(state?.assessing) || (busy && !run);
   const view: View = !run ? "unassessed" : uncertain.length ? "blocked" : state?.routed ? "routed" : quality && regulatory ? "ready" : "review";
   const questions = run?.assessment.openQuestions ?? [];
@@ -142,12 +142,18 @@ export function CaseWorkspace({ caseId, user, directory }: { caseId: string; use
       {error && <p className="form-error" role="alert">{error}</p>}
 
       <div className="cw-grid">
-        {/* 2. What the change touches */}
-        <section className={`cw-map is-${view}`} aria-labelledby="map-h" aria-busy={assessing}>
+        {/* 2. The assessment: every product the change could touch, its status, notice and the records behind it. */}
+        <section className={`cw-assess is-${view}`} aria-labelledby="assess-h" aria-busy={assessing}>
           <header>
-            <h2 id="map-h">Impact</h2>
-            {run && !assessing && <span className="cw-map-summary">{retest.length > 0 && <span className="pill pill-requalification_required">{retest.length} re-test</span>}{uncertain.length > 0 && <span className="pill pill-uncertain">{uncertain.length} can't decide</span>}<span className="pill pill-unaffected">{findings.length - retest.length - uncertain.length} not affected</span></span>}
+            <h2 id="assess-h">Assessment</h2>
+            {run && !assessing && <span className="cw-map-summary">
+              {retest.length > 0 && <span className="pill pill-requalification_required">{retest.length} re-test</span>}
+              {qualified.length > 0 && <span className="pill pill-qualified">{qualified.length} still qualified</span>}
+              {uncertain.length > 0 && <span className="pill pill-uncertain">{uncertain.length} can't decide</span>}
+              {unaffected.length > 0 && <span className="pill pill-unaffected">{unaffected.length} not affected</span>}
+            </span>}
           </header>
+
           {assessing ? <ol className="cw-progress" aria-label="Lookups so far">
             <li className="is-head">Checking Apex's systems, one saved step at a time</li>
             {(state?.progress ?? []).map((item, i) => <li key={i} className={item.ok ? undefined : "is-bad"}>
@@ -155,80 +161,46 @@ export function CaseWorkspace({ caseId, user, directory }: { caseId: string; use
               <span>{item.label}</span>
               {item.ms !== undefined && <em>{item.ms} ms</em>}
             </li>)}
-          </ol> : <div className="cw-tree">
-            <div className="cw-root"><span>Raw material</span><strong>{change.materialName}</strong><small>{change.material}</small></div>
-            <ul className="cw-branches">
-              {run ? findings.map(f => <li key={f.finishedGood}>
-                <button className={`cw-node is-${f.disposition}`} onClick={() => setOpen(f.finishedGood)} aria-label={`${f.product}, ${statusLabel[f.disposition]}. Open details`}>
-                  <span className="cw-node-name">{shortName(f.product)} <em>{marketTag(f.market)}</em></span>
-                  <span className={`pill pill-${f.disposition}`}>{statusLabel[f.disposition]}</span>
-                  <span className="cw-node-notice">{f.disposition === "unaffected" || f.noticeDays === 0 ? "No notice" : f.noticeDays ? `${f.noticeDays}-day notice` : "Notice unknown"}</span>
-                </button>
-              </li>) : change.candidates.map(id => <li key={id}><div className="cw-node is-pending"><span className="cw-node-name">{id}</span><span className="pill">Not checked</span><span className="cw-node-notice">Flagged by Purchasing</span></div></li>)}
-            </ul>
+          </ol> : <div className="as-table" role="table" aria-label="Products the change could touch">
+            <div className="as-row is-head" role="row"><span role="columnheader">Product</span><span role="columnheader">Status</span><span role="columnheader">Notice</span><span role="columnheader">Records</span></div>
+            {run ? findings.map(f => <button key={f.finishedGood} className={`as-row is-${f.disposition}`} role="row" onClick={() => setOpen(f.finishedGood)} title="Open the reasoning">
+              <span role="cell" className="as-product"><strong>{shortName(f.product)}</strong><em>{marketTag(f.market)}</em></span>
+              <span role="cell"><span className={`pill pill-${f.disposition}`}>{statusLabel[f.disposition]}</span></span>
+              <span role="cell" className="as-notice">{f.disposition === "unaffected" || f.noticeDays === 0 ? "None" : f.noticeDays ? `${f.noticeDays} days` : "Unknown"}</span>
+              <span role="cell" className="as-records">
+                {f.evidenceIds.map(id => { const rec = sourceById.get(id); return <code key={id} className={`ev-chip is-${rec?.system === "Supplier notice" ? "SUP" : rec?.system ?? "SUP"}`} title={rec ? `${rec.title.split(" | ")[1] ?? rec.title}: ${rec.detail}` : id}>{id}</code>; })}
+                {f.disposition === "uncertain" && <span className="ev-chip is-gap">Missing</span>}
+              </span>
+            </button>) : change.candidates.map(id => <div key={id} className="as-row is-pending" role="row">
+              <span role="cell" className="as-product"><strong>{id}</strong></span>
+              <span role="cell"><span className="pill">Not checked</span></span>
+              <span role="cell" className="as-notice">–</span>
+              <span role="cell" className="as-records"><span className="ev-none">Flagged by Purchasing</span></span>
+            </div>)}
           </div>}
-          {run && !assessing && <p className="cw-map-foot">{run.mode === "ai-gateway" ? "AI, checked by policy" : "Policy rules"} | {(run.latencyMs / 1000).toFixed(1)} s{run.costUsd ? ` | $${run.costUsd.toFixed(4)}` : ""}{run.corrections.length ? ` | ${run.corrections.length} AI corrections` : ""}<button className="btn-text" onClick={() => send({ type: "assess" })} disabled={busy || Boolean(state?.routed)}>Run again</button></p>}
+
+          {/* How it was checked: one line, details on demand. */}
+          {run && !assessing && <details className="as-how">
+            <summary>
+              <span>{run.mode === "ai-gateway" ? "AI, checked by policy" : "Policy rules"}</span>
+              <span>{(run.latencyMs / 1000).toFixed(1)} s</span>
+              {run.costUsd ? <span>${run.costUsd.toFixed(4)}</span> : null}
+              {run.mode === "ai-gateway" && <span>{run.corrections.length} fixed by policy</span>}
+              <button className="btn-text" onClick={event => { event.preventDefault(); send({ type: "assess" }); }} disabled={busy || Boolean(state?.routed)}>Run again</button>
+            </summary>
+            <div className="as-how-body">
+              <div><h3 className="cw-label">Lookups in Apex's systems</h3><CallTimeline calls={run.calls} /></div>
+              {run.mode === "ai-gateway" && run.corrections.length > 0 && <div><h3 className="cw-label">What the policy check corrected</h3><ul className="as-fixes">{run.corrections.map(c => <li key={c}>{c}</li>)}</ul></div>}
+              {state && <div><h3 className="cw-label">History</h3><ol className="as-history">{state.log.slice(-6).reverse().map((entry, i) => <li key={i}><time>{stamp(entry.at)}</time><span>{entry.text}</span></li>)}</ol></div>}
+              <p className="act-run">Model {run.model} | Workflow run <code>{state?.runId}</code></p>
+            </div>
+          </details>}
         </section>
 
         {/* 3. What to do now */}
         <NextStep change={change} view={view} state={state} user={user} lead={lead} person={person} questions={questions} busy={busy} assessing={assessing}
           onAssess={() => send({ type: "assess" })} onRoute={() => send({ type: "route" })} onSign={(role, note) => send({ type: "sign", role, note })} />
       </div>
-
-      <nav className="cw-tabs" role="tablist" aria-label="More detail">
-        {(["evidence", "activity"] as Tab[]).map(t => <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(tab === t ? null : t)}>
-          {t === "evidence" ? "Evidence" : "Activity"}
-        </button>)}
-      </nav>
-
-      {/* Evidence at a glance: one row per product, one column per Apex system, the records that back each answer. */}
-      {tab === "evidence" && <div className="cw-evidence" role="tabpanel">
-        {!run ? <p className="cw-empty">Apex records appear here once the assessment reads them.</p> : <>
-          <div className="ev-grid" role="table" aria-label="Records behind each product">
-            <div className="ev-row is-head" role="row"><span role="columnheader">Product</span>{evSystems.map(sys => <span key={sys} role="columnheader">{evLabel[sys]}</span>)}</div>
-            {findings.map(f => <div key={f.finishedGood} className="ev-row" role="row">
-              <button className="ev-product" role="rowheader" onClick={() => setOpen(f.finishedGood)} title="Open details">
-                <strong>{shortName(f.product)}</strong><em>{marketTag(f.market)}</em><i className={`ev-dot is-${f.disposition}`} aria-label={statusLabel[f.disposition]} />
-              </button>
-              {evSystems.map(sys => {
-                const ids = f.evidenceIds.filter(id => sourceById.get(id)?.system === sys);
-                const missing = sys === "QMS" && f.disposition === "uncertain" && ids.length === 0;
-                return <span key={sys} role="cell" className="ev-cell">
-                  {ids.map(id => { const rec = sourceById.get(id)!; return <code key={id} className="ev-chip" title={`${rec.title.split(" | ")[1] ?? rec.title}: ${rec.detail}`}>{id}</code>; })}
-                  {missing && <span className="ev-chip is-gap" title={f.rationale}>Missing</span>}
-                  {ids.length === 0 && !missing && <span className="ev-none" aria-label="None">–</span>}
-                </span>;
-              })}
-            </div>)}
-          </div>
-          <p className="ev-foot">Hover a record for what it says; click a product for the full reasoning.</p>
-        </>}
-      </div>}
-
-      {/* Activity at a glance: the run in four numbers, each lookup on a timeline, and the case history. */}
-      {tab === "activity" && state && <div className="cw-activity" role="tabpanel">
-        {run ? <>
-          <div className="act-stats">
-            <div><span>Answered by</span><strong>{run.mode === "ai-gateway" ? run.model.split("/").pop() : "Policy rules"}</strong></div>
-            <div><span>Time</span><strong>{(run.latencyMs / 1000).toFixed(1)} s</strong></div>
-            <div><span>Cost</span><strong>{run.costUsd ? `$${run.costUsd.toFixed(4)}` : "–"}</strong></div>
-            <div><span>Fixed by policy</span><strong>{run.mode === "ai-gateway" ? run.corrections.length : "–"}</strong></div>
-          </div>
-          <section className="cw-card act-calls">
-            <h3 className="cw-label">Lookups in Apex's systems</h3>
-            <CallTimeline calls={run.calls} />
-          </section>
-        </> : <p className="cw-empty">Not assessed yet.</p>}
-        <section className="cw-card act-history">
-          <h3 className="cw-label">History</h3>
-          <ol>{state.log.slice(-6).reverse().map((entry, i) => <li key={i}><time>{stamp(entry.at)}</time><span>{entry.text}</span></li>)}</ol>
-        </section>
-        {run?.mode === "ai-gateway" && run.corrections.length > 0 && <details className="act-fixes">
-          <summary>What the policy check corrected</summary>
-          <ul>{run.corrections.map(c => <li key={c}>{c}</li>)}</ul>
-        </details>}
-        <p className="act-run">Workflow run <code>{state.runId}</code></p>
-      </div>}
     </main>
 
     {selected && <ProductPanel finding={selected} sourceById={sourceById} onClose={() => setOpen(null)} />}

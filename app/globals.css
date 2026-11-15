@@ -62,17 +62,13 @@ button:disabled { cursor: not-allowed; }
 .avatar.large { width: 56px; height: 56px; font-size: 17px; }
 .avatar.tiny { width: 24px; height: 24px; font-size: 9.5px; }
 /* Portraits: Unsplash photos (credited on the landing page), cropped to the face; initials stay for screen readers' layout only. */
-.tone-dana, .tone-priya, .tone-marcus { color: transparent; background-repeat: no-repeat; background-size: 190% auto; }
+.tone-dana, .tone-priya, .tone-marcus, .tone-ingrid, .tone-kenji, .tone-lucia { color: transparent; background-repeat: no-repeat; background-size: 190% auto; }
 .tone-dana { background-color: #f8d9b8; background-image: url(/people/dana.jpg); background-position: 52% 24%; }
 .tone-priya { background-color: #dbe8cd; background-image: url(/people/priya.jpg); background-position: 44% 26%; }
 .tone-marcus { background-color: #ecd8e5; background-image: url(/people/marcus.jpg); background-position: 50% 26%; }
-.tone-ingrid { background: #e4d4f0; color: #5b3f78; }
-.tone-kenji { background: #cfe3e6; color: #2f5a60; }
-.tone-lucia { background: #f6d2c4; color: #7a3a24; }
-/* No photo for these three yet: an empty avatar shows their initials. */
-.tone-ingrid:empty::before { content: "IS"; }
-.tone-kenji:empty::before { content: "KW"; }
-.tone-lucia:empty::before { content: "LF"; }
+.tone-ingrid { background-color: #e4d4f0; background-image: url(/people/ingrid.jpg); background-position: 50% 22%; }
+.tone-kenji { background-color: #cfe3e6; background-image: url(/people/kenji.jpg); background-position: 50% 18%; }
+.tone-lucia { background-color: #f6d2c4; background-image: url(/people/lucia.jpg); background-position: 48% 26%; }
 .tone-supplier { background: #f1e7da; color: var(--ink-2); }
 
 /* Badges */

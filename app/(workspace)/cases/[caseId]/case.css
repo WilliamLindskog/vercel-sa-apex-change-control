@@ -201,3 +201,39 @@ button.cw-node:hover { transform: translateX(3px); box-shadow: 0 0 0 1px var(--l
   .ev-row { min-width: 520px; }
   .act-stats { grid-template-columns: 1fr 1fr; }
 }
+
+/* Assessment: one card for impact, evidence and how it was checked. */
+.cw-assess { display: grid; align-content: start; gap: 14px; padding: 20px 22px; border-radius: var(--radius); background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
+.cw-assess > header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.cw-assess h2 { font: 500 22px/1.2 var(--serif); font-variation-settings: "SOFT" 100, "opsz" 48; }
+.as-table { display: grid; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; }
+.as-row { display: grid; grid-template-columns: minmax(150px, 1.4fr) 128px 76px minmax(150px, 1.6fr); align-items: center; gap: 10px; width: 100%; padding: 10px 14px; border: 0; border-bottom: 1px solid var(--line); background: none; color: inherit; font: inherit; text-align: left; }
+.as-row:last-child { border-bottom: 0; }
+.as-row.is-head { padding-block: 7px; background: var(--sunken); color: var(--ink-3); font-size: 12px; font-weight: 700; }
+button.as-row { cursor: pointer; transition: background-color .15s; }
+button.as-row:hover { background: var(--ground); }
+.as-row.is-uncertain { background: var(--rose-bg); }
+.as-product { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.as-product strong { overflow: hidden; font: 500 14.5px/1.25 var(--serif); font-variation-settings: "SOFT" 100, "opsz" 36; text-overflow: ellipsis; }
+.as-product em { flex: none; padding: 0 6px; border-radius: 6px; background: var(--sunken); color: var(--ink-3); font-size: 11px; font-style: normal; font-weight: 700; }
+.as-notice { color: var(--ink-2); font-size: 13px; font-weight: 600; }
+.as-records { display: flex; flex-wrap: wrap; gap: 4px; }
+.ev-chip.is-ERP { background: #f3e6d4; color: #7a5326; }
+.ev-chip.is-QMS { background: var(--marigold-bg); color: var(--marigold-ink); }
+.ev-chip.is-Regulatory { background: var(--sage-bg); color: var(--sage); }
+.ev-chip.is-SUP { background: var(--sunken); color: var(--ink-2); }
+.as-how { border-top: 1px solid var(--line); padding-top: 10px; }
+.as-how summary { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; color: var(--ink-3); font-size: 12.5px; cursor: pointer; list-style: none; }
+.as-how summary::-webkit-details-marker { display: none; }
+.as-how summary::before { content: "▸"; color: var(--ink-3); transition: transform .15s; }
+.as-how[open] summary::before { transform: rotate(90deg); }
+.as-how summary .btn-text { margin-left: auto; }
+.as-how-body { display: grid; gap: 16px; margin-top: 14px; }
+.as-fixes { display: grid; gap: 4px; padding-left: 18px; color: var(--ink-2); font-size: 13px; list-style: disc; }
+.as-history { display: grid; gap: 5px; }
+.as-history li { display: grid; grid-template-columns: 64px 1fr; gap: 8px; font-size: 13px; }
+.as-history time { color: var(--ink-3); }
+@media (max-width: 680px) {
+  .as-row { grid-template-columns: 1fr auto; }
+  .as-row .as-notice, .as-row .as-records, .as-row.is-head span:nth-child(n+3) { display: none; }
+}

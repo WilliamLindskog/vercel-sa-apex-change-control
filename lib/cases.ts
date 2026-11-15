@@ -19,6 +19,7 @@ export type CaseSummary = {
   line: ProductLine;
   opened: string;
   due: string;
+  deadline: string;       // ISO date the change takes effect
   people: string[];
   waitingOn?: string;
   note?: string;
@@ -26,7 +27,7 @@ export type CaseSummary = {
 
 export const cases: CaseSummary[] = supplierChanges.map(c => ({
   id: c.id, title: c.title, supplier: c.supplier, material: c.materialName, line: c.line,
-  opened: displayDate(c.received), due: displayDate(c.deadline),
+  opened: displayDate(c.received), due: displayDate(c.deadline), deadline: c.deadline,
   people: [c.team.lead, c.team.quality, c.team.regulatory],
 }));
 

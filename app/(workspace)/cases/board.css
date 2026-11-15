@@ -148,3 +148,21 @@
 .bell-item em { grid-column: 2; grid-row: 1 / 3; align-self: center; color: var(--ink-2); font-size: 12px; font-style: normal; font-weight: 700; }
 .bell-item em.is-soon { color: var(--rose); }
 @media (max-width: 680px) { .board-strip header { width: auto; } .bell-pop { right: -60px; } }
+
+/* Calendar v2: bars from today to the change date, coloured by urgency; a flag for the notice deadline. */
+.cal-bar { height: 12px; min-width: 4px; }
+.cal-bar.is-soon { background: var(--rose); }
+.cal-bar.is-near { background: var(--marigold); }
+.cal-bar.is-later { background: var(--sage); opacity: .85; }
+.cal-notice { position: absolute; top: 50%; z-index: 2; width: 12px; height: 12px; margin-left: -6px; border-radius: 2px; background: var(--action); box-shadow: 0 0 0 2px var(--surface); transform: translateY(-50%) rotate(45deg); cursor: help; }
+.cal-notice.is-late { background: var(--rose); }
+.cal-row .cal-name > span { gap: 6px; }
+.cal-row .cal-name .board-dot { width: 7px; height: 7px; }
+.cal-row.is-done { min-height: 40px; opacity: .6; }
+.cal-row.is-done .cal-track { height: 40px; }
+.cal-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.cal-key { width: 14px; height: 8px; border-radius: 999px; }
+.cal-key.is-soon { background: var(--rose); }
+.cal-key.is-near { background: var(--marigold); }
+.cal-key.is-later { background: var(--sage); }
+.cal-key-notice { width: 9px; height: 9px; border-radius: 2px; background: var(--action); transform: rotate(45deg); }
