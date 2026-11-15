@@ -36,9 +36,9 @@ export function AppShell({ accounts, account, helper, children }: { accounts: Us
         <Suspense fallback={<MainLinks collapsed={collapsed} calendar={false} />}><MainLinksFromUrl collapsed={collapsed} /></Suspense>
         <button className="sidebar-heading sidebar-fold" onClick={toggleTeam} aria-expanded={teamOpen} aria-controls="sidebar-team">Team<ChevronIcon /></button>
         {teamOpen && <ul className="sidebar-team" id="sidebar-team">
-          {accounts.map(person => <li key={person.id} title={collapsed ? `${person.name}, ${person.role}` : undefined}>
+          {accounts.map(person => <li key={person.id} title={collapsed ? `${person.name}, ${person.title}` : undefined}>
             <span className={`avatar small tone-${person.id}`} aria-hidden="true">{person.initials}</span>
-            <span className="nav-label"><strong>{person.name}</strong><span>{person.role}</span></span>
+            <span className="nav-label"><strong>{person.name}</strong><span>{person.title}</span></span>
           </li>)}
         </ul>}
         <p className="sidebar-heading">About</p>

@@ -28,7 +28,7 @@ export function AccountMenu({ user, accounts }: { user: User; accounts: User[] }
       <p className="popover-heading">Switch account</p>
       {accounts.map(account => <button key={account.id} role="menuitemradio" aria-checked={account.id === user.id} disabled={pending} onClick={() => account.id === user.id ? setOpen(false) : choose(account.id)}>
         <span className={`avatar small tone-${account.id}`} aria-hidden="true">{account.initials}</span>
-        <span><strong>{account.name}</strong><span>{account.role}</span></span>
+        <span><strong>{account.name}</strong><span>{account.title}</span></span>
       </button>)}
       <form action={signOut}><button type="submit" role="menuitem" className="sign-out">Sign out</button></form>
     </div>}

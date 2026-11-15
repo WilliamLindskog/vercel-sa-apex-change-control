@@ -67,6 +67,9 @@ export function HelperBuddy({ thinking = false }: { thinking?: boolean }) {
   </svg>;
 }
 
+// Any page can hand Mango a request: it opens the chat and sends it. Used by the quick actions on a case.
+export const askMango = (text: string) => window.dispatchEvent(new CustomEvent("mango:ask", { detail: text }));
+
 const starters = (user: User) => [
   "What should I focus on today?",
   "Who is holding things up?",
@@ -138,22 +141,33 @@ export function Assistant({ user }: { user: User }) {
 
   const send = (text: string) => { if (!text.trim() || busy) return; sendMessage({ text }); setInput(""); };
 
+  useEffect(() => {
+    const onAsk = (event: Event) => {
+      const text = (event as CustomEvent<string>).detail;
+      setOpen(true);
+      try { localStorage.setItem("apex-helper", "open"); } catch {}
+      sendMessage({ text });
+    };
+    window.addEventListener("mango:ask", onAsk);
+    return () => window.removeEventListener("mango:ask", onAsk);
+  }, [sendMessage]);
+
   // A chat window that opens above the page from a round button in the lower right. The chat stays in memory when closed.
-  const launcher = <button className={`as-launcher ${open ? "is-open" : ""}`} onClick={onToggle} aria-label={open ? "Close Helper" : "Open Helper"} aria-expanded={open} aria-controls="helper-window">
-    {!open && <span className="as-hello" aria-hidden="true">Ask Helper</span>}
+  const launcher = <button className={`as-launcher ${open ? "is-open" : ""}`} onClick={onToggle} aria-label={open ? "Close Mango" : "Open Mango"} aria-expanded={open} aria-controls="helper-window">
+    {!open && <span className="as-hello" aria-hidden="true">Ask Mango</span>}
     <HelperBuddy thinking={busy} />
     {!open && messages.length > 0 && <i className="as-dot" aria-hidden="true" />}
   </button>;
   if (!open) return launcher;
 
-  return <>{launcher}<section className="assistant" id="helper-window" role="dialog" aria-label="Helper">
+  return <>{launcher}<section className="assistant" id="helper-window" role="dialog" aria-label="Mango">
     <header className="as-head">
       <HelperAvatar size={34} thinking={busy} />
-      <div><strong>Helper</strong><span>Plans your day, nudges people</span></div>
+      <div><strong>Mango</strong><span>Plans your day, nudges people</span></div>
       {messages.length > 0 && <button className="as-icon" onClick={() => setMessages([])} title="New chat" aria-label="New chat">
         <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8a5.5 5.5 0 1 0 1.7-4M2.5 2.5V5H5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
       </button>}
-      <button className="as-icon" onClick={onToggle} aria-label="Minimise Helper">
+      <button className="as-icon" onClick={onToggle} aria-label="Minimise Mango">
         <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 6 8 10.5 12.5 6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
       </button>
     </header>

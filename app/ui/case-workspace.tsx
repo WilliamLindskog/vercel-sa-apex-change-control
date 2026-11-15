@@ -6,6 +6,7 @@ import type { Scenario, SourceRecord } from "@/lib/apex-systems";
 import type { AssessmentRun, CaseState, Disposition, Finding } from "@/lib/case";
 import { defaultNote, displayDate, getChange, type SupplierChange } from "@/lib/case";
 import type { ReviewRole, User } from "@/lib/users";
+import { askMango, HelperAvatar } from "@/app/ui/assistant";
 
 // The case page reads top to bottom in three blocks: where the case is (process), what it touches
 // (impact map), and what you should do now (next step). Evidence and run detail sit in tabs below.
@@ -44,7 +45,16 @@ function useCase(caseId: string) {
     return next;
   }, [caseId]);
 
-  useEffect(() => { load().catch(reason => setError(reason.message)); }, [load]);
+  // Keep the page current. Until the first snapshot arrives (a case may still be starting), retry quietly
+  // every 2 s; after that, refresh every 15 s so a sign-off by someone else appears without a reload.
+  useEffect(() => {
+    let failures = 0;
+    const tick = () => load().then(() => { failures = 0; setError(""); }).catch(reason => { if (++failures >= 8) setError(reason.message); });
+    tick();
+    const retry = setInterval(() => { if (!latest.current) tick(); }, 2000);
+    const refresh = setInterval(() => { if (latest.current && !document.hidden) tick(); }, 15000);
+    return () => { clearInterval(retry); clearInterval(refresh); };
+  }, [load]);
 
   const send = useCallback(async (command: Command) => {
     setBusy(true); setError("");
@@ -248,11 +258,20 @@ function NextStep({ change, view, state, user, lead, person, questions, busy, as
     <h2 id="next-h">{isMe ? "Your next step" : `Waiting for ${owner.name.split(" ")[0]}`}</h2>
     <div className="cw-next-who">
       <span className={`avatar tone-${owner.id}`} aria-hidden="true">{owner.initials}</span>
-      <span><strong>{owner.name}</strong><span>{owner.role}</span></span>
+      <span><strong>{owner.name}</strong><span>{owner.title}</span></span>
     </div>
     <p className="cw-next-task">{task}</p>
     {action}
     {questions.length > 1 && <ul className="cw-next-more">{questions.slice(1).map(q => <li key={`${q.finishedGood}-${q.owner}`}><strong>{q.owner}:</strong> {q.detail}</li>)}</ul>}
+    {/* Not your turn: Mango can nudge the person, or explain the hold-up, in one click. */}
+    {!isMe && state && !state.routed && <div className="cw-mango">
+      <span className="cw-mango-label"><HelperAvatar size={24} />Ask Mango</span>
+      <div className="cw-mango-actions">
+        <button onClick={() => askMango(`Draft a friendly check-in to ${owner.name} about ${change.materialName} (${change.id}). What they need to do: ${task}`)}>Nudge {owner.name.split(" ")[0]}</button>
+        <button onClick={() => askMango(`What is holding up ${change.materialName} (${change.id}), and what would move it forward?`)}>What's the hold-up?</button>
+        {view === "blocked" && <button onClick={() => askMango(`On ${change.materialName} (${change.id}) a record is missing. Who should recover it? Draft a short message to them.`)}>Chase the missing record</button>}
+      </div>
+    </div>}
     {!isMe && state && <div className="cw-latest">
       <h3 className="cw-label">Latest</h3>
       <ol>{state.log.slice(-3).reverse().map((entry, i) => <li key={i}><time>{stamp(entry.at)}</time><span>{entry.text}</span></li>)}</ol>

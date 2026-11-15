@@ -40,7 +40,7 @@ export default function Brief() {
         <div className="value-pair">
           <div><strong>AI on top of the systems you already run</strong><p>SAP, Veeva and the regulatory service stay. Every AI answer cites a record.</p></div>
           <div><strong>People still decide</strong><p>Each case waits for Quality and Regulatory sign-off, and keeps a full history.</p></div>
-          <div><strong>A Helper for the team</strong><p>Plans the day, drafts check-ins and reports from the same live numbers.</p></div>
+          <div><strong>Mango, the team assistant</strong><p>Plans the day, drafts check-ins and reports from the same live numbers.</p></div>
         </div>
       </section>
 
@@ -88,7 +88,7 @@ export default function Brief() {
           <div className="arch-col vercel">
             <h3>On Vercel</h3>
             <ul>
-              <li><strong>Next.js workspace</strong><span>board, case page, Helper</span></li>
+              <li><strong>Next.js workspace</strong><span>board, case page, Mango</span></li>
               <li><strong>Workflows</strong><span>one durable run per case</span></li>
               <li><strong>AI SDK agent</strong><span>read-only tools, checked output</span></li>
               <li><strong>AI Gateway</strong><span>fallback, cost, budget</span></li>
@@ -109,7 +109,7 @@ export default function Brief() {
             <tr><td>Cache Components</td><td>Pages paint a static shell at once; reference data is cached and tagged.</td><td>The live case is never cached, so sign-offs are never stale.</td></tr>
             <tr><td>Fluid Compute</td><td>Mostly waiting on AI and SAP; billed for active CPU only.</td><td>Long work moves into the workflow.</td></tr>
             <tr><td>Rolling Releases</td><td>Every release goes to 10%, then 50%, then everyone, with approval.</td><td>Needs the Git release path.</td></tr>
-            <tr><td>Runtime Cache</td><td>Helper's per-person limit, shared by all instances.</td><td>Best effort; the Gateway budget is the hard cap.</td></tr>
+            <tr><td>Runtime Cache</td><td>Mango's per-person limit, shared by all instances.</td><td>Best effort; the Gateway budget is the hard cap.</td></tr>
             <tr><td>Vercel Connect (phase 2)</td><td>Per-person access to Outlook, Teams and Salesforce, through connectors IT approves.</td><td>Each person consents once per tool.</td></tr>
             <tr><td>Secure Compute</td><td>Private link into Apex's network.</td><td>Production only; mocked in the demo.</td></tr>
           </tbody>
@@ -135,7 +135,7 @@ export default function Brief() {
           <li>As Dana, open Binder X-17 and run the assessment.</li>
           <li>Sign off as Priya, then Marcus; send the plan.</li>
           <li>Pick a failure scenario and run it again.</li>
-          <li>Open Analytics, then ask Helper for a Q4 report.</li>
+          <li>Open Analytics, then ask Mango for a Q4 report.</li>
         </ol>
       </section>
 
@@ -152,7 +152,7 @@ export default function Brief() {
         <p className="note">Through Vercel Connect: Apex IT approves each connector once; each person connects their own account; the app gets short-lived tokens, never stored secrets.</p>
         <ul className="ticks">
           <li><strong>Outlook</strong>: a supplier email opens the case workflow on its own.</li>
-          <li><strong>Teams or Slack</strong>: Helper sends the check-ins it drafts, as the person.</li>
+          <li><strong>Teams or Slack</strong>: Mango sends the check-ins it drafts, as the person.</li>
           <li><strong>Salesforce</strong>: one more read-only tool names the customers to notify.</li>
         </ul>
       </section>
