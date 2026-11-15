@@ -4,7 +4,7 @@ A supplier-change workspace for Apex Additives, a fictional specialty-additives 
 
 When a supplier changes or discontinues a material, Apex must find every affected product, check each one is qualified, and notify customers on time. Today that takes 1 to 3 weeks of SAP exports, Veeva look-ups, spreadsheets and email. This workspace reads across those systems, has AI draft the assessment with a citation for every finding, and holds the case until Quality and Regulatory sign off.
 
-- **Live app:** https://vercel-sa-take-home-build.vercel.app (Sign in → use a demo account)
+- **Live app:** https://vercel-sa-take-home-build.vercel.app (Sign in → pick a person; start with Dana)
 - **Solution brief (customer-facing):** https://vercel-sa-take-home-build.vercel.app/brief
 - **Mock of Apex's systems:** https://apex-systems-mock.vercel.app/health
 
@@ -19,7 +19,7 @@ When a supplier changes or discontinues a material, Apex must find every affecte
 | Kenji Watanabe | Quality, Plastics & Inks | Signs off the technical scope |
 | Lucía Fernández | Regulatory Affairs, Americas | Signs off customer notices |
 
-The demo uses directory accounts without passwords; production would use Apex SSO.
+The demo sign-in is a role switcher with no passwords, so reviewers can see each role. The session cookie is signed (HMAC, `SESSION_SECRET`), so it can't be edited to become someone else. Production: Apex SSO (for example Okta or Entra) over OIDC, roles from directory groups, every sign-off tied to the real person, and Vercel Passport in front of every deployment, previews included.
 
 ## What's in it
 
@@ -115,5 +115,5 @@ Without `APEX_SYSTEMS_URL` and `APEX_SYSTEMS_TOKEN`, local runs use the mock on 
 
 - The mock stands in for SAP, Veeva and the regulatory service; real integration needs Apex's API gateway and Secure Compute.
 - The analytics history (Jan to Oct) is example data, labelled as such. Cases loaded part-way replay their assessment with the policy rules, not the model.
-- Demo sign-in has no passwords.
+- Demo sign-in has no passwords (production path above).
 - EU data rules need function regions and provider routing set before production.
