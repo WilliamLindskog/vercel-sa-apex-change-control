@@ -164,7 +164,7 @@ function CardView({ card, now, userId, waitingName, pending, onDragStart, onDrag
       {card.blocked ? <span className="pill pill-blocked" title={card.note}>Blocked</span> : card.stage !== "done" && days >= 0 ? <span className={`bc-due ${days < 30 ? "is-soon" : ""}`}>{days} days</span> : null}
     </div>
     <h3>{card.material}</h3>
-    <p className="bc-supplier">Raw material | {card.supplier}</p>
+    <p className="bc-supplier" title={`Raw material from ${card.supplier}`}>Raw material: {card.does ?? card.supplier}</p>
     <div className="bc-progress" aria-label={`Step ${card.step} of 6`}>{[1, 2, 3, 4, 5, 6].map(n => <i key={n} className={n <= card.step ? "is-on" : undefined} />)}</div>
     {/* Whose turn it is: the one thing a person scanning the board needs from each card. */}
     <div className="bc-foot">
