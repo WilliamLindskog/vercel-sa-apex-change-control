@@ -31,7 +31,7 @@ The demo sign-in is a role switcher with no passwords, so reviewers can see each
 - **Analytics:** simple charts of the same live cases: open cases by stage and product line, days until each change, cases decided per month, problems caught before sign-off, and AI spend.
 - **Connections:** Apex's systems with live activity from real lookups (lookups, response time, last read), and the tools people will connect in phase 2 through Vercel Connect.
 - **Mango:** the team assistant, a small monkey in the lower right, that reads the same board and analytics data. It prioritises your day, drafts check-ins and drafts reports. It only drafts; people send. Each draft offers Send in Slack, which explains that Slack comes in phase 2 (Vercel Connect) until it is connected.
-- **Demo scenario:** one setting in the top bar of every page that stands in for the state of Apex's systems (all normal, EU record missing, quality system down). Every impact check run after you change it uses it; a case shows when its result came from a different scenario.
+- **Demo scenario:** one setting in the top bar of every page that stands in for the state of Apex's systems (all normal, EU record missing, quality system down). Every impact check run after you change it uses it; a case shows when its result came from a different scenario. Every case responds to every scenario: each has an EU product, and a case whose plan is already sent can be reopened ("Reopen and check again"), which withdraws the plan and clears the sign-offs so everyone confirms again.
 - **Landing and news:** a public front page with news articles (`/news/...`), the sign-in menu, and a code-protected **Reset demo** link in the footer that puts every case back at its start (`DEMO_RESET_CODE`).
 
 ## Architecture

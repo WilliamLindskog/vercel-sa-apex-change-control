@@ -209,7 +209,7 @@ export function CaseWorkspace({ caseId, user, directory }: { caseId: string; use
               <span>{(run.latencyMs / 1000).toFixed(1)} s</span>
               {run.costUsd ? <span>${run.costUsd.toFixed(4)}</span> : null}
               {run.mode === "ai-gateway" && <span>{run.corrections.length} fixed by policy</span>}
-              <button className="btn-text" onClick={event => { event.preventDefault(); send({ type: "assess" }); }} disabled={busy || Boolean(state?.routed)}>Run again</button>
+              <button className="btn-text" onClick={event => { event.preventDefault(); send({ type: "assess" }); }} disabled={busy} title={state?.routed ? "Reopens the case: the sent plan is withdrawn and everyone signs again" : undefined}>{state?.routed ? "Reopen and check again" : "Run again"}</button>
             </summary>
             <div className="as-how-body">
               <div><h3 className="cw-label">Lookups in Apex's systems</h3><CallTimeline calls={run.calls} /></div>
