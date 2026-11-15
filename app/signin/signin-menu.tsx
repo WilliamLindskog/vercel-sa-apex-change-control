@@ -14,7 +14,7 @@ const groups: { role: Role; label: string }[] = [
   { role: "Regulatory Expert", label: "Regulatory: regulatory assessment" },
 ];
 
-// Where the demo story starts: Peter leads Binder X-17.
+// Where the demo story starts: Peter leads the CI-17 case.
 const START_HERE = "peter";
 
 // Sign-in lives behind one button in the top bar. Opening it shows the team straight away, grouped by role,

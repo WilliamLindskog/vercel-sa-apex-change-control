@@ -7,7 +7,7 @@
 
 // [material, description, supplier id, supplier name, supply end]
 const materials = [
-  ["MAT-000417", "BINDER X-17 ACRYLIC", "V-20931", "MERIDIAN SPECIALTY MATERIALS", "20270228"],
+  ["MAT-000417", "CORROSION INHIBITOR CI-17", "V-20931", "MERIDIAN SPECIALTY MATERIALS", "20270228"],
   ["MAT-000615", "PIGMENT PB-15:3 PHTHALO BLUE", "V-31877", "SUNFIELD COLOURS", "20270115"],
   ["MAT-000502", "RESIN R-50 POLYAMIDE", "V-20931", "MERIDIAN SPECIALTY MATERIALS", "20270131"],
   ["MAT-000312", "TALC T-12 MICRONISED", "V-41120", "NORDIC MINERALS", "20270331"],
@@ -25,9 +25,9 @@ const hierarchy = id => (/^FG-4/.test(id) ? "COATINGS" : /^FG-7/.test(id) ? "INK
 
 // [finished good, description, plant, sales org, components (material: description)]
 const goods = [
-  ["FG-420-US", "AEROSHIELD 420 PROTECTIVE COATING", "US10", "US01", { "MAT-000417": "BINDER X-17 ACRYLIC", "MAT-000102": "TITANIUM DIOXIDE R-9" }],
-  ["FG-420-EU", "AEROSHIELD 420 PROTECTIVE COATING (EU)", "NL20", "EU01", { "MAT-000417": "BINDER X-17 ACRYLIC", "MAT-000102": "TITANIUM DIOXIDE R-9" }],
-  ["FG-088-US", "FLEXADD 88 PLASTIC ADDITIVE", "US10", "US01", { "MAT-000233": "CARRIER RESIN CR-5", "MAT-000418": "BINDER X-17P PLASTICS GRADE" }],
+  ["FG-420-US", "AEROSHIELD 420 PROTECTIVE COATING", "US10", "US01", { "MAT-000417": "CORROSION INHIBITOR CI-17", "MAT-000102": "TITANIUM DIOXIDE R-9" }],
+  ["FG-420-EU", "AEROSHIELD 420 PROTECTIVE COATING (EU)", "NL20", "EU01", { "MAT-000417": "CORROSION INHIBITOR CI-17", "MAT-000102": "TITANIUM DIOXIDE R-9" }],
+  ["FG-088-US", "FLEXADD 88 PLASTIC ADDITIVE", "US10", "US01", { "MAT-000233": "CARRIER RESIN CR-5", "MAT-000418": "CORROSION INHIBITOR CI-17P FILM GRADE" }],
   ["FG-710-US", "COBALT 710 PACKAGING INK", "US30", "US01", { "MAT-000615": "PIGMENT PB-15:3 PHTHALO BLUE", "MAT-000502": "RESIN R-50 POLYAMIDE" }],
   ["FG-710-EU", "COBALT 710 PACKAGING INK (EU)", "NL20", "EU01", { "MAT-000615": "PIGMENT PB-15:3 PHTHALO BLUE", "MAT-000502": "RESIN R-50 POLYAMIDE" }],
   ["FG-725-US", "NAVY 725 SHEETFED INK", "US30", "US01", { "MAT-000616": "PIGMENT PB-15:4 PHTHALO BLUE", "MAT-000503": "RESIN R-52 ROSIN ESTER" }],
@@ -82,9 +82,9 @@ export const erp = {
 
 // [id, name, product, material, grade, region, effective date, scope]
 const qualifications = [
-  ["QLF-US-14", "AeroShield 420 / Binder X-17 qualification (NA)", "FG-420-US", "MAT-000417", "X-17", "na__c", "2021-03-04", "Qualified with Binder X-17 only. Any change to the binder formulation requires requalification."],
-  ["QLF-EU-03", "AeroShield 420 / Binder X-17 qualification (EMEA)", "FG-420-EU", "MAT-000417", "X-17", "emea__c", "2022-06-20", "Qualified for EMEA customers with Binder X-17 only. Formulation changes require requalification and Regulatory review."],
-  ["QLF-US-31", "FlexAdd 88 / Carrier resin CR-5 qualification (NA)", "FG-088-US", "MAT-000233", "CR-5", "na__c", "2023-01-11", "Qualified with carrier resin CR-5 and binder grade X-17P. Binder X-17 is not used."],
+  ["QLF-US-14", "AeroShield 420 / Corrosion inhibitor CI-17 qualification (NA)", "FG-420-US", "MAT-000417", "CI-17", "na__c", "2021-03-04", "Qualified with Corrosion inhibitor CI-17 only. Any change to the inhibitor formulation requires requalification."],
+  ["QLF-EU-03", "AeroShield 420 / Corrosion inhibitor CI-17 qualification (EMEA)", "FG-420-EU", "MAT-000417", "CI-17", "emea__c", "2022-06-20", "Qualified for EMEA customers with Corrosion inhibitor CI-17 only. Formulation changes require requalification and Regulatory review."],
+  ["QLF-US-31", "FlexAdd 88 / Carrier resin CR-5 qualification (NA)", "FG-088-US", "MAT-000233", "CR-5", "na__c", "2023-01-11", "Qualified with carrier resin CR-5 and inhibitor grade CI-17P. Corrosion inhibitor CI-17 is not used."],
   ["QLF-US-40", "Cobalt 710 / Pigment PB-15:3 qualification (NA)", "FG-710-US", "MAT-000615", "PB-15:3", "na__c", "2022-02-14", "Qualified with PB-15:3 alpha crystal form. Pigment grade changes require colour and lightfastness retesting."],
   ["QLF-EU-12", "Cobalt 710 / Pigment PB-15:3 qualification (EMEA)", "FG-710-EU", "MAT-000615", "PB-15:3", "emea__c", "2022-09-01", "Qualified for EMEA with PB-15:3 alpha form. Food-contact migration file references this grade."],
   ["QLF-US-41", "Cobalt 710 / Resin R-50 qualification (NA)", "FG-710-US", "MAT-000502", "R-50", "na__c", "2022-02-14", "Qualified with Resin R-50. Resin changes require adhesion and block-resistance testing."],

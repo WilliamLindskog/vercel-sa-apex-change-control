@@ -4,7 +4,7 @@ import paintSwatches from "@/app/ui/images/binder-paint-swatches.jpg";
 import rotterdamLab from "@/app/ui/images/rotterdam-lab-flasks.jpg";
 import singapore from "@/app/ui/images/singapore-marina-bay.jpg";
 
-// Apex is fictional; so is its news. The Binder X-17 story matches the demo case (SCC-2026-041).
+// Apex is fictional; so is its news. The CI-17 story matches the demo case (SCC-2026-041).
 export type Article = {
   slug: string;
   date: string;
@@ -18,18 +18,18 @@ export type Article = {
 
 export const news: Article[] = [
   {
-    slug: "binder-x17-change-review",
+    slug: "ci17-change-review",
     date: "12 Nov 2026",
-    title: "Binder X-17 change review opens",
-    summary: "Meridian is ending X-17. Three coatings products are being checked before anything changes.",
+    title: "Corrosion inhibitor CI-17 change review opens",
+    summary: "Meridian is ending CI-17. Three coatings products are being checked before anything changes.",
     image: paintSwatches,
     position: "center 18%",
     body: [
-      "Meridian Specialty Materials told Apex on 12 November that it will stop making Binder X-17 at the end of February 2027. It proposes X-17R, with a revised stabilizer package, as the replacement.",
-      "X-17 is a raw material. Three of Apex's final products, coatings sold in the US and the EU, contain it. Before any switch, Apex checks each one against its qualification records and the notice rules in each market.",
+      "Meridian Specialty Materials told Apex on 12 November that it will stop making corrosion inhibitor CI-17 at the end of February 2027. It proposes CI-17R, with a revised stabilizer package, as the replacement.",
+      "CI-17 is a raw material. Three of Apex's final products, coatings sold in the US and the EU, contain it. Before any switch, Apex checks each one against its qualification records and the notice rules in each market.",
       "Three assessments follow, in order. The lab runs small-scale performance tests. Production runs a full-scale trial, and Quality Control tests the result. The Regulatory Expert confirms compliance and which customers must be told, and by when. No product changes until all three have signed off.",
     ],
-    facts: [["Supplier", "Meridian Specialty Materials"], ["Last X-17 delivery", "28 Feb 2027"], ["Products checked", "3, in the US and EU"], ["Product Manager", "Peter Hansen"]],
+    facts: [["Supplier", "Meridian Specialty Materials"], ["Last CI-17 delivery", "28 Feb 2027"], ["Products checked", "3, in the US and EU"], ["Product Manager", "Peter Hansen"]],
   },
   {
     slug: "rotterdam-reach-update",

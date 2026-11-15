@@ -62,7 +62,7 @@ Cache Components is on (`next.config.ts`), with Partial Prefetching.
 | Sign-in landing | Static shell; only the menu reads the URL | Fast first impression |
 | Workspace frame (sidebar) | Static shell; account menu and Mango stream in | Who you are is a request-time cookie |
 | Case index, analytics history, product registry | `"use cache"`, tagged `cases` / `analytics` / `products`, `cacheLife("hours")` | Shared reference data that changes rarely |
-| Live case (Binder X-17), "in flight" | Request time (`connection()`), streamed behind `<Suspense>` | Workflow state changes on its own schedule; a sign-off must never be stale |
+| Live case (Corrosion inhibitor CI-17), "in flight" | Request time (`connection()`), streamed behind `<Suspense>` | Workflow state changes on its own schedule; a sign-off must never be stale |
 
 - **Sign-in gate:** `proxy.ts`, before any page renders. That is what lets the pages keep a static shell.
 - **Invalidation:** `POST /api/revalidate` with a shared secret calls `revalidateTag(tag, "max")`. In production, Apex's systems would call it when a case is decided or the case index changes.

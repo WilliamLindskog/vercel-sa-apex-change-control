@@ -15,7 +15,7 @@ export type SupplierChange = {
   title: string;
   supplier: string;
   material: string;          // SAP number of the raw material
-  materialName: string;      // the raw material, e.g. "Binder X-17"
+  materialName: string;      // the raw material, e.g. "Corrosion inhibitor CI-17"
   becomes: string;           // what replaces it: a grade, a site or a pack
   changeType: ChangeType;
   line: ProductLine;
@@ -78,12 +78,12 @@ export const supplierChanges: SupplierChange[] = [
     start: { stage: "review", signed: 1 },
   },
   {
-    id: "SCC-2026-041", title: "Binder X-17 replacement proposed", supplier: "Meridian Specialty Materials", material: "MAT-000417", materialName: "Binder X-17", becomes: "X-17R",
+    id: "SCC-2026-041", title: "Corrosion inhibitor CI-17 replacement proposed", supplier: "Meridian Specialty Materials", material: "MAT-000417", materialName: "Corrosion inhibitor CI-17", becomes: "CI-17R",
     changeType: "FORMULATION", line: "Coatings", received: "2026-11-12", deadline: "2027-02-28",
-    change: "Supplier will discontinue Binder X-17 and proposes Binder X-17R as the replacement.",
+    change: "Supplier will discontinue corrosion inhibitor CI-17 and proposes CI-17R as the replacement.",
     materialImpact: "Replacement formulation has a revised stabilizer package. No performance equivalency claim has been accepted by Apex.",
     candidates: ["FG-420-US", "FG-420-EU", "FG-088-US"], team: { lead: "peter", lab: "lisa", quality: "quinn", regulatory: "rachel" },
-    documents: docs("X-17 production ends 28 Feb 2027; X-17R is the proposed replacement.", "X-17R contains a revised stabilizer package; equivalency is not certified.", "12 Nov 2026"),
+    documents: docs("CI-17 production ends 28 Feb 2027; CI-17R is the proposed replacement.", "CI-17R contains a revised stabilizer package; equivalency is not certified.", "12 Nov 2026"),
     start: { stage: "new" },
   },
   {

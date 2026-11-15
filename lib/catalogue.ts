@@ -3,7 +3,7 @@
 // here it sits next to the demo data. Keyed by SAP material number and by product family (FG-420, not FG-420-US).
 
 export const materialPlain: Record<string, string> = {
-  "MAT-000417": "the glue that holds the paint film together",
+  "MAT-000417": "stops the steel underneath from rusting",
   "MAT-000615": "gives inks their blue colour",
   "MAT-000502": "makes ink stick to plastic film",
   "MAT-000312": "a mineral that makes plastic parts stiffer",
@@ -18,7 +18,7 @@ export const materialPlain: Record<string, string> = {
 
 export const productPlain: Record<string, string> = {
   "FG-420": "Anti-rust coating for steel bridges and tanks",
-  "FG-088": "Makes plastic parts more flexible",
+  "FG-088": "Additive for rust-proof packaging film",
   "FG-710": "Blue ink for food packaging",
   "FG-725": "Ink for printed brochures",
   "FG-730": "Ink for laminated snack bags",
