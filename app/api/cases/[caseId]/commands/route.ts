@@ -1,8 +1,10 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { isCase } from "@/lib/cases";
 import { restartCase, sendCommand } from "@/lib/case-store";
 import { PLAN_RECIPIENTS } from "@/workflows/supplier-change-case";
+import { isScenario, SCENARIO_COOKIE } from "@/lib/demo-scenario";
 import { currentUser } from "@/lib/session";
 
 const body = z.discriminatedUnion("type", [
@@ -27,7 +29,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ cas
 
   switch (command.type) {
     case "assess":
-      await sendCommand(caseId, { type: "assess", by: user.name, at });
+      {
+        const chosen = (await cookies()).get(SCENARIO_COOKIE)?.value;
+        await sendCommand(caseId, { type: "assess", by: user.name, at, scenario: isScenario(chosen) ? chosen : "normal" });
+      }
       break;
     case "sign":
       if (user.role !== command.role) return NextResponse.json({ error: `Only ${command.role} can record this sign-off.` }, { status: 403 });

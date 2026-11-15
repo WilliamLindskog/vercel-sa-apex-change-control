@@ -1,5 +1,6 @@
 import { createHook, getWorkflowMetadata, getWritable } from "workflow";
 import type { Scenario } from "@/lib/apex-systems";
+import { scenarioLabel } from "@/lib/demo-scenario";
 import { defaultNote, getChange, type CaseState, type SignOff, type SupplierChange } from "@/lib/case";
 import { findUser } from "@/lib/users";
 import { durableAssessment } from "./assessment";
@@ -12,7 +13,7 @@ import { durableAssessment } from "./assessment";
 // can find the case without storing a run ID anywhere.
 
 export type CaseCommand =
-  | { type: "assess"; by: string; at: string; rulesOnly?: boolean }
+  | { type: "assess"; by: string; at: string; rulesOnly?: boolean; scenario?: Scenario }
   | { type: "sign"; role: SignOff["role"]; reviewer: string; note: string; at: string }
   | { type: "route"; by: string; to: string; at: string }
   | { type: "close"; by: string; at: string };
@@ -73,7 +74,10 @@ async function apply(state: CaseState, command: Exclude<CaseCommand, { type: "cl
   }
 
   if (command.type === "assess") {
-    state = { ...state, version: state.version + 1, assessing: true, progress: [] };
+    // The demo scenario is chosen when the assessment is run (the state of Apex's systems right now).
+    const scenario = command.scenario ?? state.scenario;
+    const switched = scenario !== state.scenario;
+    state = { ...state, scenario, version: state.version + 1, assessing: true, progress: [], log: switched ? [...state.log, { at: command.at, text: `Demo scenario: ${scenarioLabel[scenario]}` }] : state.log };
     await publish(state);
     try {
       // AI runs are counted per case per day in the durable state, so the limit holds across servers and restarts.

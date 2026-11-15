@@ -24,10 +24,12 @@ The demo sign-in is a role switcher with no passwords, so reviewers can see each
 ## What's in it
 
 - **Board and Calendar:** every case by stage, with whose turn it is. The board is drag-to-advance where the case rules allow it, and the calendar runs from notice to end of supply. Every case is live: 11 supplier changes across Coatings, Plastics and Inks, each its own durable workflow with its own lead and reviewers. Cases that start part-way replay their earlier steps through the same rules. A bell lists the cases waiting on you.
-- **Case page:** the answer first (affected products, what needs re-testing, what can't be decided), then sign-offs and the evidence behind each finding.
-- **Analytics:** days to decision against the manual baseline, time and cost saved, notices on time, problems caught and AI spend, filtered by period and product line.
+- **Case page:** one Assessment card (each product, its status, the notice period and the records behind it), then whose turn it is, with quick Ask Mango actions when the case waits on someone else.
+- **Analytics:** simple charts of the same live cases: open cases by stage and product line, days until each change, cases decided per month, problems caught before sign-off, and AI spend.
 - **Connections:** Apex's systems with live activity from real lookups (lookups, response time, last read), and the tools people will connect in phase 2 through Vercel Connect.
-- **Mango:** the team assistant, a small monkey in the lower right, that reads the same board and analytics data. It prioritises your day, drafts check-ins and drafts reports. It only drafts; people send.
+- **Mango:** the team assistant, a small monkey in the lower right, that reads the same board and analytics data. It prioritises your day, drafts check-ins and drafts reports. It only drafts; people send. Each draft offers Send in Slack, which explains that Slack comes in phase 2 (Vercel Connect) until it is connected.
+- **Demo scenario:** one setting in the top bar of every page that stands in for the state of Apex's systems (all normal, EU record missing, quality system down). Every assessment run after you change it uses it; a case shows when its result came from a different scenario.
+- **Landing and news:** a public front page with news articles (`/news/...`), the sign-in menu, and a code-protected **Reset demo** link in the footer that puts every case back at its start (`DEMO_RESET_CODE`).
 
 ## Architecture
 

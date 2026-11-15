@@ -2,21 +2,22 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Scenario, SourceRecord } from "@/lib/apex-systems";
+import type { SourceRecord } from "@/lib/apex-systems";
 import type { AssessmentRun, CaseState, Disposition, Finding } from "@/lib/case";
 import { defaultNote, displayDate, getChange, type SupplierChange } from "@/lib/case";
 import type { ReviewRole, User } from "@/lib/users";
 import { askMango, HelperAvatar } from "@/app/ui/assistant";
+import { DemoScenario, useDemoScenario } from "@/app/ui/demo-scenario";
+import { scenarioLabel } from "@/lib/demo-scenario";
 
 // The case page reads top to bottom in three blocks: where the case is (process), what it touches
 // (impact map), and what you should do now (next step). Evidence and run detail sit in tabs below.
 
 type View = "unassessed" | "review" | "ready" | "routed" | "blocked";
-type Command = { type: "assess" } | { type: "sign"; role: ReviewRole; note: string } | { type: "route" } | { type: "scenario"; scenario: Scenario };
+type Command = { type: "assess" } | { type: "sign"; role: ReviewRole; note: string } | { type: "route" };
 
 const statusLabel: Record<Disposition, string> = { qualified: "Qualified", requalification_required: "Re-test", unaffected: "Not affected", uncertain: "Can't decide" };
 const viewLabel: Record<View, string> = { unassessed: "Not assessed", review: "In review", ready: "Ready to send", routed: "Plan sent", blocked: "Blocked" };
-const scenarioLabel: Record<Scenario, string> = { normal: "All systems normal", "missing-eu-qualification": "EU record missing", "qms-outage": "Quality system down" };
 // Evidence grid columns: the three systems of record.
 const evSystems = ["ERP", "QMS", "Regulatory"] as const;
 const evLabel: Record<(typeof evSystems)[number], string> = { ERP: "SAP", QMS: "Quality", Regulatory: "Regulatory" };
@@ -86,6 +87,7 @@ export function CaseWorkspace({ caseId, user, directory }: { caseId: string; use
   const change = getChange(caseId);
   const { state, error, busy, send } = useCase(change.id);
   const [open, setOpen] = useState<string | null>(null);
+  const [demoScenario] = useDemoScenario();
 
   // Each case has its own lead and reviewers.
   const byId = (id: string) => directory.find(entry => entry.id === id)!;
@@ -119,12 +121,7 @@ export function CaseWorkspace({ caseId, user, directory }: { caseId: string; use
   return <>
     <header className="topbar">
       <nav className="breadcrumb" aria-label="Breadcrumb"><Link href="/cases">Board</Link><span aria-hidden="true">/</span><span aria-current="page">{change.id}</span></nav>
-      <label className="scenario">
-        <span>Demo scenario</span>
-        <select value={state?.scenario ?? "normal"} disabled={busy || !state} onChange={event => send({ type: "scenario", scenario: event.target.value as Scenario })}>
-          {(Object.keys(scenarioLabel) as Scenario[]).map(key => <option key={key} value={key}>{scenarioLabel[key]}</option>)}
-        </select>
-      </label>
+      <DemoScenario />
     </header>
 
     <main className="page cw">
@@ -188,6 +185,11 @@ export function CaseWorkspace({ caseId, user, directory }: { caseId: string; use
               <span role="cell" className="as-records"><span className="ev-none">Flagged by Purchasing</span></span>
             </div>)}
           </div>}
+
+          {/* The demo scenario changed since this result: say so, and that running again uses it. */}
+          {run && !assessing && state && state.scenario !== demoScenario && <p className="as-stale">
+            This result is from <strong>{scenarioLabel[state.scenario]}</strong>. Run again to use <strong>{scenarioLabel[demoScenario]}</strong>.
+          </p>}
 
           {/* How it was checked: one line, details on demand. */}
           {run && !assessing && <details className="as-how">
