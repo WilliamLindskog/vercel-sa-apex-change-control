@@ -48,3 +48,25 @@ export async function boardCards(): Promise<BoardCard[]> {
   await connection(); // the rest is request time, never prerendered
   return Promise.all(index.map(liveCard));
 }
+
+// What each of Apex's systems has answered lately, from the lookups the case assessments actually made.
+// Read live from the case workflows, like the board: this is evidence of the connection, not a status flag.
+export async function systemsActivity() {
+  const index = await caseIndex();
+  await connection();
+  const states = await Promise.all(index.map(async c => latestState(await openCase(c.id))));
+  const runs = states.flatMap(s => (s?.assessment ? [s.assessment] : []));
+  return (["ERP", "QMS", "Regulatory"] as const).map(system => {
+    const calls = runs.flatMap(r => r.calls.filter(c => c.system === system).map(c => ({ ...c, at: r.completedAt })));
+    const ok = calls.filter(c => c.status < 400);
+    const last = calls.map(c => c.at).sort().at(-1) ?? null;
+    return {
+      system,
+      lookups: calls.length,
+      failures: calls.length - ok.length,
+      avgMs: ok.length ? Math.round(ok.reduce((n, c) => n + c.ms, 0) / ok.length) : null,
+      lastAt: last,
+      cases: runs.filter(r => r.calls.some(c => c.system === system)).length,
+    };
+  });
+}

@@ -7,3 +7,4 @@ export const BriefIcon = () => <svg {...base}><path d="M4 3.5h12v13H4z" /><path 
 export const ChevronIcon = ({ direction = "left" }: { direction?: "left" | "right" }) => <svg {...base} style={{ transform: direction === "right" ? "rotate(180deg)" : undefined }}><path d="M12 5l-5 5 5 5" /></svg>;
 export const CalendarIcon = () => <svg {...base}><rect x="3" y="4" width="14" height="13" rx="2" /><path d="M3 8h14M7 2.5v3M13 2.5v3M6.5 11.5h4M8.5 14h5" /></svg>;
 export const ChartIcon = () => <svg {...base}><path d="M3 16.5h14" /><path d="M5.5 13.5v-4M10 13.5V5M14.5 13.5V8.5" /></svg>;
+export const PlugIcon = () => <svg {...base}><path d="M7 3v4M13 3v4" /><path d="M5 7h10v3a5 5 0 0 1-10 0z" /><path d="M10 15v2.5" /></svg>;
