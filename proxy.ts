@@ -17,4 +17,4 @@ export function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
-export const config = { matcher: ["/", "/signin", "/cases/:path*", "/analytics/:path*"] };
+export const config = { matcher: ["/", "/signin", "/cases/:path*", "/analytics/:path*", "/connections/:path*"] };

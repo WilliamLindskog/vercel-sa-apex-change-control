@@ -1,0 +1,29 @@
+/* Connections: what the app reads today, and what people will connect next. */
+.cn { display: grid; gap: 28px; max-width: 1100px; }
+.cn h1 { font: 500 30px/1.15 var(--serif); font-variation-settings: "SOFT" 100, "opsz" 72; letter-spacing: -.02em; }
+.cn-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.cn-head h2 { font-size: 15px; font-weight: 700; }
+.cn-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.cn-grid.is-four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.cn-card { display: grid; align-content: start; gap: 10px; padding: 16px; border-radius: 16px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
+.cn-card p { color: var(--ink-2); font-size: 13.5px; line-height: 1.45; }
+.cn-card.is-planned { background: color-mix(in srgb, var(--surface) 60%, var(--ground)); }
+.cn-card.is-planned .btn { justify-self: start; padding: 5px 14px; font-size: 13px; }
+.cn-top { display: flex; align-items: center; gap: 10px; }
+.cn-top strong { font-size: 14.5px; }
+.cn-logo { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 9px; color: #fff; font-size: 13px; font-weight: 800; letter-spacing: -.02em; }
+.cn-logo.is-sap { background: #0a6ed1; font-size: 11px; }
+.cn-logo.is-veeva { background: #e25b2b; }
+.cn-logo.is-reg { background: var(--sage); }
+.cn-logo.is-outlook { background: #0f6cbd; }
+.cn-logo.is-teams { background: #5b5fc7; }
+.cn-logo.is-slack { background: #4a154b; font-size: 17px; }
+.cn-logo.is-salesforce { background: #00a1e0; }
+.cn-status { margin-left: auto; padding: 1px 9px; border-radius: 999px; background: var(--sage-bg); color: var(--sage); font-size: 12px; font-weight: 700; }
+.cn-status.is-warn { background: var(--marigold-bg); color: var(--marigold-ink); }
+.cn-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding-top: 10px; border-top: 1px solid var(--line); }
+.cn-stats dt { color: var(--ink-3); font-size: 11.5px; font-weight: 600; }
+.cn-stats dd { margin: 0; font-size: 13px; font-weight: 700; }
+.cn-note { margin-top: 10px; color: var(--ink-3); font-size: 12.5px; }
+@media (max-width: 980px) { .cn-grid, .cn-grid.is-four { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 600px) { .cn-grid, .cn-grid.is-four { grid-template-columns: 1fr; } }

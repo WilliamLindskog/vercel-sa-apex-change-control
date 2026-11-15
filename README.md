@@ -26,6 +26,7 @@ The demo uses directory accounts without passwords; production would use Apex SS
 - **Board and Calendar:** every case by stage, with whose turn it is. The board is drag-to-advance where the case rules allow it, and the calendar runs from notice to end of supply. Every case is live: 11 supplier changes across Coatings, Plastics and Inks, each its own durable workflow with its own lead and reviewers. Cases that start part-way replay their earlier steps through the same rules. A bell lists the cases waiting on you.
 - **Case page:** the answer first (affected products, what needs re-testing, what can't be decided), then sign-offs and the evidence behind each finding.
 - **Analytics:** days to decision against the manual baseline, time and cost saved, notices on time, problems caught and AI spend, filtered by period and product line.
+- **Connections:** Apex's systems with live activity from real lookups (lookups, response time, last read), and the tools people will connect in phase 2 through Vercel Connect.
 - **Mango:** the team assistant, a small monkey in the lower right, that reads the same board and analytics data. It prioritises your day, drafts check-ins and drafts reports. It only drafts; people send.
 
 ## Architecture
