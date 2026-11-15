@@ -72,15 +72,15 @@ export default function SignInPage({ searchParams }: { searchParams: Promise<{ n
     </header>
 
     <main>
-      <section className="chapter chapter-hero" id="top" aria-labelledby="hero-title">
+      <div className="stop" id="top"><section className="chapter chapter-hero" aria-labelledby="hero-title">
         <Image src={sandstone} alt="" fill priority placeholder="blur" sizes="100vw" className="chapter-bg" />
         <div className="chapter-body">
           <h1 id="hero-title">Built on solid ground.</h1>
           <p>Additives for coatings and plastics since 1828.</p>
         </div>
-      </section>
+      </section></div>
 
-      <section className="chapter chapter-news" id="news" aria-labelledby="news-title">
+      <div className="stop" id="news"><section className="chapter chapter-news" aria-labelledby="news-title">
         <div className="chapter-body">
           <h2 id="news-title">News</h2>
           <ul className="rail news-rail">
@@ -90,9 +90,9 @@ export default function SignInPage({ searchParams }: { searchParams: Promise<{ n
             </li>)}
           </ul>
         </div>
-      </section>
+      </section></div>
 
-      <section className="chapter chapter-history" id="history" aria-labelledby="history-title">
+      <div className="stop" id="history"><section className="chapter chapter-history" aria-labelledby="history-title">
         <Image src={brickMill} alt="A Victorian red-brick mill tower" fill placeholder="blur" sizes="100vw" className="chapter-bg" />
         <div className="chapter-body">
           <h2 id="history-title">History</h2>
@@ -100,15 +100,15 @@ export default function SignInPage({ searchParams }: { searchParams: Promise<{ n
             {eras.map((era, i) => <li key={era.year} style={{ "--i": i } as React.CSSProperties}><span>{era.year}</span>{era.title}</li>)}
           </ol>
         </div>
-      </section>
+      </section></div>
 
-      <section className="chapter chapter-culture" id="culture" aria-labelledby="culture-title">
+      <div className="stop" id="culture"><section className="chapter chapter-culture" aria-labelledby="culture-title">
         <Image src={labReview} alt="Two scientists checking a rack of samples together" fill placeholder="blur" sizes="100vw" className="chapter-bg" style={{ objectPosition: "center 28%" }} />
         <div className="chapter-body">
           <h2 id="culture-title">Culture</h2>
           <ul className="values">{values.map((value, i) => <li key={value} style={{ "--i": i } as React.CSSProperties}>{value}</li>)}</ul>
         </div>
-      </section>
+      </section></div>
 
     </main>
 

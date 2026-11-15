@@ -1,12 +1,12 @@
 /* Landing: framed photo chapters on warm, lightly grained paper, with a calm pause between each.
    Sign-in waits behind one button in the top bar. */
 
-.landing { --night: #24170f; --night-2: #2f2016; --cream: #fff6e8; --cream-2: #ecd8bb; --paper: #f6efe4; min-height: 100vh; color: var(--ink);
+.landing { --gutter: clamp(12px, 2vw, 28px); --inset: clamp(24px, 4.5vw, 72px); --night: #24170f; --night-2: #2f2016; --cream: #fff6e8; --cream-2: #ecd8bb; --paper: #f6efe4; min-height: 100vh; color: var(--ink);
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .17 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"), var(--paper); }
 .landing h1, .landing h2 { font-family: var(--serif); font-weight: 400; font-variation-settings: "SOFT" 40, "opsz" 144; letter-spacing: -.035em; text-wrap: balance; }
 
 /* Top bar */
-.lp-bar { position: fixed; inset: 0 0 auto; z-index: 20; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 24px; height: 72px; padding: 0 clamp(20px, 3.5vw, 52px); background: color-mix(in srgb, var(--paper) 86%, transparent); backdrop-filter: blur(12px); }
+.lp-bar { position: fixed; inset: 0 0 auto; z-index: 20; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 24px; height: 72px; padding: 0 calc(var(--gutter) + var(--inset)); background: color-mix(in srgb, var(--paper) 86%, transparent); backdrop-filter: blur(12px); }
 .lp-brand { color: var(--ink); text-decoration: none; }
 .lp-bar nav { display: flex; gap: clamp(18px, 3vw, 36px); }
 .lp-bar nav a { color: var(--ink-2); font-size: 15px; font-weight: 500; text-decoration: none; transition: color .2s; }
@@ -32,12 +32,17 @@
 .account-text span { display: block; color: var(--ink-3); font-size: 12.5px; }
 
 /* Chapters: framed panels with breathing room between them */
-.landing main { display: grid; gap: 22vh; padding: 84px clamp(14px, 2.6vw, 36px) 18vh; }
+/* Each chapter sits in a taller "stop": it pins under the bar and holds still for a stretch of scrolling
+   before the next one starts to arrive. The stop's top is the anchor, so nav links land on the pinned view. */
+.landing main { --pin: 84px; --dwell: 55vh; display: grid; gap: 10vh; padding: 0 var(--gutter) 18vh; }
+.stop { min-width: 0; padding-top: var(--pin); view-timeline: --chapter block; }
+.stop::after { content: ""; display: block; height: var(--dwell); }
+.stop > .chapter { position: sticky; top: var(--pin); }
 .chapter { position: relative; isolation: isolate; display: flex; align-items: flex-end; height: calc(100svh - 104px); min-height: 520px; overflow: hidden; border-radius: 26px; background: var(--night); color: var(--cream); }
 .chapter-bg { z-index: -2; object-fit: cover; }
 .chapter-culture .chapter-bg { filter: sepia(.28) saturate(.9) brightness(.95); }
 .chapter::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg, rgba(26, 16, 10, .86) 0%, rgba(26, 16, 10, .35) 50%, rgba(26, 16, 10, .1) 100%); }
-.chapter-body { width: min(1200px, 100% - 48px); margin: 0 auto; padding-bottom: clamp(48px, 9vh, 96px); }
+.chapter-body { width: 100%; padding: 0 var(--inset) clamp(48px, 9vh, 96px); }
 .chapter h1 { max-width: 9ch; font-size: clamp(60px, 10vw, 136px); line-height: .92; }
 .chapter-hero h1 { color: #fffdf8; text-shadow: 0 2px 40px rgba(26, 16, 10, .45); }
 .chapter-hero .chapter-body > p { color: #fbeedb; text-shadow: 0 1px 18px rgba(26, 16, 10, .5); }
@@ -60,18 +65,17 @@
   /* Every chapter arrives with a feathered edge, so there is never a hard line between sections */
 
   /* Headings wait until their section has mostly arrived, so two headings never overlap mid-transition */
-  .chapter { view-timeline: --chapter block; }
   .chapter-news h2, .chapter-history h2, .chapter-culture h2 { animation: heading-in linear both; animation-timeline: --chapter; animation-range: entry 65% entry 100%; }
   @keyframes heading-in { from { opacity: 0; transform: translateY(24px); } }
 
   /* News: a soft wipe in from the right; the cards slide in sideways one after another */
-  .chapter-news { mask-image: linear-gradient(to left, #000 var(--edge), transparent calc(var(--edge) + 35%)), linear-gradient(to bottom, transparent 0, #000 var(--top)); mask-composite: intersect; animation: wipe-left linear both; animation-timeline: view(); animation-range: entry 0% entry 100%; }
+  .chapter-news { mask-image: linear-gradient(to left, #000 var(--edge), transparent calc(var(--edge) + 35%)), linear-gradient(to bottom, transparent 0, #000 var(--top)); mask-composite: intersect; animation: wipe-left linear both; animation-timeline: --chapter; animation-range: entry 0% entry 100%; }
   @keyframes wipe-left { from { --edge: -35%; --top: 45%; } to { --edge: 100%; --top: 0%; } }
   .news-rail li { animation: card-slide linear both; animation-timeline: --chapter; animation-range: entry calc(30% + var(--i) * 10%) entry calc(80% + var(--i) * 6%); }
   @keyframes card-slide { from { transform: translateX(30%); opacity: 0; } }
 
   /* History: a soft circle opens from the centre while the photo pulls back */
-  .chapter-history { mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, #000 var(--edge), transparent calc(var(--edge) + 40%)), linear-gradient(to bottom, transparent 0, #000 var(--top)); mask-composite: intersect; animation: iris linear both; animation-timeline: view(); animation-range: entry 0% entry 100%; }
+  .chapter-history { mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, #000 var(--edge), transparent calc(var(--edge) + 40%)), linear-gradient(to bottom, transparent 0, #000 var(--top)); mask-composite: intersect; animation: iris linear both; animation-timeline: --chapter; animation-range: entry 0% entry 100%; }
   @keyframes iris { from { --edge: -40%; --top: 45%; } to { --edge: 180%; --top: 0%; } }
   .chapter-history .chapter-bg { animation: pull-back linear both; animation-timeline: --chapter; animation-range: entry 0% entry 100%; }
   @keyframes pull-back { from { transform: scale(1.25); } }
@@ -79,7 +83,7 @@
   @keyframes slide-in { from { opacity: 0; transform: translateX(80px); } }
 
   /* Culture: the whole scene dissolves in from a soft blur, then the values rise */
-  .chapter-culture { mask-image: linear-gradient(to bottom, transparent 0, #000 var(--top)); animation: dissolve linear both; animation-timeline: view(); animation-range: entry 0% entry 100%; }
+  .chapter-culture { mask-image: linear-gradient(to bottom, transparent 0, #000 var(--top)); animation: dissolve linear both; animation-timeline: --chapter; animation-range: entry 0% entry 100%; }
   @keyframes dissolve { from { opacity: 0; filter: blur(24px); --top: 45%; } 60% { filter: blur(6px); } to { --top: 0%; } }
   .values li { animation: rise linear both; animation-timeline: --chapter; animation-range: entry calc(70% + var(--i) * 10%) entry calc(95% + var(--i) * 5%); }
 }
@@ -92,7 +96,7 @@
 .chapter-news { background: var(--night-2); }
 .chapter-news::after { display: none; }
 .chapter-news .chapter-body { position: relative; width: 100%; height: 100%; padding: 0; }
-.chapter-news h2 { position: absolute; z-index: 2; top: clamp(32px, 7vh, 72px); left: max(24px, (100% - 1200px) / 2); pointer-events: none; text-shadow: 0 2px 24px rgba(0, 0, 0, .35); }
+.chapter-news h2 { position: absolute; z-index: 2; top: clamp(32px, 7vh, 72px); left: var(--inset); pointer-events: none; text-shadow: 0 2px 24px rgba(0, 0, 0, .35); }
 .news-rail { height: 100%; margin: 0; }
 .news-rail li { position: relative; width: clamp(280px, 30vw, 440px); height: 100%; overflow: hidden; }
 .news-rail li::before { content: ""; position: absolute; inset: 0 0 auto; z-index: 1; height: 45%; background: linear-gradient(180deg, rgba(26, 16, 10, .7), transparent); pointer-events: none; }
@@ -109,19 +113,19 @@
 .values li { font: 400 clamp(34px, 4.6vw, 64px)/1.05 var(--serif); font-variation-settings: "SOFT" 40, "opsz" 144; letter-spacing: -.03em; color: var(--cream); }
 
 
-.lp-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; padding: 0 clamp(20px, 3.5vw, 52px) 32px; color: var(--ink-3); font-size: 13px; }
+.lp-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; padding: 0 calc(var(--gutter) + var(--inset)) 32px; color: var(--ink-3); font-size: 13px; }
 .lp-footer a { color: var(--ink-2); }
 
 @media (max-width: 760px) {
   .lp-bar { grid-template-columns: 1fr auto; row-gap: 6px; height: auto; padding-block: 12px 10px; }
   .lp-bar nav { grid-column: 1 / -1; grid-row: 2; gap: 20px; overflow-x: auto; }
-  .landing main { gap: 14vh; padding: 112px 10px 14vh; }
+  .landing main { --pin: 112px; --dwell: 40vh; gap: 8vh; padding-bottom: 14vh; }
   .chapter { height: calc(100svh - 128px); border-radius: 18px; }
-  .chapter-body { width: calc(100% - 32px); }
   .chapter h2 { font-size: 56px; }
-  .chapter-news h2 { top: 28px; left: 16px; }
+  .chapter-news h2 { top: 28px; }
   .news-rail li { width: 82vw; }
 }
 @media (prefers-reduced-motion: reduce) {
   .landing *, .chapter { animation: none !important; }
+  .landing main { --dwell: 0px; }
 }
