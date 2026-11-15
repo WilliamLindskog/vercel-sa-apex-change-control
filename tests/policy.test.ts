@@ -28,10 +28,10 @@ describe("policy reads Apex's systems correctly", () => {
     assert.ok(f["FG-420-EU"].evidence.includes("QLF-EU-03"));
   });
 
-  test("missing EU record: EMEA becomes uncertain and Regulatory Affairs owns the follow-up", async () => {
+  test("missing EU record: EMEA becomes uncertain and Regulatory owns the follow-up", async () => {
     const f = byId(await factsFor("missing-eu-qualification"));
     assert.equal(f["FG-420-EU"].expected, "uncertain");
-    assert.equal(f["FG-420-EU"].openQuestion?.owner, "Regulatory Affairs");
+    assert.equal(f["FG-420-EU"].openQuestion?.owner, "Regulatory");
     assert.equal(f["FG-420-US"].expected, "requalification_required");
   });
 
@@ -86,7 +86,7 @@ describe("policy depends on the kind of change", () => {
   test("the missing-EU scenario blocks any case with an EMEA product", async () => {
     const f = await factsForCase("SCC-2026-042", "missing-eu-qualification");
     assert.equal(f["FG-170-EU"].expected, "uncertain");
-    assert.equal(f["FG-170-EU"].openQuestion?.owner, "Regulatory Affairs");
+    assert.equal(f["FG-170-EU"].openQuestion?.owner, "Regulatory");
     assert.equal(f["FG-170-US"].expected, "requalification_required");
   });
 
@@ -155,7 +155,7 @@ describe("policy corrects the model", () => {
       [finding("FG-420-US", "requalification_required", ["QLF-US-14"]), finding("FG-420-EU", "uncertain", ["SUP-01"]), finding("FG-088-US", "unaffected", ["FG-088-US"])],
       [{ finishedGood: "FG-420-EU", owner: "Quality", detail: "Model's own question" }],
     ), facts, known);
-    assert.equal(assessment.openQuestions[0].owner, "Regulatory Affairs");
+    assert.equal(assessment.openQuestions[0].owner, "Regulatory");
     assert.equal(assessment.openQuestions.length, 2);
   });
 });

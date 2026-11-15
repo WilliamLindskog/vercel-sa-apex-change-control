@@ -5,13 +5,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { SourceRecord } from "@/lib/apex-systems";
 import type { AssessmentRun, CaseState, Disposition, Finding } from "@/lib/case";
 import { defaultNote, displayDate, getChange, type SupplierChange } from "@/lib/case";
-import type { ReviewRole, User } from "@/lib/users";
+import { reviewLabel, reviewOrder, type ReviewRole, type User } from "@/lib/users";
 import { askMango, HelperAvatar } from "@/app/ui/assistant";
 import { DemoScenario, useDemoScenario } from "@/app/ui/demo-scenario";
 import { scenarioLabel } from "@/lib/demo-scenario";
 
-// The case page reads top to bottom in three blocks: where the case is (process), what it touches
-// (impact map), and what you should do now (next step). Evidence and run detail sit in tabs below.
+// The case page reads top to bottom in three blocks: where the case is (process), which final products the
+// raw-material change touches (impact check), and what you should do now (next step).
 
 type View = "unassessed" | "review" | "ready" | "routed" | "blocked";
 type Command = { type: "assess" } | { type: "sign"; role: ReviewRole; note: string } | { type: "route" };
@@ -20,13 +20,19 @@ const statusLabel: Record<Disposition, string> = { qualified: "Qualified", requa
 const viewLabel: Record<View, string> = { unassessed: "Not assessed", review: "In review", ready: "Ready to send", routed: "Plan sent", blocked: "Blocked" };
 // Evidence grid columns: the three systems of record.
 const evSystems = ["ERP", "QMS", "Regulatory"] as const;
-const evLabel: Record<(typeof evSystems)[number], string> = { ERP: "SAP", QMS: "Quality", Regulatory: "Regulatory" };
+const evLabel: Record<(typeof evSystems)[number], string> = { ERP: "SAP", QMS: "Veeva", Regulatory: "Regulatory" };
 const marketTag = (market: string) => (market === "EU" ? "EU" : "US");
 const shortName = (product: string) => product.replace(/ \(eu\)$/i, "").replace(/ (Protective Coating|Plastic Additive)$/i, "");
 const time = (iso: string) => new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 // Today's events show the time; older ones the date.
 const stamp = (iso: string) => new Date(iso).toDateString() === new Date().toDateString() ? time(iso) : new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 const changeLabel: Record<SupplierChange["changeType"], string> = { FORMULATION: "Formulation change", SITE: "Site change", PACKAGING: "Packaging change" };
+// What each expert does in their assessment, in plain words.
+const reviewTask: Record<ReviewRole, string> = {
+  Technical: "Technical assessment: plan the lab-scale performance tests for the final products marked Re-test.",
+  Quality: "Quality assessment: plan the production trial and the QC tests that check its outcome.",
+  Regulatory: "Regulatory assessment: confirm compliance and the customer notices for each market.",
+};
 const daysUntil = (date: string) => Math.max(0, Math.ceil((new Date(date).getTime() - Date.now()) / 86_400_000));
 
 // The case lives in a durable workflow on the server. This hook reads its latest snapshot and, after each
@@ -89,12 +95,12 @@ export function CaseWorkspace({ caseId, user, directory }: { caseId: string; use
   const [open, setOpen] = useState<string | null>(null);
   const [demoScenario] = useDemoScenario();
 
-  // Each case has its own lead and reviewers.
+  // Each case has its own Product Manager and reviewers.
   const byId = (id: string) => directory.find(entry => entry.id === id)!;
-  const person = (role: User["role"]) => byId(role === "Quality" ? change.team.quality : role === "Regulatory Affairs" ? change.team.regulatory : change.team.lead);
-  const lead = person("Product Change Lead");
-  const quality = state?.signOffs.Quality ?? null;
-  const regulatory = state?.signOffs["Regulatory Affairs"] ?? null;
+  const person = (who: ReviewRole | "Product Manager") => byId(who === "Technical" ? change.team.lab : who === "Quality" ? change.team.quality : who === "Regulatory" ? change.team.regulatory : change.team.lead);
+  const lead = person("Product Manager");
+  const signOffs = state?.signOffs;
+  const allSigned = reviewOrder.every(review => signOffs?.[review]);
   const run = state?.assessment ?? null;
   const findings = run?.assessment.findings ?? [];
   const uncertain = findings.filter(f => f.disposition === "uncertain");
@@ -102,18 +108,21 @@ export function CaseWorkspace({ caseId, user, directory }: { caseId: string; use
   const qualified = findings.filter(f => f.disposition === "qualified");
   const unaffected = findings.filter(f => f.disposition === "unaffected");
   const assessing = Boolean(state?.assessing) || (busy && !run);
-  const view: View = !run ? "unassessed" : uncertain.length ? "blocked" : state?.routed ? "routed" : quality && regulatory ? "ready" : "review";
+  const view: View = !run ? "unassessed" : uncertain.length ? "blocked" : state?.routed ? "routed" : allSigned ? "ready" : "review";
   const questions = run?.assessment.openQuestions ?? [];
   const sources = run?.sources ?? change.documents;
   const sourceById = new Map(sources.map(s => [s.id, s]));
   const selected = findings.find(f => f.finishedGood === open) ?? null;
 
-  // 1. Where the case is: five stages, each owned by a person.
-  const stagesView = [
+  // 1. Where the case is: six stages, each owned by a person. The three assessments are signed in order.
+  const stagesView: { label: string; sub: string; done: boolean; blocked?: boolean; person?: User }[] = [
     { label: "Notice", sub: displayDate(change.received), done: true },
-    { label: "Assessment", sub: run ? (run.mode === "ai-gateway" ? "AI, checked by policy" : "Policy rules") : assessing ? "Running…" : "Not run", done: Boolean(run), person: lead },
-    { label: "Quality", sub: quality ? `Signed ${stamp(quality.at)}` : person("Quality").name, done: Boolean(quality), person: person("Quality") },
-    { label: "Regulatory", sub: regulatory ? `Signed ${stamp(regulatory.at)}` : uncertain.length ? "Blocked" : person("Regulatory Affairs").name, done: Boolean(regulatory), blocked: uncertain.length > 0 && !regulatory, person: person("Regulatory Affairs") },
+    { label: "Impact check", sub: run ? (run.mode === "ai-gateway" ? "AI, checked by policy" : "Policy rules") : assessing ? "Running…" : "Not run", done: Boolean(run), person: lead },
+    ...reviewOrder.map(review => {
+      const signed = signOffs?.[review];
+      const blocked = review === "Regulatory" && uncertain.length > 0 && !signed;
+      return { label: review, sub: signed ? `Signed ${stamp(signed.at)}` : blocked ? "Blocked" : person(review).name, done: Boolean(signed), blocked, person: person(review) };
+    }),
     { label: "Plan sent", sub: state?.routed ? stamp(state.routed.at) : "To Purchasing", done: Boolean(state?.routed), person: lead },
   ];
   const current = stagesView.findIndex(s => !s.done);
@@ -127,7 +136,7 @@ export function CaseWorkspace({ caseId, user, directory }: { caseId: string; use
     <main className="page cw">
       <header className="cw-head">
         <div>
-          <p className="cw-meta">{change.id} | {change.supplier} | {changeLabel[change.changeType]}</p>
+          <p className="cw-meta">{change.id} | Raw material from {change.supplier} | {changeLabel[change.changeType]}</p>
           <h1>{change.materialName} <span className="cw-arrow" aria-label="becomes" /> {change.becomes}</h1>
         </div>
         <div className="cw-head-side">
@@ -149,10 +158,10 @@ export function CaseWorkspace({ caseId, user, directory }: { caseId: string; use
       {error && <p className="form-error" role="alert">{error}</p>}
 
       <div className="cw-grid">
-        {/* 2. The assessment: every product the change could touch, its status, notice and the records behind it. */}
+        {/* 2. The impact check: every final product the raw-material change could touch, its status, notice and records. */}
         <section className={`cw-assess is-${view}`} aria-labelledby="assess-h" aria-busy={assessing}>
           <header>
-            <h2 id="assess-h">Assessment</h2>
+            <h2 id="assess-h">Impact check</h2>
             {run && !assessing && <span className="cw-map-summary">
               {retest.length > 0 && <span className="pill pill-requalification_required">{retest.length} re-test</span>}
               {qualified.length > 0 && <span className="pill pill-qualified">{qualified.length} still qualified</span>}
@@ -164,12 +173,12 @@ export function CaseWorkspace({ caseId, user, directory }: { caseId: string; use
           {assessing ? <ol className="cw-progress" aria-label="Lookups so far">
             <li className="is-head">Checking Apex's systems, one saved step at a time</li>
             {(state?.progress ?? []).map((item, i) => <li key={i} className={item.ok ? undefined : "is-bad"}>
-              <span className="cw-progress-system">{item.system === "ERP" ? "SAP" : item.system === "QMS" ? "Quality" : item.system}</span>
+              <span className="cw-progress-system">{item.system === "ERP" ? "SAP" : item.system === "QMS" ? "Veeva" : item.system}</span>
               <span>{item.label}</span>
               {item.ms !== undefined && <em>{item.ms} ms</em>}
             </li>)}
-          </ol> : <div className="as-table" role="table" aria-label="Products the change could touch">
-            <div className="as-row is-head" role="row"><span role="columnheader">Product</span><span role="columnheader">Status</span><span role="columnheader">Notice</span><span role="columnheader">Records</span></div>
+          </ol> : <div className="as-table" role="table" aria-label="Final products the change could touch">
+            <div className="as-row is-head" role="row"><span role="columnheader">Final product</span><span role="columnheader">Status</span><span role="columnheader">Notice</span><span role="columnheader">Records</span></div>
             {run ? findings.map(f => <button key={f.finishedGood} className={`as-row is-${f.disposition}`} role="row" onClick={() => setOpen(f.finishedGood)} title="Open the reasoning">
               <span role="cell" className="as-product"><strong>{shortName(f.product)}</strong><em>{marketTag(f.market)}</em></span>
               <span role="cell"><span className={`pill pill-${f.disposition}`}>{statusLabel[f.disposition]}</span></span>
@@ -221,13 +230,11 @@ export function CaseWorkspace({ caseId, user, directory }: { caseId: string; use
 
 // One card that tells the signed-in person exactly what to do, or who the case is waiting for.
 function NextStep({ change, view, state, user, lead, person, questions, busy, assessing, onAssess, onRoute, onSign }: {
-  change: SupplierChange; view: View; state: CaseState | null; user: User; lead: User; person: (role: User["role"]) => User;
-  questions: { finishedGood: string; owner: string; detail: string }[]; busy: boolean; assessing: boolean;
+  change: SupplierChange; view: View; state: CaseState | null; user: User; lead: User; person: (who: ReviewRole | "Product Manager") => User;
+  questions: { finishedGood: string; owner: ReviewRole | "Product Manager"; detail: string }[]; busy: boolean; assessing: boolean;
   onAssess: () => void; onRoute: () => void; onSign: (role: ReviewRole, note: string) => void;
 }) {
   const [note, setNote] = useState("");
-  const quality = state?.signOffs.Quality ?? null;
-  const regulatory = state?.signOffs["Regulatory Affairs"] ?? null;
 
   // Who the case is waiting for, and what they do.
   let owner: User = lead;
@@ -236,12 +243,12 @@ function NextStep({ change, view, state, user, lead, person, questions, busy, as
   let signRole: ReviewRole | null = null;
 
   if (!state) task = "Opening the case…";
-  else if (assessing) { owner = lead; task = "The assessment is checking Apex's systems."; }
-  else if (view === "unassessed") { owner = lead; task = "Run the assessment to see which products and markets the change affects."; action = <button className="btn btn-primary" onClick={onAssess} disabled={busy}>Run assessment</button>; }
-  else if (view === "blocked") { owner = person(questions[0]?.owner === "Quality" ? "Quality" : "Regulatory Affairs"); task = questions[0]?.detail ?? "Resolve the missing record."; }
-  else if (view === "review") { signRole = !quality ? "Quality" : !regulatory ? "Regulatory Affairs" : null; owner = signRole ? person(signRole) : lead; task = signRole === "Quality" ? "Confirm the technical scope: which products need re-testing." : "Confirm the customer notices for each market."; }
-  else if (view === "ready") { owner = lead; task = "Both signed. Send the requalification and customer-notice plan to Purchasing and Customer Service."; action = <button className="btn btn-primary" onClick={onRoute} disabled={busy}>Send the plan</button>; }
-  else { owner = lead; task = `Plan sent to Purchasing and Customer Service ${state.routed ? stamp(state.routed.at) : ""}. ${lead.name.split(" ")[0]} follows up on requalification and notices.`; }
+  else if (assessing) { owner = lead; task = "The impact check is reading Apex's systems."; }
+  else if (view === "unassessed") { owner = lead; task = "Run the impact check to see which final products and markets use this raw material."; action = <button className="btn btn-primary" onClick={onAssess} disabled={busy}>Run impact check</button>; }
+  else if (view === "blocked") { owner = person(questions[0]?.owner ?? "Regulatory"); task = questions[0]?.detail ?? "Resolve the missing record."; }
+  else if (view === "review") { signRole = reviewOrder.find(review => !state.signOffs[review]) ?? null; owner = signRole ? person(signRole) : lead; task = signRole ? reviewTask[signRole] : ""; }
+  else if (view === "ready") { owner = lead; task = "All three assessments are signed. Send the testing and customer-notice plan to Purchasing and Customer Service."; action = <button className="btn btn-primary" onClick={onRoute} disabled={busy}>Send the plan</button>; }
+  else { owner = lead; task = `Plan sent to Purchasing and Customer Service ${state.routed ? stamp(state.routed.at) : ""}. ${lead.name.split(" ")[0]} follows up on testing and notices.`; }
 
   const isMe = owner.id === user.id;
   const suggested = signRole ? defaultNote(signRole, state?.assessment?.assessment.findings ?? [], change) : "";
@@ -249,7 +256,7 @@ function NextStep({ change, view, state, user, lead, person, questions, busy, as
     action = <div className="cw-sign">
       <label htmlFor="sign-note" className="visually-hidden">Decision note</label>
       <textarea id="sign-note" rows={3} value={note || suggested} onChange={event => setNote(event.target.value)} />
-      <button className="btn btn-primary" onClick={() => onSign(signRole!, note || suggested)} disabled={busy}>{busy ? "Recording…" : `Sign off as ${signRole}`}</button>
+      <button className="btn btn-primary" onClick={() => onSign(signRole!, note || suggested)} disabled={busy}>{busy ? "Recording…" : `Sign off ${reviewLabel[signRole].toLowerCase()}`}</button>
     </div>;
   } else if (!isMe) {
     // Not your turn: no action here (switch people from the account menu). Show what happened lately instead.
@@ -264,7 +271,7 @@ function NextStep({ change, view, state, user, lead, person, questions, busy, as
     </div>
     <p className="cw-next-task">{task}</p>
     {action}
-    {questions.length > 1 && <ul className="cw-next-more">{questions.slice(1).map(q => <li key={`${q.finishedGood}-${q.owner}`}><strong>{q.owner}:</strong> {q.detail}</li>)}</ul>}
+    {questions.length > 1 && <ul className="cw-next-more">{questions.slice(1).map(q => <li key={`${q.finishedGood}-${q.owner}`}><strong>{person(q.owner).name.split(" ")[0]}:</strong> {q.detail}</li>)}</ul>}
     {/* Not your turn: Mango can nudge the person, or explain the hold-up, in one click. */}
     {!isMe && state && !state.routed && <div className="cw-mango">
       <span className="cw-mango-label"><HelperAvatar size={24} />Ask Mango</span>

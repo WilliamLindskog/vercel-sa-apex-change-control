@@ -8,13 +8,14 @@ import type { Role, User } from "@/lib/users";
 import "./signin-menu.css";
 
 const groups: { role: Role; label: string }[] = [
-  { role: "Product Change Lead", label: "Product change leads" },
-  { role: "Quality", label: "Quality" },
-  { role: "Regulatory Affairs", label: "Regulatory" },
+  { role: "Product Manager", label: "Product Managers: lead the change" },
+  { role: "Lab Manager", label: "Lab: technical assessment" },
+  { role: "Production & Quality Control", label: "Production & QC: quality assessment" },
+  { role: "Regulatory Expert", label: "Regulatory: regulatory assessment" },
 ];
 
-// Where the demo story starts: Dana leads Binder X-17.
-const START_HERE = "dana";
+// Where the demo story starts: Peter leads Binder X-17.
+const START_HERE = "peter";
 
 // Sign-in lives behind one button in the top bar. Opening it shows the team straight away, grouped by role,
 // with how many cases wait on each person. Apex SSO is the production path, shown but off.

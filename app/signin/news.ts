@@ -26,10 +26,10 @@ export const news: Article[] = [
     position: "center 18%",
     body: [
       "Meridian Specialty Materials told Apex on 12 November that it will stop making Binder X-17 at the end of February 2027. It proposes X-17R, with a revised stabilizer package, as the replacement.",
-      "Three finished coatings use X-17, sold in the US and the EU. Before any switch, Apex checks each one against its qualification records and the notice rules in each market.",
-      "Quality decides whether the products need re-testing. Regulatory Affairs decides which customers must be told, and by when. No product changes until both have signed off.",
+      "X-17 is a raw material. Three of Apex's final products, coatings sold in the US and the EU, contain it. Before any switch, Apex checks each one against its qualification records and the notice rules in each market.",
+      "Three assessments follow, in order. The lab runs small-scale performance tests. Production runs a full-scale trial, and Quality Control tests the result. The Regulatory Expert confirms compliance and which customers must be told, and by when. No product changes until all three have signed off.",
     ],
-    facts: [["Supplier", "Meridian Specialty Materials"], ["Last X-17 delivery", "28 Feb 2027"], ["Products checked", "3, in the US and EU"], ["Case lead", "Dana Okafor"]],
+    facts: [["Supplier", "Meridian Specialty Materials"], ["Last X-17 delivery", "28 Feb 2027"], ["Products checked", "3, in the US and EU"], ["Product Manager", "Peter Hansen"]],
   },
   {
     slug: "rotterdam-reach-update",
@@ -43,7 +43,7 @@ export const news: Article[] = [
       "The work brings test data, safety data sheets and use descriptions in line with the latest guidance. Customers in the EU get the updated sheets with their next order.",
       "The same team reviews customer notices for supplier changes that affect EU products.",
     ],
-    facts: [["Site", "Rotterdam, NL"], ["Dossiers updated", "42"], ["Finished", "Two months early"], ["Contact", "Marcus Lindqvist"]],
+    facts: [["Site", "Rotterdam, NL"], ["Dossiers updated", "42"], ["Finished", "Two months early"], ["Contact", "Rachel Moreau"]],
   },
   {
     slug: "cleveland-198-years",

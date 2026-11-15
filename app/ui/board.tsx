@@ -11,17 +11,17 @@ import type { User } from "@/lib/users";
 const daysUntil = (date: string, now: number) => Math.ceil((new Date(date).getTime() - now) / 86_400_000);
 
 // What each stage asks of the person whose turn it is.
-const ask: Partial<Record<Stage, string>> = { new: "Start the assessment", review: "Review and sign off", ready: "Send the plan" };
+const ask: Partial<Record<Stage, string>> = { new: "Run the impact check", review: "Assess and sign off", ready: "Send the plan" };
 
 // Moves a drag may trigger on a case. Each one is a real case command, checked again by the workflow.
 const allowedMoves: Partial<Record<`${Stage}>${Stage}`, { command: "assess" | "route"; label: string }>> = {
-  "new>assessing": { command: "assess", label: "Running the assessment…" },
+  "new>assessing": { command: "assess", label: "Running the impact check…" },
   "ready>done": { command: "route", label: "Sending the plan…" },
 };
 const whyNot = (from: Stage, to: Stage) =>
-  to === "review" || to === "ready" ? "Sign-offs happen on the case page, by Quality and Regulatory."
-  : to === "done" ? "Both sign-offs are needed before the plan can be sent."
-  : to === "assessing" && from !== "new" ? "This case has already been assessed. Run it again from the case page."
+  to === "review" || to === "ready" ? "Sign-offs happen on the case page: Technical, then Quality, then Regulatory."
+  : to === "done" ? "All three assessments must be signed off before the plan can be sent."
+  : to === "assessing" && from !== "new" ? "This case has already been checked. Run it again from the case page."
   : "Cases only move forward.";
 
 export function Board({ cards: allCards, user, directory, view, now }: { cards: BoardCard[]; user: User; directory: User[]; view: "board" | "calendar"; now: number }) {
@@ -50,7 +50,7 @@ export function Board({ cards: allCards, user, directory, view, now }: { cards: 
         await new Promise(resolve => setTimeout(resolve, 800));
         const state = await fetch(`/api/cases/${card.id}`, { cache: "no-store" }).then(r => r.json());
         if (state.version > (card.version ?? 0) && !state.assessing) break;
-        if (i === 2) router.refresh(); // show it in the Assessing column while it runs
+        if (i === 2) router.refresh(); // show it in the Checking impact column while it runs
       }
       setNotice(null);
     } catch (error) {
@@ -164,8 +164,8 @@ function CardView({ card, now, userId, waitingName, pending, onDragStart, onDrag
       {card.blocked ? <span className="pill pill-blocked" title={card.note}>Blocked</span> : card.stage !== "done" && days >= 0 ? <span className={`bc-due ${days < 30 ? "is-soon" : ""}`}>{days} days</span> : null}
     </div>
     <h3>{card.material}</h3>
-    <p className="bc-supplier">{card.supplier}</p>
-    <div className="bc-progress" aria-label={`Step ${card.step} of 5`}>{[1, 2, 3, 4, 5].map(n => <i key={n} className={n <= card.step ? "is-on" : undefined} />)}</div>
+    <p className="bc-supplier">Raw material | {card.supplier}</p>
+    <div className="bc-progress" aria-label={`Step ${card.step} of 6`}>{[1, 2, 3, 4, 5, 6].map(n => <i key={n} className={n <= card.step ? "is-on" : undefined} />)}</div>
     {/* Whose turn it is: the one thing a person scanning the board needs from each card. */}
     <div className="bc-foot">
       {mine ? <span className="bc-turn">Your turn</span>

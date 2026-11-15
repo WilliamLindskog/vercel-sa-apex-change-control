@@ -1,0 +1,37 @@
+import assert from "node:assert/strict";
+import { describe, test } from "node:test";
+import { rejectionFor } from "../lib/case-rules";
+import type { CaseState, Finding, SignOff } from "../lib/case";
+import type { ReviewRole } from "../lib/users";
+
+// The sign-off rules the case workflow enforces: three assessments, in order, and nothing routed while a record is missing.
+const finding = (disposition: Finding["disposition"]): Finding => ({ finishedGood: "FG-420-EU", product: "AeroShield 420", market: "EU", disposition, rationale: "", evidenceIds: ["QLF-EU-03"], noticeDays: 90 });
+const signed = (role: ReviewRole): SignOff => ({ role, reviewer: "Test", note: "ok", at: "2026-11-15T10:00:00Z" });
+
+function caseWith(roles: ReviewRole[], disposition: Finding["disposition"] = "requalification_required"): CaseState {
+  return {
+    caseId: "SCC-2026-041", runId: "run", scenario: "normal", version: 1, assessing: false,
+    assessment: { assessment: { summary: "", findings: [finding(disposition)], openQuestions: [] }, sources: [], calls: [], mode: "rules-only", model: "", corrections: [], latencyMs: 0, completedAt: "" },
+    signOffs: { Technical: null, Quality: null, Regulatory: null, ...Object.fromEntries(roles.map(r => [r, signed(r)])) },
+    routed: null, aiRuns: { day: "", count: 0 }, progress: [], log: [],
+  };
+}
+const sign = (role: ReviewRole) => ({ type: "sign" as const, role, reviewer: "Test", note: "ok", at: "" });
+const route = { type: "route" as const, by: "Test", to: "Purchasing", at: "" };
+
+describe("sign-off order", () => {
+  test("Technical can sign first", () => assert.equal(rejectionFor(caseWith([]), sign("Technical")), null));
+  test("Quality cannot sign before Technical", () => assert.match(rejectionFor(caseWith([]), sign("Quality")) ?? "", /Technical assessment must be signed off first/));
+  test("Regulatory cannot sign before Quality", () => assert.match(rejectionFor(caseWith(["Technical"]), sign("Regulatory")) ?? "", /Quality assessment must be signed off first/));
+  test("Regulatory can sign once Technical and Quality have", () => assert.equal(rejectionFor(caseWith(["Technical", "Quality"]), sign("Regulatory")), null));
+  test("no one signs twice", () => assert.match(rejectionFor(caseWith(["Technical"]), sign("Technical")) ?? "", /already signed off/));
+});
+
+describe("sending the plan", () => {
+  test("needs all three assessments", () => assert.match(rejectionFor(caseWith(["Technical", "Quality"]), route) ?? "", /all three assessments/));
+  test("goes through once all three are signed", () => assert.equal(rejectionFor(caseWith(["Technical", "Quality", "Regulatory"]), route), null));
+  test("a missing record blocks Regulatory and the plan", () => {
+    assert.match(rejectionFor(caseWith(["Technical", "Quality"], "uncertain"), sign("Regulatory")) ?? "", /record is missing/);
+    assert.match(rejectionFor(caseWith(["Technical", "Quality", "Regulatory"], "uncertain"), route) ?? "", /record is missing/);
+  });
+});

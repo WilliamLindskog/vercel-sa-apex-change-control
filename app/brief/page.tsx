@@ -36,11 +36,11 @@ export default function Brief() {
 
     <main className="brief-main">
       <section className="brief-hero">
-        <p className="brief-for">For Apex Additives | Change Control, Quality, Regulatory</p>
+        <p className="brief-for">For Apex Additives | Product Management, Lab, Production & QC, Regulatory</p>
         <h1>Supplier changes decided in days, not weeks.</h1>
         <div className="value-pair">
           <div><strong>AI on top of the systems you already run</strong><p>SAP, Veeva and the regulatory service stay. Every AI answer cites a record.</p></div>
-          <div><strong>People still decide</strong><p>Each case waits for Quality and Regulatory sign-off, and keeps a full history.</p></div>
+          <div><strong>People still decide</strong><p>Each case waits for three sign-offs in order (technical, quality, regulatory) and keeps a full history.</p></div>
           <div><strong>Mango, the team assistant</strong><p>Plans the day, drafts check-ins and reports from the same live numbers.</p></div>
         </div>
       </section>
@@ -49,7 +49,7 @@ export default function Brief() {
 
       <section id="problem" className="brief-section">
         <h2>1 | The problem</h2>
-        <p className="lede">A supplier ends Binder X-17. Apex must find every affected product, check it is qualified, and tell customers on time.</p>
+        <p className="lede">A supplier ends Binder X-17, a raw material. Apex must find every final product that contains it, decide what testing each needs, and tell customers on time.</p>
         <ul className="ticks">
           <li>Today this is SAP exports, Veeva look-ups, Excel and email sign-offs.</li>
           <li>Late notices mean penalties; missing records mean audit findings.</li>
@@ -127,15 +127,16 @@ export default function Brief() {
             <li><a href="https://apex-systems-mock.vercel.app/health">Mock of Apex's systems</a></li>
           </ul>
           <ul className="ticks">
-            <li><strong>Dana</strong>, Change Lead: runs the assessment</li>
-            <li><strong>Priya</strong>, Quality: signs off scope</li>
-            <li><strong>Marcus</strong>, Regulatory: signs off notices</li>
-            <li>Plus <strong>Ingrid</strong>, <strong>Kenji</strong> and <strong>Lucía</strong> for Plastics and Inks</li>
+            <li><strong>Peter</strong>, Product Manager: leads the change, runs the impact check, sends the plan</li>
+            <li><strong>Lisa</strong>, Lab Manager: technical assessment (lab-scale tests)</li>
+            <li><strong>Quinn</strong>, Production & QC: quality assessment (production trial, QC tests)</li>
+            <li><strong>Rachel</strong>, Regulatory Expert: regulatory assessment (compliance, customer notices)</li>
+            <li>Plus <strong>Paula</strong> and <strong>Quentin</strong> for Plastics and Inks</li>
           </ul>
         </div>
         <ol className="steps-list">
-          <li>As Dana, open Binder X-17 and run the assessment.</li>
-          <li>Sign off as Priya, then Marcus; send the plan.</li>
+          <li>As Peter, open Binder X-17 and run the impact check.</li>
+          <li>Sign off as Lisa, then Quinn, then Rachel; back as Peter, send the plan.</li>
           <li>Pick a failure scenario and run it again.</li>
           <li>Open Analytics, then ask Mango for a Q4 report.</li>
         </ol>
@@ -168,7 +169,7 @@ export default function Brief() {
           </ul>
           <ul className="ticks">
             <li><strong>Pilot:</strong> one product line, 10 past cases as baseline.</li>
-            <li><strong>Owner:</strong> Change Control, with one Quality and one Regulatory reviewer.</li>
+            <li><strong>Owner:</strong> a Product Manager, with one Lab, one Production & QC and one Regulatory reviewer.</li>
           </ul>
         </div>
         <table className="brief-table gates">

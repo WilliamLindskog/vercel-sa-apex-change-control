@@ -74,7 +74,7 @@ export const askMango = (text: string) => window.dispatchEvent(new CustomEvent("
 const starters = (user: User) => [
   "What should I focus on today?",
   "Who is holding things up?",
-  user.id === "priya" || user.id === "kenji" ? "Check in with Marcus on UV absorber UV-5" : "Check in with Priya on Wax W-210",
+  user.id === "quinn" ? "Check in with Rachel on UV absorber UV-5" : "Check in with Quinn on Wax W-210",
   "Draft a Q4 report for Coatings",
 ];
 
