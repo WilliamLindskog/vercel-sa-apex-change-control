@@ -42,10 +42,12 @@ const credits = [
   { name: "National Cancer Institute", href: "https://unsplash.com/@nci" },
   { name: "Julia Taubitz", href: "https://unsplash.com/@justmejuliee" },
   { name: "Kirill Petropavlov", href: "https://unsplash.com/@kp89_" },
-  // Team portraits (Dana, Priya, Marcus)
+  // Team portraits (Dana and Lucía, Priya, Marcus, Ingrid, Kenji)
   { name: "Christina @ wocintechchat.com", href: "https://unsplash.com/@wocintechchat" },
   { name: "Siddharth Vyas", href: "https://unsplash.com/@siddharth_vyas1" },
   { name: "Danny Postma", href: "https://unsplash.com/@dannypostma" },
+  { name: "Troy Spoelma", href: "https://unsplash.com/@spoelee4" },
+  { name: "Redd Francisco", href: "https://unsplash.com/@reddfrancisco" },
 ];
 
 // The landing page is fully static (prerendered at build). Only the sign-in menu reads the URL, so it

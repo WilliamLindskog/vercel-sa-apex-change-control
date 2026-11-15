@@ -4,7 +4,8 @@ import { latestState, openCase } from "./case-store";
 import { getChange, type CaseState } from "./case";
 import { cases, type CaseSummary, type Stage } from "./cases";
 
-export type BoardCard = CaseSummary & { stage: Stage; blocked: boolean; step: number; version?: number; runId?: string };
+// noticeBy: the last day to send customer notices (change date minus the longest notice period that applies).
+export type BoardCard = CaseSummary & { stage: Stage; blocked: boolean; step: number; version?: number; runId?: string; noticeBy?: string; noticeDays?: number };
 
 // Where a case sits follows its durable workflow, never a stored column. It also says who the case is
 // waiting for, using the case's own team and the same rules as the case page's next-step card.
@@ -36,7 +37,9 @@ async function caseIndex(): Promise<CaseSummary[]> {
 async function liveCard(summary: CaseSummary): Promise<BoardCard> {
   const state = await latestState(await openCase(summary.id));
   const at = stageOf(summary.id, state);
-  return { ...summary, ...at, version: state?.version ?? 0, runId: state?.runId ?? "" };
+  const days = Math.max(0, ...(state?.assessment?.assessment.findings ?? []).filter(f => f.disposition !== "unaffected").map(f => f.noticeDays ?? 0));
+  const noticeBy = days ? new Date(Date.parse(`${summary.deadline}T12:00:00Z`) - days * 86_400_000).toISOString().slice(0, 10) : undefined;
+  return { ...summary, ...at, noticeBy, noticeDays: days || undefined, version: state?.version ?? 0, runId: state?.runId ?? "" };
 }
 
 // Every case as the board shows it. The board, analytics and Helper all read this, so they never disagree.
