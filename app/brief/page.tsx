@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PublicAccount } from "@/app/signin/public-account";
 import { ApexLogo } from "@/app/ui/apex-mark";
 import evalResults from "@/evals/results/latest.json";
 import "./brief.css";
@@ -30,7 +31,7 @@ export default function Brief() {
     <header className="brief-bar">
       <Link href="/signin" className="brief-brand" aria-label="Apex"><ApexLogo size={26} /></Link>
       <span>Solution brief | November 2026</span>
-      <a className="brief-cta" href={`${APP}/signin`}>Open the demo</a>
+      <PublicAccount />
     </header>
 
     <main className="brief-main">

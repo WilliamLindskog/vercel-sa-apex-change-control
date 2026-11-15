@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { systemsActivity } from "@/lib/board";
+import { tools } from "@/lib/connections";
 import { requireUser } from "@/lib/session";
 import "./connections.css";
 
@@ -17,12 +18,6 @@ const apexSystems = [
   { system: "Regulatory", name: "Regulatory", mark: "R", tone: "reg" },
 ] as const;
 
-const tools = [
-  { name: "Outlook", mark: "O", tone: "outlook" },
-  { name: "Teams", mark: "T", tone: "teams" },
-  { name: "Slack", mark: "#", tone: "slack" },
-  { name: "Salesforce", mark: "S", tone: "salesforce" },
-];
 
 export default function ConnectionsPage() {
   return <>
@@ -41,9 +36,9 @@ export default function ConnectionsPage() {
         <header className="cn-head"><h2 id="tools-h">Your tools</h2><span className="cn-tag" title="IT approves each tool; you connect your own account; the app only gets short-lived tokens.">Vercel Connect, phase 2</span></header>
         <div className="cn-grid is-four">
           {tools.map(t => <div key={t.name} className="cn-card is-planned">
-            <span className={`cn-logo is-${t.tone}`} aria-hidden="true">{t.mark}</span>
+            <span className={`cn-logo is-${t.id}`} aria-hidden="true">{t.mark}</span>
             <strong>{t.name}</strong>
-            <button className="cn-connect" disabled title="Phase 2">Connect</button>
+            {t.connected ? <span className="cn-status">Connected</span> : <button className="cn-connect" disabled title="Phase 2">Connect</button>}
           </div>)}
         </div>
       </section>

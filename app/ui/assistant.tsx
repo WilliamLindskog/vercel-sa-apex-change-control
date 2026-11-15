@@ -4,6 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { tool } from "@/lib/connections";
 import type { User } from "@/lib/users";
 import "./assistant.css";
 
@@ -115,16 +116,33 @@ function ReportCard({ report }: { report: Report }) {
 
 function DraftCard({ draft }: { draft: Draft }) {
   const [copied, setCopied] = useState(false);
+  const [slackHelp, setSlackHelp] = useState(false);
   if (!draft.ok) return <p className="as-note">{draft.error}</p>;
   const copy = async () => { try { await navigator.clipboard.writeText(draft.message); setCopied(true); setTimeout(() => setCopied(false), 1600); } catch {} };
+  const first = draft.to.name.split(" ")[0];
+  // Sending needs a real Slack connection (Vercel Connect). Until there is one, say so and offer the way there.
+  const slack = tool("slack");
   return <div className="as-draft">
-    <div className="as-draft-to"><span className={`avatar tiny tone-${draft.to.id}`} aria-hidden="true" /><span>To <strong>{draft.to.name.split(" ")[0]}</strong> | {draft.material}</span></div>
+    <div className="as-draft-to"><span className={`avatar tiny tone-${draft.to.id}`} aria-hidden="true" /><span>To <strong>{first}</strong> | {draft.material}</span></div>
     <p>{draft.message}</p>
     <div className="as-draft-actions">
       <button className="btn btn-primary" onClick={copy}>{copied ? "Copied" : "Copy message"}</button>
+      <button className="btn as-slack" onClick={() => setSlackHelp(!slackHelp)} aria-expanded={slackHelp}><SlackMark />Send in Slack</button>
       <Link className="as-link" href={`/cases/${draft.caseId}`}>Open case</Link>
     </div>
+    {slackHelp && !slack.connected && <div className="as-slack-help" role="status">
+      <strong>Slack isn't connected yet</strong>
+      <span>Once IT approves Slack, you connect your own account and Mango can message {first} directly. Until then, copy the message.</span>
+      <Link className="as-link" href="/connections">See Connections</Link>
+    </div>}
   </div>;
+}
+
+function SlackMark() {
+  return <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="9" y="2" width="4" height="9" rx="2" fill="#36c5f0" /><rect x="13" y="13" width="4" height="9" rx="2" fill="#2eb67d" />
+    <rect x="2" y="11" width="9" height="4" rx="2" fill="#e01e5a" /><rect x="13" y="9" width="9" height="4" rx="2" fill="#ecb22e" />
+  </svg>;
 }
 
 export function Assistant({ user }: { user: User }) {

@@ -1,6 +1,4 @@
 /* News article: one photo, the story, a few key facts, then the other stories. Same paper, bar and gutters as the landing. */
-.article-back { justify-self: end; color: var(--ink-2); font-size: 15px; font-weight: 500; text-decoration: none; }
-.article-back:hover { color: var(--ink); text-decoration: underline; }
 
 .article { padding: 84px var(--gutter) 12vh; }
 .article-hero { position: relative; height: min(52vh, 520px); overflow: hidden; border-radius: 26px; background: var(--night); }
@@ -27,9 +25,7 @@
 .article-more strong { font: 400 20px/1.2 var(--serif); font-variation-settings: "SOFT" 40, "opsz" 48; }
 
 @media (max-width: 760px) {
-  .article { padding-top: 76px; }
-  .article-page .lp-bar { grid-template-columns: 1fr auto; height: 64px; padding-block: 0; }
-  .article-page .lp-bar > span { display: none; }
+  .article { padding-top: 112px; }
   .article-hero { height: 36vh; border-radius: 18px; }
   .article-grid { grid-template-columns: 1fr; gap: 28px; padding-top: 28px; }
 }

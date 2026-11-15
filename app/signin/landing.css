@@ -12,32 +12,6 @@
 .lp-bar nav a { color: var(--ink-2); font-size: 15px; font-weight: 500; text-decoration: none; transition: color .2s; }
 .lp-bar nav a:hover { color: var(--ink); text-decoration: underline; }
 
-/* Sign-in menu */
-.signin-menu { position: relative; justify-self: end; }
-.signin-trigger { min-height: 38px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--action); color: #fff8ef; font-size: 14.5px; font-weight: 600; transition: background-color .2s; }
-.signin-trigger:hover, .signin-trigger[aria-expanded="true"] { background: var(--action-hover); }
-.signin-panel { position: absolute; top: calc(100% + 10px); right: 0; width: min(390px, calc(100vw - 32px)); padding: 22px; border-radius: 18px; background: var(--ground); color: var(--ink); box-shadow: 0 24px 60px -18px rgba(0, 0, 0, .55); animation: panel-in .35s cubic-bezier(.16, 1, .3, 1) both; transform-origin: top right; max-height: calc(100svh - 96px); overflow-y: auto; }
-@keyframes panel-in { from { opacity: 0; transform: translateY(-6px) scale(.98); } }
-.signin-panel h2 { margin-bottom: 14px; color: var(--ink); font-size: 26px; letter-spacing: -.02em; }
-.signin-lede { margin: -8px 0 12px; color: var(--ink-3); font-size: 13.5px; }
-.signin-panel .form-error { margin: 0 0 12px; }
-.account-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
-.account-group { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; min-inline-size: 0; margin: 0; padding: 0; border: 0; }
-.account-group legend { margin-bottom: 4px; padding: 0; color: var(--ink-3); font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
-.account { display: flex; align-items: center; gap: 12px; width: 100%; min-width: 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); text-align: left; transition: border-color .2s, background-color .2s, opacity .2s; }
-.account:hover:not(:disabled) { border-color: var(--marigold-line); background: #fffcf6; }
-.account:disabled { opacity: .55; cursor: progress; }
-.account.is-pending { opacity: 1; border-color: var(--marigold-deep); }
-.account-text { flex: 1; min-width: 0; }
-.account-text strong { display: flex; align-items: center; gap: 6px; font-size: 14.5px; }
-.account-text span { display: block; overflow: hidden; color: var(--ink-3); font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; }
-.account.is-pending .account-text span { color: var(--marigold-ink); font-weight: 600; }
-.start-here { padding: 1px 7px; border-radius: 999px; background: var(--action); color: #fff8ef; font-size: 10.5px; font-style: normal; font-weight: 700; }
-.account-waiting { flex: none; padding: 2px 8px; border-radius: 999px; background: var(--marigold-bg); color: var(--marigold-ink); font-size: 11.5px; font-weight: 700; }
-.sso-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--ink-3); font-size: 12.5px; }
-.sso { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px dashed var(--line-strong); border-radius: 999px; background: transparent; color: var(--ink-3); font-size: 12.5px; font-weight: 600; --mark-ink: var(--ground); }
-.sso .apex-mark { color: var(--ink-3); }
-
 /* Chapters: framed panels with breathing room between them */
 /* Each chapter sits in a taller "stop": it pins under the bar and holds still for a stretch of scrolling
    before the next one starts to arrive. The stop's top is the anchor, so nav links land on the pinned view. */
