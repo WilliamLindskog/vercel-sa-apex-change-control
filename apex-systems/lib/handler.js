@@ -42,6 +42,11 @@ export async function handle(request) {
     return json({ d: { results: erp.whereUsed[match[1]] ?? [] } });
   }
 
+  // ERP: the finished-goods catalogue (product master), with product hierarchy and components
+  if (path === "/erp/v1/finished-goods") {
+    return json({ d: { results: Object.values(erp.finishedGoods) } });
+  }
+
   // ERP: finished good with its bill of materials
   if ((match = path.match(/^\/erp\/v1\/finished-goods\/([A-Z0-9-]+)$/))) {
     const good = erp.finishedGoods[match[1]];

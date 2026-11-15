@@ -20,6 +20,9 @@ const materials = [
   ["MAT-000112", "ANTIOXIDANT AO-12 PHENOLIC", "V-22604", "CORVANE INDUSTRIAL", "20260930"],
 ];
 
+// SAP product hierarchy (top level) by product family: 4xx coatings, 7xx inks, the rest plastics additives.
+const hierarchy = id => (/^FG-4/.test(id) ? "COATINGS" : /^FG-7/.test(id) ? "INKS" : "PLASTICS");
+
 // [finished good, description, plant, sales org, components (material: description)]
 const goods = [
   ["FG-420-US", "AEROSHIELD 420 PROTECTIVE COATING", "US10", "US01", { "MAT-000417": "BINDER X-17 ACRYLIC", "MAT-000102": "TITANIUM DIOXIDE R-9" }],
@@ -72,7 +75,7 @@ export const erp = {
     return all;
   }, {}),
   finishedGoods: Object.fromEntries(goods.map(([FinishedGood, Description, Plant, SalesOrg, components]) =>
-    [FinishedGood, { FinishedGood, Description, Plant, SalesOrg, Components: Object.entries(components).map(([Material, desc]) => ({ Material, Description: desc })) }])),
+    [FinishedGood, { FinishedGood, Description, Plant, SalesOrg, ProductHierarchy: hierarchy(FinishedGood), Components: Object.entries(components).map(([Material, desc]) => ({ Material, Description: desc })) }])),
 };
 
 // [id, name, product, material, grade, region, effective date, scope]

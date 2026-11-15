@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { ApexLogo, ApexMark } from "@/app/ui/apex-mark";
-import { BoardIcon, BriefIcon, CalendarIcon, ChartIcon, ChevronIcon, PlugIcon } from "@/app/ui/icons";
+import { BoardIcon, BoxIcon, BriefIcon, CalendarIcon, ChartIcon, ChevronIcon, PlugIcon } from "@/app/ui/icons";
 import type { User } from "@/lib/users";
 
 // Small per-browser preferences: which panels are open.
@@ -63,12 +63,13 @@ function MainLinksFromUrl({ collapsed }: { collapsed: boolean }) {
   return <MainLinks collapsed={collapsed} calendar={calendar} />;
 }
 
-// Board and Calendar are two views of the same cases; Analytics is the numbers behind them.
+// Board and Calendar are two views of the same cases; Products is what they can touch; Analytics is the numbers.
 function MainLinks({ collapsed, calendar }: { collapsed: boolean; calendar: boolean }) {
   const pathname = usePathname();
   return <>
     <NavLink href="/cases" label="Board" icon={<BoardIcon />} active={pathname.startsWith("/cases") && !calendar} collapsed={collapsed} />
     <NavLink href="/cases?view=calendar" label="Calendar" icon={<CalendarIcon />} active={calendar} collapsed={collapsed} />
+    <NavLink href="/products" label="Products" icon={<BoxIcon />} active={pathname.startsWith("/products")} collapsed={collapsed} />
     <NavLink href="/analytics" label="Analytics" icon={<ChartIcon />} active={pathname.startsWith("/analytics")} collapsed={collapsed} />
     <NavLink href="/connections" label="Connections" icon={<PlugIcon />} active={pathname.startsWith("/connections")} collapsed={collapsed} />
   </>;
