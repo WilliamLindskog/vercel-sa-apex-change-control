@@ -29,6 +29,7 @@ function connection() {
 const erpMaterial = z.object({ d: z.object({ Material: z.string(), MaterialDescription: z.string(), Supplier: z.string(), SupplierName: z.string(), SupplyEndDate: z.string() }) });
 const erpWhereUsed = z.object({ d: z.object({ results: z.array(z.object({ Recipe: z.string(), FinishedGood: z.string(), FinishedGoodDescription: z.string(), Plant: z.string(), SalesOrg: z.string() })) }) });
 const erpFinishedGood = z.object({ d: z.object({ FinishedGood: z.string(), Description: z.string(), Plant: z.string(), SalesOrg: z.string(), Components: z.array(z.object({ Material: z.string(), Description: z.string() })) }) });
+const erpCatalogue = z.object({ d: z.object({ results: z.array(z.object({ FinishedGood: z.string(), Description: z.string(), Plant: z.string(), SalesOrg: z.string(), ProductHierarchy: z.string(), Components: z.array(z.object({ Material: z.string(), Description: z.string() })) })) }) });
 const qmsQualifications = z.object({ data: z.array(z.object({ id: z.string(), name__v: z.string(), status__v: z.string(), product__c: z.string(), material__c: z.string(), material_grade__c: z.string(), region__c: z.string(), effective_date__c: z.string(), scope__c: z.string() })) });
 const regRules = z.object({ items: z.array(z.object({ ruleId: z.string(), market: z.string(), changeType: z.string(), appliesTo: z.string(), noticeDays: z.number(), requirement: z.string() })) });
 
@@ -89,6 +90,15 @@ export function apexSession(scenario: Scenario) {
       const g = body.d;
       remember({ id: g.FinishedGood, system: "ERP", title: `Bill of materials | ${title(g.Description)}`, detail: `Components: ${g.Components.map(c => `${title(c.Description)} (${c.Material})`).join(", ")}.` });
       return { finishedGood: g.FinishedGood, product: title(g.Description), market: marketFor(g.SalesOrg), components: g.Components.map(c => c.Material) };
+    },
+
+    // The finished-goods catalogue (SAP product master). Reference data, not evidence for a case.
+    async catalogue() {
+      const body = await get("ERP", "/erp/v1/finished-goods", erpCatalogue);
+      return (body?.d.results ?? []).map(g => ({
+        finishedGood: g.FinishedGood, product: title(g.Description).replace(/ \(Eu\)$/, ""), market: marketFor(g.SalesOrg), plant: g.Plant,
+        line: title(g.ProductHierarchy), components: g.Components.map(c => ({ material: c.Material, name: title(c.Description) })),
+      }));
     },
 
     async qualifications(finishedGood: string) {

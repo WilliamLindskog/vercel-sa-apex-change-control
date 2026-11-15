@@ -4,7 +4,7 @@ import { revalidateTag } from "next/cache";
 // shared secret when the underlying data changes, so the cached board and analytics refresh at once,
 // without a rebuild and without making those pages dynamic. Production: a signed webhook from Apex's
 // integration layer, over the same private connection as the reads.
-const tags = new Set(["cases", "analytics"]);
+const tags = new Set(["cases", "analytics", "products"]);
 
 export async function POST(request: Request) {
   const secret = process.env.REVALIDATE_SECRET;

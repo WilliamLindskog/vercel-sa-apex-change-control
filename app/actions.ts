@@ -11,7 +11,7 @@ import { signSession } from "@/lib/session-token";
 import { findUser } from "@/lib/users";
 
 const safeNext = (value: FormDataEntryValue | null) =>
-  typeof value === "string" && /^\/(cases|analytics|connections)(\/|\?|$)/.test(value) ? value : "/cases";
+  typeof value === "string" && /^\/(cases|analytics|connections|products)(\/|\?|$)/.test(value) ? value : "/cases";
 
 async function setSession(userId: string) {
   (await cookies()).set(SESSION_COOKIE, await signSession(userId), {
