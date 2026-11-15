@@ -30,7 +30,7 @@ export function useDemoScenario(): [Scenario, (next: Scenario) => void] {
 // Shown in the top bar of every workspace page.
 export function DemoScenario() {
   const [scenario, choose] = useDemoScenario();
-  return <label className="scenario" title="How Apex's systems behave for the next assessment you run">
+  return <label className="scenario" title="How Apex's systems behave for the next impact check you run">
     <span>Demo scenario</span>
     <select value={scenario} onChange={event => choose(event.target.value as Scenario)}>
       {(Object.keys(scenarioLabel) as Scenario[]).map(key => <option key={key} value={key}>{scenarioLabel[key]}</option>)}

@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { latestState, openCase } from "./case-store";
 import { getChange, type CaseState } from "./case";
 import { cases, type CaseSummary, type Stage } from "./cases";
+import { reviewOrder, type ReviewRole } from "./users";
 
 // noticeBy: the last day to send customer notices (change date minus the longest notice period that applies).
 export type BoardCard = CaseSummary & { stage: Stage; blocked: boolean; step: number; version?: number; runId?: string; noticeBy?: string; noticeDays?: number };
@@ -14,12 +15,14 @@ function stageOf(caseId: string, state: CaseState | null): { stage: Stage; block
   if (!state) return { stage: "new", blocked: false, step: 1, waitingOn: team.lead };
   const run = state.assessment;
   const blocked = run?.assessment.findings.some(f => f.disposition === "uncertain") ?? false;
-  const signed = Number(Boolean(state.signOffs.Quality)) + Number(Boolean(state.signOffs["Regulatory Affairs"]));
-  if (state.routed) return { stage: "done", blocked: false, step: 5, note: `Plan sent ${new Date(state.routed.at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}` };
+  const signed = reviewOrder.filter(review => state.signOffs[review]).length;
+  const reviewer: Record<ReviewRole, string> = { Technical: team.lab, Quality: team.quality, Regulatory: team.regulatory };
+  if (state.routed) return { stage: "done", blocked: false, step: 6, note: `Plan sent ${new Date(state.routed.at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}` };
   if (state.assessing) return { stage: "assessing", blocked: false, step: 1 };
   if (!run) return { stage: "new", blocked: false, step: 1, waitingOn: team.lead };
-  if (signed === 2 && !blocked) return { stage: "ready", blocked: false, step: 4, waitingOn: team.lead };
-  const owner = blocked ? (run.assessment.openQuestions[0]?.owner === "Quality" ? team.quality : team.regulatory) : !state.signOffs.Quality ? team.quality : team.regulatory;
+  if (signed === reviewOrder.length && !blocked) return { stage: "ready", blocked: false, step: 5, waitingOn: team.lead };
+  const asked = run.assessment.openQuestions[0]?.owner;
+  const owner = blocked ? (asked && asked !== "Product Manager" ? reviewer[asked] : team.lead) : reviewer[reviewOrder[signed]];
   return { stage: "review", blocked, step: 2 + signed, waitingOn: owner, note: blocked ? "Record missing" : undefined };
 }
 

@@ -14,7 +14,7 @@
 .cw-head-side .pill { padding: 4px 12px; font-size: 13px; }
 
 /* 1. Process */
-.cw-process { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.cw-process { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
 .cw-process li { position: relative; display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 14px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); color: var(--ink-3); }
 .cw-process li:not(:last-child)::after { content: ""; position: absolute; right: -9px; top: 50%; z-index: 1; width: 10px; height: 2px; background: var(--line-strong); }
 .cw-process li.is-done { background: var(--sage-bg); box-shadow: none; color: var(--sage); }
@@ -135,7 +135,7 @@ button.cw-node:hover { transform: translateX(3px); box-shadow: 0 0 0 1px var(--l
 
 @media (max-width: 1000px) {
   .cw-grid, .cw-activity { grid-template-columns: 1fr; }
-  .cw-process { grid-template-columns: repeat(5, minmax(150px, 1fr)); overflow-x: auto; padding: 2px; }
+  .cw-process { grid-template-columns: repeat(6, minmax(150px, 1fr)); overflow-x: auto; padding: 2px; }
 }
 @media (max-width: 680px) {
   .cw-head { flex-direction: column; align-items: flex-start; gap: 8px; }

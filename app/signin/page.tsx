@@ -35,7 +35,7 @@ const credits = [
   { name: "National Cancer Institute", href: "https://unsplash.com/@nci" },
   { name: "Julia Taubitz", href: "https://unsplash.com/@justmejuliee" },
   { name: "Kirill Petropavlov", href: "https://unsplash.com/@kp89_" },
-  // Team portraits (Dana, Priya, Marcus, Ingrid, Kenji, Lucía)
+  // Team portraits (in order: Lisa, Quinn, Peter, Paula, Quentin, Rachel)
   { name: "Christina @ wocintechchat.com", href: "https://unsplash.com/@wocintechchat" },
   { name: "Siddharth Vyas", href: "https://unsplash.com/@siddharth_vyas1" },
   { name: "Danny Postma", href: "https://unsplash.com/@dannypostma" },

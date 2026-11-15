@@ -2,11 +2,13 @@ import { createHook, getWorkflowMetadata, getWritable } from "workflow";
 import type { Scenario } from "@/lib/apex-systems";
 import { scenarioLabel } from "@/lib/demo-scenario";
 import { defaultNote, getChange, type CaseState, type SignOff, type SupplierChange } from "@/lib/case";
-import { findUser } from "@/lib/users";
+import { findUser, reviewOrder, type ReviewRole } from "@/lib/users";
+import { rejectionFor } from "@/lib/case-rules";
 import { durableAssessment } from "./assessment";
 
 // One durable workflow run is one supplier-change case. It holds the case until people act on it:
-// assessment, Quality sign-off, Regulatory sign-off, routing. It can wait days between steps, and
+// the impact check, then three assessments signed off in order (Technical by the Lab Manager, Quality by
+// Production & QC, Regulatory by the Regulatory Expert), then the Product Manager sends the plan. It can wait days between steps, and
 // survives crashes and deploys, because its state is the event history Workflows records, not server memory.
 //
 // Commands arrive through a single hook with a token derived from the case ID, so any server instance
@@ -41,7 +43,7 @@ export async function supplierChangeCase(input: { caseId: string; scenario: Scen
     version: 1,
     assessing: false,
     assessment: null,
-    signOffs: { Quality: null, "Regulatory Affairs": null },
+    signOffs: noSignOffs(),
     routed: null,
     aiRuns: { day: new Date().toISOString().slice(0, 10), count: 0 },
     progress: [],
@@ -89,22 +91,22 @@ async function apply(state: CaseState, command: Exclude<CaseCommand, { type: "cl
         await publish(state);
       });
       // A new assessment replaces the evidence the sign-offs were based on, so earlier sign-offs no longer count.
-      const hadSignOffs = Boolean(state.signOffs.Quality || state.signOffs["Regulatory Affairs"]);
+      const hadSignOffs = reviewOrder.some(review => state.signOffs[review]);
       const completedAt = command.rulesOnly ? command.at : assessment.completedAt;
       state = {
-        ...state, assessing: false, assessment: { ...assessment, completedAt }, signOffs: { Quality: null, "Regulatory Affairs": null },
+        ...state, assessing: false, assessment: { ...assessment, completedAt }, signOffs: noSignOffs(),
         aiRuns: command.rulesOnly ? state.aiRuns : { day: today, count: runsToday + (assessment.mode === "ai-gateway" ? 1 : 0) },
-        log: [...state.log, { at: completedAt, text: `Assessment completed by ${assessment.mode === "ai-gateway" ? assessment.model : "policy rules"} for ${command.by}${hadSignOffs ? ". Earlier sign-offs cleared" : ""}` }],
+        log: [...state.log, { at: completedAt, text: `Impact check completed by ${assessment.mode === "ai-gateway" ? assessment.model : "policy rules"} for ${command.by}${hadSignOffs ? ". Earlier sign-offs cleared" : ""}` }],
       };
     } catch {
-      state = { ...state, assessing: false, log: [...state.log, { at: command.at, text: "Assessment failed after retries: Apex systems unreachable. Try again later." }] };
+      state = { ...state, assessing: false, log: [...state.log, { at: command.at, text: "Impact check failed after retries: Apex systems unreachable. Try again later." }] };
     }
   }
 
   if (command.type === "sign") {
     const signOff: SignOff = { role: command.role, reviewer: command.reviewer, note: command.note, at: command.at };
     await recordAudit(state.caseId, { event: "sign_off", ...signOff });
-    state = { ...state, signOffs: { ...state.signOffs, [command.role]: signOff }, log: [...state.log, { at: command.at, text: `${command.role} signed off: ${command.reviewer}` }] };
+    state = { ...state, signOffs: { ...state.signOffs, [command.role]: signOff }, log: [...state.log, { at: command.at, text: `${command.role} assessment signed off: ${command.reviewer}` }] };
   }
 
   if (command.type === "route") {
@@ -125,44 +127,24 @@ function at(isoDate: string, days: number, hour: number) {
   return d.toISOString();
 }
 
-// The commands a case had already been through, for a case that starts part-way. The assessment is replayed
+// The commands a case had already been through, for a case that starts part-way. The impact check is replayed
 // with the policy rules (no model, no spend); sign-off notes are drafted from its findings.
 function* history(change: SupplierChange): Generator<Exclude<CaseCommand, { type: "close" }>> {
-  const { stage, qualitySigned } = change.start;
+  const { stage } = change.start;
   if (stage === "new") return;
   const name = (id: string) => findUser(id)?.name ?? id;
+  const reviewer: Record<ReviewRole, string> = { Technical: change.team.lab, Quality: change.team.quality, Regulatory: change.team.regulatory };
   yield { type: "assess", by: name(change.team.lead), at: at(change.received, 1, 10), rulesOnly: true };
-  // The notes need the findings, which only exist once the assessment has run; sign() fills them in below.
-  if (stage === "review" && !qualitySigned) return;
-  yield { type: "sign", role: "Quality", reviewer: name(change.team.quality), note: "", at: at(change.received, 2, 14) };
-  if (stage === "review") return;
-  yield { type: "sign", role: "Regulatory Affairs", reviewer: name(change.team.regulatory), note: "", at: at(change.received, 3, 11) };
-  if (stage === "ready") return;
-  yield { type: "route", by: name(change.team.lead), to: PLAN_RECIPIENTS, at: at(change.received, 4, 9) };
+  // The notes need the findings, which only exist once the impact check has run; they are filled in on replay.
+  const signed = stage === "review" ? (change.start.signed ?? 0) : reviewOrder.length;
+  for (const [i, review] of reviewOrder.slice(0, signed).entries()) {
+    yield { type: "sign", role: review, reviewer: name(reviewer[review]), note: "", at: at(change.received, 2 + i, 11 + i) };
+  }
+  if (stage !== "done") return;
+  yield { type: "route", by: name(change.team.lead), to: PLAN_RECIPIENTS, at: at(change.received, 5, 9) };
 }
 
-// The case rules live here, inside the durable record, so no client or API shortcut can skip them.
-function rejectionFor(state: CaseState, command: CaseCommand): string | null {
-  const uncertain = state.assessment?.assessment.findings.some(f => f.disposition === "uncertain") ?? false;
-  switch (command.type) {
-    case "assess":
-      if (state.assessing) return "an assessment is already running";
-      if (state.routed) return "the plan has already been routed";
-      return null;
-    case "sign":
-      if (!state.assessment) return `${command.role} cannot sign before the assessment`;
-      if (state.signOffs[command.role]) return `${command.role} has already signed off`;
-      if (command.role === "Regulatory Affairs" && uncertain) return "Regulatory Affairs cannot sign while a record is missing";
-      return null;
-    case "route":
-      if (state.routed) return "the plan has already been routed";
-      if (uncertain) return "a record is missing, so nothing can be routed";
-      if (!state.signOffs.Quality || !state.signOffs["Regulatory Affairs"]) return "both sign-offs are required before routing";
-      return null;
-    default:
-      return null;
-  }
-}
+const noSignOffs = (): CaseState["signOffs"] => ({ Technical: null, Quality: null, Regulatory: null });
 
 async function publish(state: CaseState) {
   "use step";

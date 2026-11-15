@@ -6,10 +6,11 @@ import { restartCase, sendCommand } from "@/lib/case-store";
 import { PLAN_RECIPIENTS } from "@/workflows/supplier-change-case";
 import { isScenario, SCENARIO_COOKIE } from "@/lib/demo-scenario";
 import { currentUser } from "@/lib/session";
+import { reviewerRole, reviewOrder, type ReviewRole } from "@/lib/users";
 
 const body = z.discriminatedUnion("type", [
   z.object({ type: z.literal("assess") }),
-  z.object({ type: z.literal("sign"), role: z.enum(["Quality", "Regulatory Affairs"]), note: z.string().trim().min(3).max(600) }),
+  z.object({ type: z.literal("sign"), role: z.enum(reviewOrder as [ReviewRole, ...ReviewRole[]]), note: z.string().trim().min(3).max(600) }),
   z.object({ type: z.literal("route") }),
   z.object({ type: z.literal("scenario"), scenario: z.enum(["normal", "missing-eu-qualification", "qms-outage"]) }),
 ]);
@@ -35,7 +36,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ cas
       }
       break;
     case "sign":
-      if (user.role !== command.role) return NextResponse.json({ error: `Only ${command.role} can record this sign-off.` }, { status: 403 });
+      if (user.role !== reviewerRole[command.role]) return NextResponse.json({ error: `Only the ${reviewerRole[command.role]} can sign off the ${command.role} assessment.` }, { status: 403 });
       await sendCommand(caseId, { type: "sign", role: command.role, reviewer: user.name, note: command.note, at });
       break;
     case "route":

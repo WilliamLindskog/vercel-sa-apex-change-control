@@ -30,16 +30,16 @@ async function Registry() {
 
   return <>
     <header className="pr-head">
-      <h1>Products</h1>
-      <p>{products.length} products in {lines.length} lines | from SAP</p>
+      <h1>Final products</h1>
+      <p>{products.length} final products Apex sells, in {lines.length} lines, with the raw materials in each | from SAP</p>
     </header>
 
     {lines.map(line => {
       const rows = products.filter(p => p.line === line);
       return <section key={line} className="pr-line" aria-labelledby={`line-${line}`}>
         <h2 id={`line-${line}`}>{line}<span>{rows.length}</span></h2>
-        <div className="pr-table" role="table" aria-label={`${line} products`}>
-          <div className="pr-row is-head" role="row"><span role="columnheader">Product</span><span role="columnheader">Markets</span><span role="columnheader">Key materials</span><span role="columnheader">Changes</span></div>
+        <div className="pr-table" role="table" aria-label={`${line} final products`}>
+          <div className="pr-row is-head" role="row"><span role="columnheader">Final product</span><span role="columnheader">Markets</span><span role="columnheader">Raw materials</span><span role="columnheader">Raw-material changes</span></div>
           {rows.map(product => {
             const cases = casesFor(product.markets.map(m => m.finishedGood));
             return <div key={product.family} className="pr-row" role="row">

@@ -62,13 +62,13 @@ button:disabled { cursor: not-allowed; }
 .avatar.large { width: 56px; height: 56px; font-size: 17px; }
 .avatar.tiny { width: 24px; height: 24px; font-size: 9.5px; }
 /* Portraits: Unsplash photos (credited on the landing page), cropped to the face; initials stay for screen readers' layout only. */
-.tone-dana, .tone-priya, .tone-marcus, .tone-ingrid, .tone-kenji, .tone-lucia { color: transparent; background-repeat: no-repeat; background-size: 190% auto; }
-.tone-dana { background-color: #f8d9b8; background-image: url(/people/dana.jpg); background-position: 52% 24%; }
-.tone-priya { background-color: #dbe8cd; background-image: url(/people/priya.jpg); background-position: 44% 26%; }
-.tone-marcus { background-color: #ecd8e5; background-image: url(/people/marcus.jpg); background-position: 50% 26%; }
-.tone-ingrid { background-color: #e4d4f0; background-image: url(/people/ingrid.jpg); background-position: 50% 22%; }
-.tone-kenji { background-color: #cfe3e6; background-image: url(/people/kenji.jpg); background-position: 50% 18%; }
-.tone-lucia { background-color: #f6d2c4; background-image: url(/people/lucia.jpg); background-position: 50% 30%; }
+.tone-lisa, .tone-quinn, .tone-peter, .tone-paula, .tone-quentin, .tone-rachel { color: transparent; background-repeat: no-repeat; background-size: 190% auto; }
+.tone-lisa { background-color: #f8d9b8; background-image: url(/people/lisa.jpg); background-position: 52% 24%; }
+.tone-quinn { background-color: #dbe8cd; background-image: url(/people/quinn.jpg); background-position: 44% 26%; }
+.tone-peter { background-color: #ecd8e5; background-image: url(/people/peter.jpg); background-position: 50% 26%; }
+.tone-paula { background-color: #e4d4f0; background-image: url(/people/paula.jpg); background-position: 50% 22%; }
+.tone-quentin { background-color: #cfe3e6; background-image: url(/people/quentin.jpg); background-position: 50% 18%; }
+.tone-rachel { background-color: #f6d2c4; background-image: url(/people/rachel.jpg); background-position: 50% 30%; }
 .tone-supplier { background: #f1e7da; color: var(--ink-2); }
 
 /* Badges */

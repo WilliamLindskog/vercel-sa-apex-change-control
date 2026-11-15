@@ -63,7 +63,7 @@ export type Fact = {
   evidence: string[];
   noticeDays: number | null;
   reason: string;
-  openQuestion?: { owner: "Quality" | "Regulatory Affairs"; detail: string };
+  openQuestion?: { owner: "Technical" | "Quality" | "Regulatory"; detail: string };
 };
 
 // The policy, written as code so it can be read, tested and defended. It only uses what the systems returned.
@@ -102,7 +102,7 @@ export async function establishFacts(session: ApexSession, change: SupplierChang
         facts.push({
           finishedGood, product: usage.product, market, usesMaterial: true, expected: "uncertain", evidence: [finishedGood, "SUP-01", ...ruleIds], noticeDays,
           reason: "The quality system returned no effective qualification record, so approved use cannot be established.",
-          openQuestion: { owner: "Regulatory Affairs", detail: `No qualification record for ${finishedGood} in ${marketLabel(market)}. Recover or verify it before any decision.` },
+          openQuestion: { owner: "Regulatory", detail: `No qualification record for ${finishedGood} in ${marketLabel(market)}. Recover or verify it before any decision.` },
         });
       }
     } catch (error) {
