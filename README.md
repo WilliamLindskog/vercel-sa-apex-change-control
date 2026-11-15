@@ -26,7 +26,7 @@ The demo uses directory accounts without passwords; production would use Apex SS
 - **Board and Calendar:** every case by stage, with whose turn it is. The board is drag-to-advance where the case rules allow it, and the calendar runs from notice to end of supply. Every case is live: 11 supplier changes across Coatings, Plastics and Inks, each its own durable workflow with its own lead and reviewers. Cases that start part-way replay their earlier steps through the same rules. A bell lists the cases waiting on you.
 - **Case page:** the answer first (affected products, what needs re-testing, what can't be decided), then sign-offs and the evidence behind each finding.
 - **Analytics:** days to decision against the manual baseline, time and cost saved, notices on time, problems caught and AI spend, filtered by period and product line.
-- **Helper:** a chat assistant (lower right) that reads the same board and analytics data. It prioritises your day, drafts check-ins and drafts reports. It only drafts; people send.
+- **Mango:** the team assistant, a small monkey in the lower right, that reads the same board and analytics data. It prioritises your day, drafts check-ins and drafts reports. It only drafts; people send.
 
 ## Architecture
 
@@ -36,7 +36,7 @@ The demo uses directory accounts without passwords; production would use Apex SS
  │ SAP S/4HANA  where-used  │◄──── API ─────│ Next.js workspace (Fluid Compute)             │
  │ Veeva QMS    qualif.     │  bearer token │  ├─ Workflow: one durable run per case        │
  │ Regulatory   notice rules│               │  │   └─ WorkflowAgent assessment (AI SDK)     │
- └──────────────────────────┘               │  ├─ Helper chat (AI SDK, tool calling)        │
+ └──────────────────────────┘               │  ├─ Mango chat (AI SDK, tool calling)         │
   demo: apex-systems/ deployed as its own   │  └─ AI Gateway: fallback, cost, budget (OIDC) │
   Vercel project; prod: Secure Compute      └───────────────────────────────────────────────┘
 ```
@@ -54,7 +54,7 @@ Cache Components is on (`next.config.ts`), with Partial Prefetching.
 | --- | --- | --- |
 | Solution brief | Static, built once | The same for everyone |
 | Sign-in landing | Static shell; only the menu reads the URL | Fast first impression |
-| Workspace frame (sidebar) | Static shell; account menu and Helper stream in | Who you are is a request-time cookie |
+| Workspace frame (sidebar) | Static shell; account menu and Mango stream in | Who you are is a request-time cookie |
 | Case index, analytics history | `"use cache"`, tagged `cases` / `analytics`, `cacheLife("hours")` | Shared reference data that changes rarely |
 | Live case (Binder X-17), "in flight" | Request time (`connection()`), streamed behind `<Suspense>` | Workflow state changes on its own schedule; a sign-off must never be stale |
 
@@ -69,7 +69,7 @@ Cache Components is on (`next.config.ts`), with Partial Prefetching.
 | Cache Components | Static shell, streamed live data, tagged cache for reference data | The live case is deliberately never cached |
 | Workflows | Cases wait days for people; durable, auditable, enforces sign-off | Open runs keep the code they started on |
 | AI SDK + AI Gateway | One API for any model, automatic fallback, cost per run, hard budget | The model is checked by a policy step, never trusted alone |
-| Runtime Cache | Helper's per-person hourly limit, shared across instances | No atomic increment: a best-effort guard; the Gateway budget is the hard cap |
+| Runtime Cache | Mango's per-person hourly limit, shared across instances | No atomic increment: a best-effort guard; the Gateway budget is the hard cap |
 | Git deploys + Rolling Releases | A preview link per change; production rolls out 10% → 50% → 100% with manual approval | Needs the Git-connected path, set up mid-project |
 | Secure Compute (production only) | Private link into Apex's network | Mocked in the demo |
 | Vercel Connect (phase 2) | IT-approved connectors; each person connects their own Outlook, Teams or Salesforce; the app gets short-lived tokens via OIDC, no stored secrets | Not built: each tool needs a consent step per person |
@@ -78,7 +78,7 @@ Cache Components is on (`next.config.ts`), with Partial Prefetching.
 
 - AI Gateway budget: $5/month on the project (hard cap).
 - Assessment: 20 AI runs per case per day, 8 model calls and 2,000 output tokens per call. After that, the policy rules answer alone and say so.
-- Helper: 30 questions per person per hour, 12 turns of history, 900 output tokens, 25-second timeout.
+- Mango: 30 questions per person per hour, 12 turns of history, 900 output tokens, 25-second timeout.
 
 ## How the AI was checked
 

@@ -237,3 +237,10 @@ button.as-row:hover { background: var(--ground); }
   .as-row { grid-template-columns: 1fr auto; }
   .as-row .as-notice, .as-row .as-records, .as-row.is-head span:nth-child(n+3) { display: none; }
 }
+
+/* Ask Mango: quick actions when the case is waiting on someone else */
+.cw-mango { display: grid; gap: 8px; margin-top: 14px; padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, var(--surface) 70%, transparent); box-shadow: inset 0 0 0 1px var(--marigold-line); }
+.cw-mango-label { display: flex; align-items: center; gap: 6px; color: var(--marigold-ink); font-size: 12.5px; font-weight: 700; }
+.cw-mango-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.cw-mango-actions button { padding: 5px 11px; border: 0; border-radius: 999px; background: var(--surface); color: var(--ink); font-size: 13px; font-weight: 600; box-shadow: 0 0 0 1px var(--line); transition: box-shadow .15s, transform .15s; }
+.cw-mango-actions button:hover { box-shadow: 0 0 0 1.5px var(--marigold-deep); transform: translateY(-1px); }

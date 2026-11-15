@@ -68,7 +68,7 @@ button:disabled { cursor: not-allowed; }
 .tone-marcus { background-color: #ecd8e5; background-image: url(/people/marcus.jpg); background-position: 50% 26%; }
 .tone-ingrid { background-color: #e4d4f0; background-image: url(/people/ingrid.jpg); background-position: 50% 22%; }
 .tone-kenji { background-color: #cfe3e6; background-image: url(/people/kenji.jpg); background-position: 50% 18%; }
-.tone-lucia { background-color: #f6d2c4; background-image: url(/people/lucia.jpg); background-position: 48% 26%; }
+.tone-lucia { background-color: #f6d2c4; background-image: url(/people/lucia.jpg); background-position: 50% 30%; }
 .tone-supplier { background: #f1e7da; color: var(--ink-2); }
 
 /* Badges */

@@ -33,7 +33,7 @@ export function SignInMenu({ accounts, next, error }: { accounts: User[]; next: 
             <input type="hidden" name="next" value={next} />
             {accounts.map(user => <button key={user.id} type="submit" name="user" value={user.id} className="account">
               <span className={`avatar small tone-${user.id}`} aria-hidden="true">{user.initials}</span>
-              <span className="account-text"><strong>{user.name}</strong><span>{user.role}</span></span>
+              <span className="account-text"><strong>{user.name}</strong><span>{user.title}</span></span>
             </button>)}
           </form>
         : <button type="button" className="demo-toggle" onClick={() => setShowDemo(true)}>Use a demo account</button>}
