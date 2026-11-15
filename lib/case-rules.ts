@@ -9,7 +9,8 @@ export function rejectionFor(state: CaseState, command: CaseCommand): string | n
   switch (command.type) {
     case "assess":
       if (state.assessing) return "an impact check is already running";
-      if (state.routed) return "the plan has already been routed";
+      // A sent plan can be reopened: new data after the plan went out means checking again. The workflow
+      // clears the sign-offs and the sent plan, so everyone re-confirms against the new evidence.
       return null;
     case "sign": {
       if (!state.assessment) return `the ${command.role} assessment cannot be signed before the impact check`;

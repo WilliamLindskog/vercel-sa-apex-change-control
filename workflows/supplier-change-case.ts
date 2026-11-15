@@ -79,7 +79,8 @@ async function apply(state: CaseState, command: Exclude<CaseCommand, { type: "cl
     // The demo scenario is chosen when the assessment is run (the state of Apex's systems right now).
     const scenario = command.scenario ?? state.scenario;
     const switched = scenario !== state.scenario;
-    state = { ...state, scenario, version: state.version + 1, assessing: true, progress: [], log: switched ? [...state.log, { at: command.at, text: `Demo scenario: ${scenarioLabel[scenario]}` }] : state.log };
+    const reopened = state.routed ? [{ at: command.at, text: `Case reopened by ${command.by}: sent plan withdrawn, sign-offs to be confirmed again` }] : [];
+    state = { ...state, scenario, routed: null, version: state.version + 1, assessing: true, progress: [], log: [...state.log, ...reopened, ...(switched ? [{ at: command.at, text: `Demo scenario: ${scenarioLabel[scenario]}` }] : [])] };
     await publish(state);
     try {
       // AI runs are counted per case per day in the durable state, so the limit holds across servers and restarts.

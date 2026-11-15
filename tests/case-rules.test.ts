@@ -35,3 +35,13 @@ describe("sending the plan", () => {
     assert.match(rejectionFor(caseWith(["Technical", "Quality", "Regulatory"], "uncertain"), route) ?? "", /record is missing/);
   });
 });
+
+describe("checking again", () => {
+  test("a sent plan can be reopened by a new impact check", () => {
+    const sent = { ...caseWith(["Technical", "Quality", "Regulatory"]), routed: { by: "Test", to: "Purchasing", at: "" } };
+    assert.equal(rejectionFor(sent, { type: "assess", by: "Test", at: "" }), null);
+  });
+  test("but not while a check is already running", () => {
+    assert.match(rejectionFor({ ...caseWith([]), assessing: true }, { type: "assess", by: "Test", at: "" }) ?? "", /already running/);
+  });
+});

@@ -190,7 +190,8 @@ a.case-title-link:hover strong { text-decoration: underline; }
 
 /* Responsive */
 @media (max-width: 860px) {
-  .app, .app[data-collapsed] { grid-template-columns: 1fr; }
+  .app, .app[data-collapsed] { grid-template-columns: minmax(0, 1fr); }
+  .sidebar { min-width: 0; }
   .sidebar { position: static; height: auto; flex-direction: row; align-items: center; gap: 12px; padding: 10px 16px; }
   .sidebar-brand { padding: 0; }
   .apex-logo-label, .sidebar-nav .sidebar-heading, .sidebar-nav ul { display: none; }
