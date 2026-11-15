@@ -1,14 +1,14 @@
-// Apex logo: a peak built from three layers of warm strata (the "solid ground" the company stands on),
+// Apex logo: two sharp peaks in the warm strata colours, the taller one tipped with gold (the apex),
 // paired with an "Apex" wordmark set in the soft serif.
-const bands = [
-  { points: "14,3 17.45,9.3 10.55,9.3", fill: "#f4b54f" },
-  { points: "9.78,10.7 18.22,10.7 21.28,16.3 6.72,16.3", fill: "#e08a34" },
-  { points: "5.95,17.7 22.05,17.7 25.5,24 2.5,24", fill: "#b85a26" },
+const peaks = [
+  { points: "12,24 19,10.5 26,24", fill: "#e08a34" },
+  { points: "2,24 11,5 20,24", fill: "#b85a26" },
+  { points: "11,5 14.32,12 12.6,10.8 11,12.4 9.4,10.8 7.68,12", fill: "#f4b54f" },
 ];
 
 export function ApexMark({ size = 28, mono = false }: { size?: number; mono?: boolean }) {
   return <svg className="apex-mark" width={size} height={size} viewBox="0 0 28 28" aria-hidden="true">
-    {bands.map(band => <polygon key={band.points} points={band.points} fill={mono ? "currentColor" : band.fill} stroke={mono ? "currentColor" : band.fill} strokeWidth="1.4" strokeLinejoin="round" />)}
+    {peaks.map((peak, i) => <polygon key={peak.points} points={peak.points} fill={mono ? "currentColor" : peak.fill} opacity={mono && i === 0 ? 0.55 : undefined} />)}
   </svg>;
 }
 
