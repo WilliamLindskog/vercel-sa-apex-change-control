@@ -49,7 +49,7 @@ export default function Brief() {
 
       <section id="problem" className="brief-section">
         <h2>1 | The problem</h2>
-        <p className="lede">A supplier ends Binder X-17, a raw material. Apex must find every final product that contains it, decide what testing each needs, and tell customers on time.</p>
+        <p className="lede">A supplier ends corrosion inhibitor CI-17, a raw material. Apex must find every final product that contains it, decide what testing each needs, and tell customers on time.</p>
         <ul className="ticks">
           <li>Today this is SAP exports, Veeva look-ups, Excel and email sign-offs.</li>
           <li>Late notices mean penalties; missing records mean audit findings.</li>
@@ -135,7 +135,7 @@ export default function Brief() {
           </ul>
         </div>
         <ol className="steps-list">
-          <li>As Peter, open Binder X-17 and run the impact check.</li>
+          <li>As Peter, open Corrosion inhibitor CI-17 and run the impact check.</li>
           <li>Sign off as Lisa, then Quinn, then Rachel; back as Peter, send the plan.</li>
           <li>Pick a failure scenario and run it again.</li>
           <li>Open Analytics, then ask Mango for a Q4 report.</li>

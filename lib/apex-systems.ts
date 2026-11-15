@@ -33,7 +33,7 @@ const erpCatalogue = z.object({ d: z.object({ results: z.array(z.object({ Finish
 const qmsQualifications = z.object({ data: z.array(z.object({ id: z.string(), name__v: z.string(), status__v: z.string(), product__c: z.string(), material__c: z.string(), material_grade__c: z.string(), region__c: z.string(), effective_date__c: z.string(), scope__c: z.string() })) });
 const regRules = z.object({ items: z.array(z.object({ ruleId: z.string(), market: z.string(), changeType: z.string(), appliesTo: z.string(), noticeDays: z.number(), requirement: z.string() })) });
 
-const title = (text: string) => text.toLowerCase().replace(/(^|[\s(/-])\S/g, s => s.toUpperCase()).replace(/\bX-17(\w?)\b/gi, m => m.toUpperCase()).replace(/\b(Uv|Hals|Pd|Pb|Py|Ao|Sx|Cr|R-\d+n?)\b/g, m => m.toUpperCase());
+const title = (text: string) => text.toLowerCase().replace(/(^|[\s(/-])\S/g, s => s.toUpperCase()).replace(/\bCI-17(\w?)\b/gi, m => m.toUpperCase()).replace(/\b(Uv|Hals|Pd|Pb|Py|Ao|Sx|Cr|R-\d+n?)\b/g, m => m.toUpperCase());
 const sapDate = (d: string) => `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`;
 export const marketFor = (salesOrg: string) => (salesOrg.startsWith("EU") ? "EU" : "US");
 
