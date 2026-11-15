@@ -28,7 +28,7 @@
 .as-draft-to { display: flex; align-items: center; gap: 8px; color: var(--marigold-ink); font-size: 12.5px; }
 .as-draft-to .avatar { width: 22px; height: 22px; }
 .as-draft p { color: var(--ink); font-size: 13.5px; }
-.as-draft-actions { display: flex; align-items: center; gap: 12px; }
+.as-draft-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .as-draft-actions .btn { padding: 5px 12px; font-size: 13px; }
 .as-report { gap: 6px; }
 .as-report-title { font: 500 16px/1.25 var(--serif); font-variation-settings: "SOFT" 100, "opsz" 36; }
@@ -97,3 +97,10 @@
   .as-launcher { right: 8px; bottom: 6px; }
 }
 @media (prefers-reduced-motion: reduce) { .as-typing i, .ha-body, .ha-eyes, .ha-ear, .assistant, .hb-all, .hb-shadow, .hb-tail, .hb-head, .hb-arm { animation: none !important; } }
+
+/* Send in Slack: shown on every draft; without a Slack connection it explains how to get one. */
+.as-slack { display: inline-flex; align-items: center; gap: 6px; background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+.as-slack:hover { box-shadow: 0 0 0 1px var(--marigold-deep); }
+.as-slack-help { display: grid; gap: 4px; padding: 10px 12px; border-radius: 12px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); font-size: 12.5px; }
+.as-slack-help strong { color: var(--ink); font-size: 13px; }
+.as-slack-help span { color: var(--ink-2); }

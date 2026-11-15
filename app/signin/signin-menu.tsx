@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { signIn, waitingCounts } from "@/app/actions";
 import { ApexMark } from "@/app/ui/apex-mark";
 import type { Role, User } from "@/lib/users";
+import "./signin-menu.css";
 
 const groups: { role: Role; label: string }[] = [
   { role: "Product Change Lead", label: "Product change leads" },

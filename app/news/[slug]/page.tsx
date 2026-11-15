@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ApexLogo } from "@/app/ui/apex-mark";
 import { findArticle, news } from "@/app/signin/news";
+import { PublicAccount } from "@/app/signin/public-account";
 import "@/app/signin/landing.css";
 import "./article.css";
 
@@ -26,8 +27,12 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   return <div className="landing article-page">
     <header className="lp-bar">
       <Link className="lp-brand" href="/signin" aria-label="Apex, home"><ApexLogo size={30} /></Link>
-      <span />
-      <Link className="article-back" href="/signin#news">All news</Link>
+      <nav aria-label="Sections">
+        <Link href="/signin#news">News</Link>
+        <Link href="/signin#history">History</Link>
+        <Link href="/signin#culture">Culture</Link>
+      </nav>
+      <PublicAccount />
     </header>
 
     <main className="article">
