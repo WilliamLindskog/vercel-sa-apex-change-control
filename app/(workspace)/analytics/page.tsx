@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DemoScenario } from "@/app/ui/demo-scenario";
 import Link from "next/link";
 import { Suspense } from "react";
 import { analytics, periods, productLines, type Period, type ProductLine } from "@/lib/analytics";
@@ -14,7 +15,7 @@ const usd = (n: number, digits = 0) => n.toLocaleString("en-US", { style: "curre
 // open cases are read live from their workflows. Filters live in the URL, so a view can be shared as a link.
 export default function AnalyticsPage({ searchParams }: { searchParams: Promise<{ period?: string; line?: string }> }) {
   return <>
-    <header className="topbar"><nav className="breadcrumb" aria-label="Breadcrumb"><span aria-current="page">Analytics</span></nav></header>
+    <header className="topbar"><nav className="breadcrumb" aria-label="Breadcrumb"><span aria-current="page">Analytics</span></nav><DemoScenario /></header>
     <Suspense fallback={<main className="page an" aria-busy="true"><div className="an-head"><h1>Analytics</h1></div><div className="sk-block" style={{ height: 110 }} /><div className="sk-block" style={{ height: 260 }} /></main>}>
       <Dashboard searchParams={searchParams} />
     </Suspense>

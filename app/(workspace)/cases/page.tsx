@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DemoScenario } from "@/app/ui/demo-scenario";
 import { Suspense } from "react";
 import { Board } from "@/app/ui/board";
 import { boardCards } from "@/lib/board";
@@ -12,7 +13,7 @@ export const metadata: Metadata = { title: "Board" };
 // because they depend on who you are (whose turn) and on the live workflow.
 export default function BoardPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
   return <>
-    <header className="topbar"><nav className="breadcrumb" aria-label="Breadcrumb"><span aria-current="page">Cases</span></nav></header>
+    <header className="topbar"><nav className="breadcrumb" aria-label="Breadcrumb"><span aria-current="page">Cases</span></nav><DemoScenario /></header>
     <main className="page board-page">
       <Suspense fallback={<BoardSkeleton />}><Cases searchParams={searchParams} /></Suspense>
     </main>

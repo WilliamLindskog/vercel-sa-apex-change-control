@@ -1,7 +1,6 @@
 /* Case page: process on top, impact map and next step side by side, detail in tabs below. Warm palette from globals.css. */
 
 .cw { display: grid; gap: 18px; max-width: 1080px; margin: 0 auto; }
-.topbar .scenario { margin-left: auto; }
 
 /* Header */
 .cw-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
@@ -244,3 +243,6 @@ button.as-row:hover { background: var(--ground); }
 .cw-mango-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .cw-mango-actions button { padding: 5px 11px; border: 0; border-radius: 999px; background: var(--surface); color: var(--ink); font-size: 13px; font-weight: 600; box-shadow: 0 0 0 1px var(--line); transition: box-shadow .15s, transform .15s; }
 .cw-mango-actions button:hover { box-shadow: 0 0 0 1.5px var(--marigold-deep); transform: translateY(-1px); }
+
+/* The result was produced under another demo scenario than the one now chosen */
+.as-stale { padding: 8px 12px; border-radius: 10px; background: var(--marigold-bg); color: var(--marigold-ink); font-size: 13px; }

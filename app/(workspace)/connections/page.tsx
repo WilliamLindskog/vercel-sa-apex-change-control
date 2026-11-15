@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DemoScenario } from "@/app/ui/demo-scenario";
 import { Suspense } from "react";
 import { systemsActivity } from "@/lib/board";
 import { tools } from "@/lib/connections";
@@ -21,7 +22,7 @@ const apexSystems = [
 
 export default function ConnectionsPage() {
   return <>
-    <header className="topbar"><nav className="breadcrumb" aria-label="Breadcrumb"><span aria-current="page">Connections</span></nav></header>
+    <header className="topbar"><nav className="breadcrumb" aria-label="Breadcrumb"><span aria-current="page">Connections</span></nav><DemoScenario /></header>
     <main className="page cn">
       <h1>Connections</h1>
 
