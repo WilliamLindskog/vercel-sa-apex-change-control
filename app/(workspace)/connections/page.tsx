@@ -7,23 +7,22 @@ import "./connections.css";
 export const metadata: Metadata = { title: "Connections" };
 
 // Two kinds of connection, kept honest:
-//   Apex systems: live today. The app reads them through Apex's service API; the numbers below come from
-//                 the lookups real assessments made.
-//   Your tools:   phase 2, through Vercel Connect. Shown so people know what is coming; nothing here pretends to work.
+//   Apex systems: live today, read-only through Apex's service API (production: Vercel Secure Compute).
+//                 The numbers come from the lookups real assessments made.
+//   Your tools:   phase 2, through Vercel Connect (IT-approved connectors, per-person consent, short-lived
+//                 tokens). Shown so people know what is coming; nothing here pretends to work.
 const apexSystems = [
-  { system: "ERP", name: "SAP S/4HANA", what: "Materials, where-used, bills of materials", mark: "SAP", tone: "sap" },
-  { system: "QMS", name: "Veeva Vault QMS", what: "Qualification records", mark: "V", tone: "veeva" },
-  { system: "Regulatory", name: "Regulatory service", what: "Customer notice rules per market", mark: "R", tone: "reg" },
+  { system: "ERP", name: "SAP S/4HANA", mark: "SAP", tone: "sap" },
+  { system: "QMS", name: "Veeva QMS", mark: "V", tone: "veeva" },
+  { system: "Regulatory", name: "Regulatory", mark: "R", tone: "reg" },
 ] as const;
 
 const tools = [
-  { name: "Outlook", what: "A supplier email opens the case on its own.", mark: "O", tone: "outlook" },
-  { name: "Microsoft Teams", what: "Mango sends your nudges and sign-off requests.", mark: "T", tone: "teams" },
-  { name: "Slack", what: "The same, for teams on Slack.", mark: "#", tone: "slack" },
-  { name: "Salesforce", what: "Names the customers each notice must reach.", mark: "S", tone: "salesforce" },
+  { name: "Outlook", mark: "O", tone: "outlook" },
+  { name: "Teams", mark: "T", tone: "teams" },
+  { name: "Slack", mark: "#", tone: "slack" },
+  { name: "Salesforce", mark: "S", tone: "salesforce" },
 ];
-
-const when = (iso: string | null) => iso ? new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "UTC" }) + " UTC" : "Not yet";
 
 export default function ConnectionsPage() {
   return <>
@@ -32,23 +31,21 @@ export default function ConnectionsPage() {
       <h1>Connections</h1>
 
       <section aria-labelledby="apex-h">
-        <header className="cn-head"><h2 id="apex-h">Apex systems</h2><span className="pill pill-ready">Live</span></header>
-        <Suspense fallback={<div className="cn-grid">{apexSystems.map(s => <div key={s.system} className="cn-card sk-block" style={{ height: 150 }} />)}</div>}>
+        <header className="cn-head"><h2 id="apex-h">Apex systems</h2><span className="cn-tag" title="Read-only through Apex's service API. Production: Vercel Secure Compute.">Read-only</span></header>
+        <Suspense fallback={<div className="cn-grid">{apexSystems.map(s => <div key={s.system} className="cn-card sk-block" style={{ height: 64 }} />)}</div>}>
           <ApexSystems />
         </Suspense>
-        <p className="cn-note">Read-only, through Apex's service API with a service token. In production: Vercel Secure Compute (static IPs, VPC peering).</p>
       </section>
 
       <section aria-labelledby="tools-h">
-        <header className="cn-head"><h2 id="tools-h">Your tools</h2><span className="pill">Phase 2</span></header>
+        <header className="cn-head"><h2 id="tools-h">Your tools</h2><span className="cn-tag" title="IT approves each tool; you connect your own account; the app only gets short-lived tokens.">Vercel Connect, phase 2</span></header>
         <div className="cn-grid is-four">
           {tools.map(t => <div key={t.name} className="cn-card is-planned">
-            <div className="cn-top"><span className={`cn-logo is-${t.tone}`} aria-hidden="true">{t.mark}</span><strong>{t.name}</strong></div>
-            <p>{t.what}</p>
-            <button className="btn btn-secondary" disabled title="Phase 2">Connect</button>
+            <span className={`cn-logo is-${t.tone}`} aria-hidden="true">{t.mark}</span>
+            <strong>{t.name}</strong>
+            <button className="cn-connect" disabled title="Phase 2">Connect</button>
           </div>)}
         </div>
-        <p className="cn-note">Through Vercel Connect: IT approves each tool once, you connect your own account, and the app only gets short-lived tokens. No passwords or keys are stored.</p>
       </section>
     </main>
   </>;
@@ -60,15 +57,10 @@ async function ApexSystems() {
   return <div className="cn-grid">
     {apexSystems.map(s => {
       const a = activity.find(x => x.system === s.system)!;
-      return <div key={s.system} className="cn-card">
-        <div className="cn-top"><span className={`cn-logo is-${s.tone}`} aria-hidden="true">{s.mark}</span><strong>{s.name}</strong>
-          <span className={`cn-status ${a.failures ? "is-warn" : ""}`}>{a.failures ? `${a.failures} failed` : "Connected"}</span></div>
-        <p>{s.what}</p>
-        <dl className="cn-stats">
-          <div><dt>Lookups</dt><dd>{a.lookups}</dd></div>
-          <div><dt>Avg response</dt><dd>{a.avgMs !== null ? `${a.avgMs} ms` : "–"}</dd></div>
-          <div><dt>Last read</dt><dd>{when(a.lastAt)}</dd></div>
-        </dl>
+      return <div key={s.system} className="cn-card" title={`${a.lookups} lookups${a.avgMs !== null ? `, ${a.avgMs} ms on average` : ""}`}>
+        <span className={`cn-logo is-${s.tone}`} aria-hidden="true">{s.mark}</span>
+        <span className="cn-name"><strong>{s.name}</strong><small>{a.avgMs !== null ? `${a.avgMs} ms` : "–"}</small></span>
+        <span className={`cn-status ${a.failures ? "is-warn" : ""}`}>{a.failures ? `${a.failures} failed` : "Connected"}</span>
       </div>;
     })}
   </div>;

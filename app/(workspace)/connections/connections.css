@@ -27,3 +27,18 @@
 .cn-note { margin-top: 10px; color: var(--ink-3); font-size: 12.5px; }
 @media (max-width: 980px) { .cn-grid, .cn-grid.is-four { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 600px) { .cn-grid, .cn-grid.is-four { grid-template-columns: 1fr; } }
+
+/* Minimal: one row per connection. */
+.cn { gap: 24px; max-width: 900px; }
+.cn-tag { padding: 1px 9px; border-radius: 999px; background: var(--sunken); color: var(--ink-3); font-size: 12px; font-weight: 600; cursor: help; }
+.cn-card { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+.cn-card strong { font-size: 14px; }
+.cn-name { display: grid; min-width: 0; }
+.cn-name small { color: var(--ink-3); font-size: 12px; }
+.cn-card .cn-status { margin-left: auto; }
+.cn-connect { margin-left: auto; padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; background: none; color: var(--ink-3); font-size: 12px; font-weight: 600; }
+.cn-logo { width: 30px; height: 30px; border-radius: 8px; }
+.cn { max-width: 980px; }
+.cn-card { min-width: 0; }
+.cn-card > strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cn-connect, .cn-status, .cn-logo { flex: none; }
