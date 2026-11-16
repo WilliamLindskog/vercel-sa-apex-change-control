@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { SourceRecord } from "@/lib/apex-systems";
 import type { AssessmentRun, CaseState, Disposition, Finding } from "@/lib/case";
 import { defaultNote, displayDate, getChange, type SupplierChange } from "@/lib/case";
-import { reviewLabel, reviewOrder, type ReviewRole, type User } from "@/lib/users";
+import { reviewOrder, type ReviewRole, type User } from "@/lib/users";
 import { askMango, HelperAvatar } from "@/app/ui/assistant";
 import { whatMaterialDoes, whatProductIs } from "@/lib/catalogue";
 import { DemoScenario, useDemoScenario } from "@/app/ui/demo-scenario";
@@ -28,6 +28,9 @@ const time = (iso: string) => new Date(iso).toLocaleTimeString("en-US", { hour: 
 // Today's events show the time; older ones the date.
 const stamp = (iso: string) => new Date(iso).toDateString() === new Date().toDateString() ? time(iso) : new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 const changeLabel: Record<SupplierChange["changeType"], string> = { FORMULATION: "Formulation change", SITE: "Site change", PACKAGING: "Packaging change" };
+// What each expert approves. Approving means agreeing the plan (which tests, which trial, which notices),
+// not finishing the work: the lab tests and production trial still take as long as they take.
+const approveLabel: Record<ReviewRole, string> = { Technical: "Approve the test plan", Quality: "Approve the trial plan", Regulatory: "Approve the notice plan" };
 // What each expert does in their assessment, in plain words.
 const reviewTask: Record<ReviewRole, string> = {
   Technical: "Technical assessment: plan the lab-scale performance tests for the final products marked Re-test.",
@@ -249,16 +252,16 @@ function NextStep({ change, view, state, user, lead, person, questions, busy, as
   else if (view === "unassessed") { owner = lead; task = "Run the impact check to see which final products and markets use this raw material."; action = <button className="btn btn-primary" onClick={onAssess} disabled={busy}>Run impact check</button>; }
   else if (view === "blocked") { owner = person(questions[0]?.owner ?? "Regulatory"); task = questions[0]?.detail ?? "Resolve the missing record."; }
   else if (view === "review") { signRole = reviewOrder.find(review => !state.signOffs[review]) ?? null; owner = signRole ? person(signRole) : lead; task = signRole ? reviewTask[signRole] : ""; }
-  else if (view === "ready") { owner = lead; task = "All three assessments are signed. Send the testing and customer-notice plan to Purchasing and Customer Service."; action = <button className="btn btn-primary" onClick={onRoute} disabled={busy}>Send the plan</button>; }
+  else if (view === "ready") { owner = lead; task = "All three plans are approved. Send the testing and customer-notice plan to Purchasing and Customer Service."; action = <button className="btn btn-primary" onClick={onRoute} disabled={busy}>Send the plan</button>; }
   else { owner = lead; task = `Plan sent to Purchasing and Customer Service ${state.routed ? stamp(state.routed.at) : ""}. ${lead.name.split(" ")[0]} follows up on testing and notices.`; }
 
   const isMe = owner.id === user.id;
   const suggested = signRole ? defaultNote(signRole, state?.assessment?.assessment.findings ?? [], change) : "";
   if (signRole && isMe) {
     action = <div className="cw-sign">
-      <label htmlFor="sign-note" className="visually-hidden">Decision note</label>
+      <label htmlFor="sign-note" className="visually-hidden">Plan note</label>
       <textarea id="sign-note" rows={3} value={note || suggested} onChange={event => setNote(event.target.value)} />
-      <button className="btn btn-primary" onClick={() => onSign(signRole!, note || suggested)} disabled={busy}>{busy ? "Recording…" : `Sign off ${reviewLabel[signRole].toLowerCase()}`}</button>
+      <button className="btn btn-primary" onClick={() => onSign(signRole!, note || suggested)} disabled={busy}>{busy ? "Recording…" : approveLabel[signRole]}</button>
     </div>;
   } else if (!isMe) {
     // Not your turn: no action here (switch people from the account menu). Show what happened lately instead.

@@ -80,8 +80,8 @@ async function Dashboard({ searchParams }: { searchParams: Promise<{ period?: st
     </section>
 
     <section className="an-card" aria-labelledby="decided">
-      <header><h2 id="decided">Cases decided per month</h2><strong className="an-total">{months.reduce((n, m) => n + m.cases, 0)}</strong></header>
-      <div className="an-months" role="img" aria-label="Number of cases decided each month">
+      <header><h2 id="decided">Plans agreed per month</h2><strong className="an-total">{months.reduce((n, m) => n + m.cases, 0)}</strong></header>
+      <div className="an-months" role="img" aria-label="Number of plans agreed each month">
         {months.map(m => <div key={m.month} className={m.inPeriod ? undefined : "is-out"}>
           <span style={{ height: `${(m.cases / maxMonth) * 100}%` }} data-tip={`${m.label}: ${m.cases} ${m.cases === 1 ? "case" : "cases"}`} tabIndex={0}>{m.cases > 0 && <b>{m.cases}</b>}</span>
           <small>{m.label}</small>
