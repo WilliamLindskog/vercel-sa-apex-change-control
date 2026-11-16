@@ -20,7 +20,7 @@ const allowedMoves: Partial<Record<`${Stage}>${Stage}`, { command: "assess" | "r
 };
 const whyNot = (from: Stage, to: Stage) =>
   to === "review" || to === "ready" ? "Sign-offs happen on the case page: Technical, then Quality, then Regulatory."
-  : to === "done" ? "All three assessments must be signed off before the plan can be sent."
+  : to === "done" ? "All three plans must be approved before the plan can be sent."
   : to === "assessing" && from !== "new" ? "This case has already been checked. Run it again from the case page."
   : "Cases only move forward.";
 

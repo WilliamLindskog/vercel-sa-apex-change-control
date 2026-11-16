@@ -107,7 +107,7 @@ async function apply(state: CaseState, command: Exclude<CaseCommand, { type: "cl
   if (command.type === "sign") {
     const signOff: SignOff = { role: command.role, reviewer: command.reviewer, note: command.note, at: command.at };
     await recordAudit(state.caseId, { event: "sign_off", ...signOff });
-    state = { ...state, signOffs: { ...state.signOffs, [command.role]: signOff }, log: [...state.log, { at: command.at, text: `${command.role} assessment signed off: ${command.reviewer}` }] };
+    state = { ...state, signOffs: { ...state.signOffs, [command.role]: signOff }, log: [...state.log, { at: command.at, text: `${planName[command.role]} approved by ${command.reviewer}` }] };
   }
 
   if (command.type === "route") {
@@ -145,6 +145,7 @@ function* history(change: SupplierChange): Generator<Exclude<CaseCommand, { type
   yield { type: "route", by: name(change.team.lead), to: PLAN_RECIPIENTS, at: at(change.received, 5, 9) };
 }
 
+const planName: Record<ReviewRole, string> = { Technical: "Test plan", Quality: "Trial plan", Regulatory: "Notice plan" };
 const noSignOffs = (): CaseState["signOffs"] => ({ Technical: null, Quality: null, Regulatory: null });
 
 async function publish(state: CaseState) {

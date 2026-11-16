@@ -37,7 +37,7 @@ export default function Brief() {
     <main className="brief-main">
       <section className="brief-hero">
         <p className="brief-for">For Apex Additives | Product Management, Lab, Production & QC, Regulatory</p>
-        <h1>Supplier changes decided in days, not weeks.</h1>
+        <h1>Every customer notice on time, with a plan agreed in days.</h1>
         <div className="value-pair">
           <div><strong>AI on top of the systems you already run</strong><p>SAP, Veeva and the regulatory service stay. Every AI answer cites a record.</p></div>
           <div><strong>People still decide</strong><p>Each case waits for three sign-offs in order (technical, quality, regulatory) and keeps a full history.</p></div>
@@ -54,7 +54,7 @@ export default function Brief() {
           <li>Today this is SAP exports, Veeva look-ups, Excel and email sign-offs.</li>
           <li>Late notices mean penalties; missing records mean audit findings.</li>
         </ul>
-        <div className="bars" aria-label="Time from supplier notice to documented decision, estimated">
+        <div className="bars" aria-label="Time from supplier notice to an agreed plan, estimated">
           <div><span>Today</span><i style={{ width: "100%" }} /><b>1 to 3 weeks</b></div>
           <div><span>With the workspace</span><i style={{ width: "8%" }} /><b>1 to 2 days</b></div>
         </div>
@@ -68,7 +68,7 @@ export default function Brief() {
           <li><strong>Supplier notice</strong><span>PDF in one buyer's inbox</span></li>
           <li><strong>Manual look-ups</strong><span>SAP export, Veeva search, rules lookup</span></li>
           <li><strong>Spreadsheet + email</strong><span>joined by hand, sign-offs by reply</span></li>
-          <li className="is-pain"><strong>Decision</strong><span>1 to 3 weeks, no single record</span></li>
+          <li className="is-pain"><strong>Agreed plan</strong><span>1 to 3 weeks, no single record</span></li>
         </ol>
         <h3>With Vercel</h3>
         <div className="arch">
@@ -136,7 +136,7 @@ export default function Brief() {
         </div>
         <ol className="steps-list">
           <li>As Peter, open Corrosion inhibitor CI-17 and run the impact check.</li>
-          <li>Sign off as Lisa, then Quinn, then Rachel; back as Peter, send the plan.</li>
+          <li>Approve the plans as Lisa, then Quinn, then Rachel; back as Peter, send the plan.</li>
           <li>Pick a failure scenario and run it again.</li>
           <li>Open Analytics, then ask Mango for a Q4 report.</li>
         </ol>
@@ -164,7 +164,7 @@ export default function Brief() {
         <h2>6 | Success and pilot</h2>
         <div className="cols">
           <ul className="ticks">
-            <li><strong>Business:</strong> days to decision, notices on time, audit findings. Tracked on the Analytics page.</li>
+            <li><strong>Business:</strong> notices on time, days to an agreed plan, audit findings. Tracked on the Analytics page.</li>
             <li><strong>Technical:</strong> valid citations, cost per run, fallback rate.</li>
           </ul>
           <ul className="ticks">
@@ -188,7 +188,7 @@ export default function Brief() {
               <li><strong>Roll back:</strong> any invalid citation or error spike</li>
             </ul></td>
             <td><ul className="ticks">
-              <li>Decisions in days, not weeks</li>
+              <li>Plans agreed in days, not weeks</li>
               <li>100% valid citations</li>
               <li>No missed customer notices</li>
               <li>Users prefer it to the spreadsheet</li>
