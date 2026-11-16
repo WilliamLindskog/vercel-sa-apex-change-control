@@ -41,9 +41,10 @@ export function Board({ cards: allCards, user, directory, view, now }: { cards: 
     if (card.stage === to) return;
     const move = allowedMoves[`${card.stage}>${to}`];
     if (!move) { setNotice({ text: whyNot(card.stage, to), tone: "warn" }); return; }
+    if (card.waitingOn !== user.id) { setNotice({ text: "Switch to the assigned case lead to make this move.", tone: "warn" }); return; }
     setPending(card.id); setNotice({ text: move.label, tone: "info" });
     try {
-      const response = await fetch(`/api/cases/${card.id}/commands`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ type: move.command }) });
+      const response = await fetch(`/api/cases/${card.id}/commands`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ type: move.command, runId: card.runId, version: card.version }) });
       if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error ?? "That move didn't go through.");
       // Wait for the workflow to apply it, then re-read the board from the server.
       for (let i = 0; i < 120; i++) {

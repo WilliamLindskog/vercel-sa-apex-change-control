@@ -3,7 +3,7 @@ import type { Scenario } from "@/lib/apex-systems";
 import { scenarioLabel } from "@/lib/demo-scenario";
 import { defaultNote, getChange, type CaseState, type SignOff, type SupplierChange } from "@/lib/case";
 import { findUser, reviewOrder, type ReviewRole } from "@/lib/users";
-import { rejectionFor } from "@/lib/case-rules";
+import { invalidateAssessment, rejectionFor } from "@/lib/case-rules";
 import { durableAssessment } from "./assessment";
 
 // One durable workflow run is one supplier-change case. It holds the case until people act on it:
@@ -16,8 +16,8 @@ import { durableAssessment } from "./assessment";
 
 export type CaseCommand =
   | { type: "assess"; by: string; at: string; rulesOnly?: boolean; scenario?: Scenario }
-  | { type: "sign"; role: SignOff["role"]; reviewer: string; note: string; at: string }
-  | { type: "route"; by: string; to: string; at: string }
+  | { type: "sign"; runId?: string; version?: number; role: SignOff["role"]; reviewer: string; note: string; at: string }
+  | { type: "route"; runId?: string; version?: number; by: string; to: string; at: string }
   | { type: "close"; by: string; at: string };
 
 export const caseToken = (caseId: string) => `apex-case:${caseId}`;
@@ -80,7 +80,8 @@ async function apply(state: CaseState, command: Exclude<CaseCommand, { type: "cl
     const scenario = command.scenario ?? state.scenario;
     const switched = scenario !== state.scenario;
     const reopened = state.routed ? [{ at: command.at, text: `Case reopened by ${command.by}: sent plan withdrawn, sign-offs to be confirmed again` }] : [];
-    state = { ...state, scenario, routed: null, version: state.version + 1, assessing: true, progress: [], log: [...state.log, ...reopened, ...(switched ? [{ at: command.at, text: `Demo scenario: ${scenarioLabel[scenario]}` }] : [])] };
+    const hadSignOffs = reviewOrder.some(review => state.signOffs[review]);
+    state = { ...invalidateAssessment(state), scenario, version: state.version + 1, assessing: true, progress: [], log: [...state.log, ...reopened, ...(switched ? [{ at: command.at, text: `Demo scenario: ${scenarioLabel[scenario]}` }] : [])] };
     await publish(state);
     try {
       // AI runs are counted per case per day in the durable state, so the limit holds across servers and restarts.
@@ -92,7 +93,6 @@ async function apply(state: CaseState, command: Exclude<CaseCommand, { type: "cl
         await publish(state);
       });
       // A new assessment replaces the evidence the sign-offs were based on, so earlier sign-offs no longer count.
-      const hadSignOffs = reviewOrder.some(review => state.signOffs[review]);
       const completedAt = command.rulesOnly ? command.at : assessment.completedAt;
       state = {
         ...state, assessing: false, assessment: { ...assessment, completedAt }, signOffs: noSignOffs(),

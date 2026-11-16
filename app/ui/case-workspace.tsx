@@ -69,9 +69,9 @@ function useCase(caseId: string) {
 
   const send = useCallback(async (command: Command) => {
     setBusy(true); setError("");
-    const before = latest.current;
+    const before = state;
     try {
-      const response = await fetch(`/api/cases/${caseId}/commands`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(command) });
+      const response = await fetch(`/api/cases/${caseId}/commands`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...command, runId: before?.runId, version: before?.version }) });
       if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error ?? "That action didn't go through. Try again.");
       for (let i = 0; i < 180; i++) {
         await new Promise(resolve => setTimeout(resolve, i < 10 ? 300 : 700));
@@ -88,7 +88,7 @@ function useCase(caseId: string) {
     } finally {
       setBusy(false);
     }
-  }, [caseId, load]);
+  }, [caseId, load, state]);
 
   return { state, error, busy, send };
 }
@@ -212,7 +212,7 @@ export function CaseWorkspace({ caseId, user, directory }: { caseId: string; use
               <span>{(run.latencyMs / 1000).toFixed(1)} s</span>
               {run.costUsd ? <span>${run.costUsd.toFixed(4)}</span> : null}
               {run.mode === "ai-gateway" && <span>{run.corrections.length} fixed by policy</span>}
-              <button className="btn-text" onClick={event => { event.preventDefault(); send({ type: "assess" }); }} disabled={busy} title={state?.routed ? "Reopens the case: the sent plan is withdrawn and everyone signs again" : undefined}>{state?.routed ? "Reopen and check again" : "Run again"}</button>
+              {user.id === lead.id && <button className="btn-text" onClick={event => { event.preventDefault(); send({ type: "assess" }); }} disabled={busy} title={state?.routed ? "Reopens the case: the sent plan is withdrawn and everyone signs again" : undefined}>{state?.routed ? "Reopen and check again" : "Run again"}</button>}
             </summary>
             <div className="as-how-body">
               <div><h3 className="cw-label">Lookups in Apex's systems</h3><CallTimeline calls={run.calls} /></div>
@@ -224,7 +224,7 @@ export function CaseWorkspace({ caseId, user, directory }: { caseId: string; use
         </section>
 
         {/* 3. What to do now */}
-        <NextStep change={change} view={view} state={state} user={user} lead={lead} person={person} questions={questions} busy={busy} assessing={assessing}
+        <NextStep key={`${user.id}:${run?.completedAt ?? "pending"}`} change={change} view={view} state={state} user={user} lead={lead} person={person} questions={questions} busy={busy} assessing={assessing}
           onAssess={() => send({ type: "assess" })} onRoute={() => send({ type: "route" })} onSign={(role, note) => send({ type: "sign", role, note })} />
       </div>
     </main>

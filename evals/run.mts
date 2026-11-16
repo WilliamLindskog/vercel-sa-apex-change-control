@@ -23,6 +23,7 @@ globalThis.fetch = ((original: typeof fetch) => (input: RequestInfo | URL, init?
 
 const RUNS = Number(process.env.EVAL_RUNS ?? 5);
 // AI Gateway free credits are rate limited per minute; a pause keeps every run on the model instead of the fallback.
+if (!Number.isInteger(RUNS) || RUNS < 1) throw new Error("EVAL_RUNS must be a positive integer.");
 const PAUSE_MS = Number(process.env.EVAL_PAUSE_MS ?? 15_000);
 
 // Ground truth for each scenario, written by hand from the records, not derived from the code under test.
@@ -71,5 +72,8 @@ const summary = {
   })),
 };
 console.log("\n" + JSON.stringify(summary, null, 2));
+if (ai.length !== rows.length || rows.some(row => !row.finalCorrect)) {
+  throw new Error("Evaluation failed: every scenario must use AI Gateway and match the expected dispositions. Previous published results were preserved.");
+}
 await mkdir(new URL("./results/", import.meta.url), { recursive: true });
 await writeFile(new URL("./results/latest.json", import.meta.url), JSON.stringify({ summary, rows }, null, 2));

@@ -1,17 +1,21 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { getChange } from "@/lib/case";
+import { assignedActor } from "@/lib/case-rules";
 import { isCase } from "@/lib/cases";
 import { restartCase, sendCommand } from "@/lib/case-store";
 import { PLAN_RECIPIENTS } from "@/workflows/supplier-change-case";
 import { isScenario, SCENARIO_COOKIE } from "@/lib/demo-scenario";
 import { currentUser } from "@/lib/session";
-import { reviewerRole, reviewOrder, type ReviewRole } from "@/lib/users";
+import { reviewOrder, type ReviewRole } from "@/lib/users";
+
+const snapshot = { runId: z.string().min(1), version: z.number().int().positive() };
 
 const body = z.discriminatedUnion("type", [
   z.object({ type: z.literal("assess") }),
-  z.object({ type: z.literal("sign"), role: z.enum(reviewOrder as [ReviewRole, ...ReviewRole[]]), note: z.string().trim().min(3).max(600) }),
-  z.object({ type: z.literal("route") }),
+  z.object({ type: z.literal("sign"), ...snapshot, role: z.enum(reviewOrder as [ReviewRole, ...ReviewRole[]]), note: z.string().trim().min(3).max(600) }),
+  z.object({ type: z.literal("route"), ...snapshot }),
   z.object({ type: z.literal("scenario"), scenario: z.enum(["normal", "missing-eu-qualification", "qms-outage"]) }),
 ]);
 
@@ -24,8 +28,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ cas
   if (!isCase(caseId)) return NextResponse.json({ error: "Case not found." }, { status: 404 });
 
   const parsed = body.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "That action isn't valid. A decision note needs at least 3 characters." }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: "Refresh the case before acting. A sign-off also needs a note of 3 to 600 characters." }, { status: 400 });
   const command = parsed.data;
+  if (user.id !== assignedActor(getChange(caseId).team, command)) {
+    return NextResponse.json({ error: "This action belongs to another member of the assigned case team." }, { status: 403 });
+  }
   const at = new Date().toISOString();
 
   switch (command.type) {
@@ -36,11 +43,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ cas
       }
       break;
     case "sign":
-      if (user.role !== reviewerRole[command.role]) return NextResponse.json({ error: `Only the ${reviewerRole[command.role]} can sign off the ${command.role} assessment.` }, { status: 403 });
-      await sendCommand(caseId, { type: "sign", role: command.role, reviewer: user.name, note: command.note, at });
+      await sendCommand(caseId, { ...command, reviewer: user.name, at });
       break;
     case "route":
-      await sendCommand(caseId, { type: "route", by: user.name, to: PLAN_RECIPIENTS, at });
+      await sendCommand(caseId, { ...command, by: user.name, to: PLAN_RECIPIENTS, at });
       break;
     case "scenario":
       await restartCase(caseId, command.scenario, user.name);

@@ -6,6 +6,7 @@ When a supplier changes or discontinues a raw material (an ingredient Apex buys)
 
 - **Live app:** https://vercel-sa-take-home-build.vercel.app (Sign in → pick a person; start with Peter)
 - **Solution brief (customer-facing):** https://vercel-sa-take-home-build.vercel.app/brief
+- **Customer slide deck:** https://vercel-sa-take-home-build.vercel.app/apex-pilot.pdf
 - **Mock of Apex's systems:** https://apex-systems-mock.vercel.app/health
 
 ## Demo accounts
@@ -58,7 +59,7 @@ Cache Components is on (`next.config.ts`), with Partial Prefetching.
 
 | What | How it renders | Why |
 | --- | --- | --- |
-| Solution brief | Static, built once | The same for everyone |
+| Solution brief | Prerendered content with a streamed account control | The solution is public and the header reads the session |
 | Sign-in landing | Static shell; only the menu reads the URL | Fast first impression |
 | Workspace frame (sidebar) | Static shell; account menu and Mango stream in | Who you are is a request-time cookie |
 | Case index, analytics history, product registry | `"use cache"`, tagged `cases` / `analytics` / `products`, `cacheLife("hours")` | Shared reference data that changes rarely |
@@ -88,8 +89,8 @@ Cache Components is on (`next.config.ts`), with Partial Prefetching.
 
 ## How the AI was checked
 
-- `npm test`: 13 policy tests run the mock in-process and check every scenario, every kind of change (formulation, site, packaging) and every correction, without a model.
-- `npm run eval`: real assessments across three scenarios (normal, missing EU qualification, quality system down), checked against hand-written answers. Latest results are in `evals/results/latest.json`: 15/15 correct after the policy check, 42/45 findings right from the model alone, and every invented citation caught.
+- `npm test`: Policy tests run the mock in-process and check every scenario, every kind of change (formulation, site, packaging) and every correction, without a model.
+- `npm run eval`: real assessments across three scenarios (normal, missing EU qualification, quality system down), checked against hand-written answers. Latest results are in `evals/results/latest.json`: the number of runs matching all expected dispositions, raw model label accuracy, and occurrences of citation IDs absent from retrieved records. The gate requires every run to use the model and match the expected dispositions. Citation relevance and free-text rationale require separate review.
 
 ## Release and rollback
 
@@ -105,7 +106,7 @@ Rehearsed on 14 Nov 2026:
 ## Run locally
 
 ```bash
-npm install
+npm ci   # Node 22.13 or newer
 node apex-systems/dev.js   # mock of Apex's systems on :4100
 ```
 
