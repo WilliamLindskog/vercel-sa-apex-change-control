@@ -43,7 +43,6 @@ export default function Brief() {
         </div>
       </section>
 
-      <p className="note"><a href="/apex-pilot.pdf">View the customer slide deck (PDF)</a></p>
       <nav className="brief-toc" aria-label="Sections">{sections.map(([id, label], i) => <a key={id} href={`#${id}`}><span>{i + 1}</span>{label}</a>)}</nav>
 
       <section id="problem" className="brief-section">
@@ -216,8 +215,6 @@ export default function Brief() {
         </div>
         <p className="note">{evals.runs} real runs across three scenarios (<code>npm run eval</code>), scoring final dispositions against hand-written expectations. Reviewers assess the relevance of citations and explanations separately. Policy and approval tests run without a model (<code>npm test</code>). Last run {new Date(evals.ranAt).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}. Built with Claude Code, Codex and the Vercel CLI.</p>
       </section>
-
-
     </main>
 
     <footer className="brief-foot">Apex is a fictional company created for a Vercel Solutions Architect take-home.</footer>
