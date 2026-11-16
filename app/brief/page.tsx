@@ -213,7 +213,7 @@ export default function Brief() {
           <div><strong>{evals.inventedCitations}</strong><span>unreturned citation IDs removed (occurrences)</span></div>
           <div><strong>${evals.averageCostUsd.toFixed(4)}</strong><span>estimated model cost per assessment</span></div>
         </div>
-        <p className="note">{evals.runs} real runs across three scenarios (<code>npm run eval</code>), scoring final dispositions against hand-written expectations. Reviewers assess the relevance of citations and explanations separately. Policy and approval tests run without a model (<code>npm test</code>). Last run {new Date(evals.ranAt).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}. Built with Claude Code, Codex and the Vercel CLI.</p>
+        <p className="note">{evals.runs} real runs across three scenarios (<code>npm run eval</code>), scoring final dispositions against hand-written expectations. Reviewers assess the relevance of citations and explanations separately. Policy and approval tests run without a model (<code>npm test</code>). Last run {new Date(evals.ranAt).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}. Built and reviewed by William Lindskog using Claude Code, Codex and the Vercel CLI.</p>
       </section>
     </main>
 
