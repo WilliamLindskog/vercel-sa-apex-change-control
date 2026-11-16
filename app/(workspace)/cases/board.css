@@ -166,3 +166,8 @@
 .cal-key.is-near { background: var(--marigold); }
 .cal-key.is-later { background: var(--sage); }
 .cal-key-notice { width: 9px; height: 9px; border-radius: 2px; background: var(--action); transform: rotate(45deg); }
+
+@media (max-width: 600px) {
+  .strip-chip { max-width: 100%; }
+  .strip-chip strong { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+}
