@@ -109,3 +109,8 @@
   .gates td:nth-child(2)::before { content: "Gates"; }
   .gates td:nth-child(3)::before { content: "Exit"; }
 }
+
+@media (max-width: 760px) {
+  #choices .brief-table { table-layout: fixed; overflow-wrap: anywhere; }
+  #choices .brief-table td, #choices .brief-table th { padding: 10px 8px; }
+}
