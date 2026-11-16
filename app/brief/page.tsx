@@ -37,14 +37,14 @@ export default function Brief() {
     <main className="brief-main">
       <section className="brief-hero">
         <p className="brief-for">For Apex Additives | Product Management, Lab, Production & QC, Regulatory</p>
-        <h1>Every customer notice on time, with a plan agreed in days.</h1>
+        <h1>Agree the testing plan before the notice deadline.</h1>
         <div className="value-pair">
-          <div><strong>AI on top of the systems you already run</strong><p>SAP, Veeva and the regulatory service stay. Every AI answer cites a record.</p></div>
+          <div><strong>AI on top of the systems you already run</strong><p>SAP, Veeva and the regulatory service stay. Each product finding links to the records used in its assessment.</p></div>
           <div><strong>People still decide</strong><p>Each case waits for three sign-offs in order (technical, quality, regulatory) and keeps a full history.</p></div>
-          <div><strong>Mango, the team assistant</strong><p>Plans the day, drafts check-ins and reports from the same live numbers.</p></div>
         </div>
       </section>
 
+      <p className="note"><a href="/apex-pilot.pdf">View the customer slide deck (PDF)</a></p>
       <nav className="brief-toc" aria-label="Sections">{sections.map(([id, label], i) => <a key={id} href={`#${id}`}><span>{i + 1}</span>{label}</a>)}</nav>
 
       <section id="problem" className="brief-section">
@@ -56,9 +56,9 @@ export default function Brief() {
         </ul>
         <div className="bars" aria-label="Time from supplier notice to an agreed plan, estimated">
           <div><span>Today</span><i style={{ width: "100%" }} /><b>1 to 3 weeks</b></div>
-          <div><span>With the workspace</span><i style={{ width: "8%" }} /><b>1 to 2 days</b></div>
+          <div><span>Pilot target</span><i style={{ width: "8%" }} /><b>≤ 2 days</b></div>
         </div>
-        <p className="note">Today's figure is Apex's own estimate; the pilot measures both.</p>
+        <p className="note">In the illustrative case history, the manual median is 16 days and 7 of 32 notices were late. At 36 cases per year and $95 per hour, reducing effort from 18 to 3 hours per case would release 540 hours, valued at $51,300 annually before pilot and operating costs.</p>
       </section>
 
       <section id="architecture" className="brief-section">
@@ -92,12 +92,12 @@ export default function Brief() {
               <li><strong>Next.js workspace</strong><span>board, case page, Mango</span></li>
               <li><strong>Workflows</strong><span>one durable run per case</span></li>
               <li><strong>AI SDK agent</strong><span>read-only tools, checked output</span></li>
-              <li><strong>AI Gateway</strong><span>fallback, cost, budget, zero data retention</span></li>
+              <li><strong>AI Gateway</strong><span>fallback, estimated model cost and spend controls</span></li>
               <li><strong>Vercel Connect</strong><span>phase 2: Outlook, Teams, Salesforce</span></li>
             </ul>
           </div>
         </div>
-        <p className="note">Nothing is copied or migrated. Systems of record stay validated where they are.</p>
+        <p className="note">SAP, Veeva and Regulatory remain authoritative. The workspace retains the evidence, decision history and approvals needed for each case.</p>
       </section>
 
       <section id="choices" className="brief-section">
@@ -108,12 +108,12 @@ export default function Brief() {
             <tr><td>AI SDK + Gateway</td><td>Any model, automatic fallback, cost per run, hard budget.</td><td>The model is checked by policy, not trusted.</td></tr>
             <tr><td>Workflows</td><td>Cases wait days for people; runs survive crashes and deploys.</td><td>Open runs keep the code they started on.</td></tr>
             <tr><td>Cache Components</td><td>Pages paint a static shell at once; reference data is cached and tagged.</td><td>The live case is never cached, so sign-offs are never stale.</td></tr>
-            <tr><td>Fluid Compute</td><td>Mostly waiting on AI and SAP; billed for active CPU only.</td><td>Long work moves into the workflow.</td></tr>
+            <tr><td>Fluid Compute</td><td>CPU billing pauses during I/O waits. Memory and invocations also contribute to cost.</td><td>Long work moves into the workflow.</td></tr>
             <tr><td>Rolling Releases</td><td>Every release goes to 10%, then 50%, then everyone, with approval.</td><td>Needs the Git release path.</td></tr>
             <tr><td>Runtime Cache</td><td>Mango's per-person limit, shared by all instances.</td><td>Best effort; the Gateway budget is the hard cap.</td></tr>
             <tr><td>Vercel Connect (phase 2)</td><td>Per-person access to Outlook, Teams and Salesforce, through connectors IT approves.</td><td>Each person consents once per tool.</td></tr>
             <tr><td>Secure Compute</td><td>Private link into Apex's network.</td><td>Production only; mocked in the demo.</td></tr>
-            <tr><td>Open source core</td><td>Next.js, the AI SDK and the Workflow SDK are open source; the app is plain TypeScript in Apex's repo.</td><td>Vercel runs it best, but nothing is locked in.</td></tr>
+            <tr><td>Open source core</td><td>Next.js, the AI SDK and the Workflow SDK are open source; the app is plain TypeScript in Apex's repo.</td><td>Moving to another host would require equivalent workflow storage, routing and release controls.</td></tr>
           </tbody>
         </table>
       </section>
@@ -146,7 +146,7 @@ export default function Brief() {
         <h2>5 | Rollout</h2>
         <ol className="timeline">
           <li><strong>Preview</strong><span>Every change gets its own link.</span></li>
-          <li><strong>Validate</strong><span>AI tests must pass.</span></li>
+          <li><strong>Validate</strong><span>All 10 historical outcomes match and model-backed checks pass.</span></li>
           <li><strong>Canary</strong><span>10%, then 50% of users. Used for this demo.</span></li>
           <li><strong>Cut over</strong><span>100%; pilot team moves in.</span></li>
           <li><strong>Roll back</strong><span>One click; open cases keep running.</span></li>
@@ -164,11 +164,11 @@ export default function Brief() {
         <h2>6 | Success and pilot</h2>
         <div className="cols">
           <ul className="ticks">
-            <li><strong>Business:</strong> notices on time, days to an agreed plan, audit findings. Tracked on the Analytics page.</li>
+            <li><strong>Business:</strong> compare workflow timestamps, reviewer time and actual delivery receipts from Customer Service with the baseline. Analytics illustrates these measures with sample data.</li>
             <li><strong>Technical:</strong> valid citations, cost per run, fallback rate.</li>
           </ul>
           <ul className="ticks">
-            <li><strong>Pilot:</strong> one product line, 10 past cases as baseline.</li>
+            <li><strong>Pilot:</strong> one product line for six weeks. Apex supplies 10 historical cases with known outcomes.</li>
             <li><strong>Owner:</strong> a Product Manager, with one Lab, one Production & QC and one Regulatory reviewer.</li>
           </ul>
         </div>
@@ -176,9 +176,10 @@ export default function Brief() {
           <thead><tr><th>Entry: before the pilot</th><th>Gates: to widen the rollout</th><th>Exit: pilot succeeded</th></tr></thead>
           <tbody><tr>
             <td><ul className="ticks">
+              <li>Sponsor and account executive agree the pilot budget, one product line, staffing and week-six decision in writing</li>
               <li>Read-only test access to SAP, Veeva and regulatory, over Secure Compute</li>
               <li>Apex SSO on; roles from directory groups</li>
-              <li>All 10 past cases match their real outcome</li>
+              <li>Ten adjudicated cases and notice dates available for validation</li>
               <li>Security and data review signed off</li>
             </ul></td>
             <td><ul className="ticks">
@@ -188,14 +189,16 @@ export default function Brief() {
               <li><strong>Roll back:</strong> any invalid citation or error spike</li>
             </ul></td>
             <td><ul className="ticks">
-              <li>Plans agreed in days, not weeks</li>
-              <li>100% valid citations</li>
-              <li>No missed customer notices</li>
-              <li>Users prefer it to the spreadsheet</li>
+              <li>Median plan time ≤ 2 days and mean effort ≤ 3 staff hours per case</li>
+              <li>Reviewers verify that every material finding cites supporting evidence. Missing qualifications block routing.</li>
+              <li>Customer Service confirms every due notice arrived on time</li>
+              <li>Sponsor reviews measured results and costs with the account executive</li>
             </ul></td>
           </tr></tbody>
         </table>
       </section>
+
+      <p className="note"><strong>Week-six decision.</strong> If the agreed gates pass, the sponsor and account executive review a priced deployment for the next product line. Otherwise pause expansion, record the gap and agree whether to stop or fund a time-boxed correction. New connectors require a separate scope decision.</p>
 
       <section id="risks" className="brief-section">
         <h2>7 | Risks</h2>
@@ -210,12 +213,12 @@ export default function Brief() {
       <section id="validation" className="brief-section">
         <h2>8 | How the AI was checked</h2>
         <div className="stats">
-          <div><strong>{evals.finalAnswerCorrect}</strong><span>correct after the policy check</span></div>
-          <div><strong>{evals.modelStatusAccuracy.replace(" findings", "")}</strong><span>right from the model alone</span></div>
-          <div><strong>{evals.inventedCitations}</strong><span>invented citations caught</span></div>
-          <div><strong>${evals.averageCostUsd.toFixed(4)}</strong><span>average cost per run</span></div>
+          <div><strong>{evals.finalAnswerCorrect}</strong><span>runs matched all expected product dispositions</span></div>
+          <div><strong>{evals.modelStatusAccuracy.replace(" findings", "")}</strong><span>product disposition labels correct before policy</span></div>
+          <div><strong>{evals.inventedCitations}</strong><span>unreturned citation IDs removed (occurrences)</span></div>
+          <div><strong>${evals.averageCostUsd.toFixed(4)}</strong><span>estimated model cost per assessment</span></div>
         </div>
-        <p className="note">{evals.runs} real runs across three scenarios (<code>npm run eval</code>), plus policy tests without a model (<code>npm test</code>). Last run {new Date(evals.ranAt).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}. Built with Claude Code, Codex and the Vercel CLI.</p>
+        <p className="note">{evals.runs} real runs across three scenarios (<code>npm run eval</code>), scoring final dispositions against hand-written expectations. Reviewers assess the relevance of citations and explanations separately. Policy and approval tests run without a model (<code>npm test</code>). Last run {new Date(evals.ranAt).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}. Built with Claude Code, Codex and the Vercel CLI.</p>
       </section>
 
       <section id="feedback" className="brief-section">

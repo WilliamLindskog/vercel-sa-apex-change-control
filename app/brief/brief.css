@@ -14,7 +14,7 @@
 .brief h3 { margin: 22px 0 8px; font-size: 15px; font-weight: 700; }
 .brief-for { margin-bottom: 14px; color: var(--marigold-ink); font-size: 14px; font-weight: 600; }
 
-.value-pair { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 32px; }
+.value-pair { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 32px; }
 .value-pair > div { padding: 20px 22px; border-radius: var(--radius); background: var(--shell); }
 .value-pair strong { display: block; font-size: 16px; line-height: 1.35; }
 .value-pair p { margin-top: 8px; color: var(--shell-ink); font-size: 14.5px; }
