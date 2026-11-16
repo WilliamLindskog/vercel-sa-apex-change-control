@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { rejectionFor } from "../lib/case-rules";
+import { assignedActor, invalidateAssessment, rejectionFor } from "../lib/case-rules";
 import type { CaseState, Finding, SignOff } from "../lib/case";
 import type { ReviewRole } from "../lib/users";
 
@@ -44,4 +44,33 @@ describe("checking again", () => {
   test("but not while a check is already running", () => {
     assert.match(rejectionFor({ ...caseWith([]), assessing: true }, { type: "assess", by: "Test", at: "" }) ?? "", /already running/);
   });
+});
+
+test("each case uses its assigned people across product lines", () => {
+  const coatings = { lead: "peter", lab: "lisa", quality: "quinn", regulatory: "rachel" };
+  const plastics = { ...coatings, lead: "paula", quality: "quentin" };
+  for (const team of [coatings, plastics]) {
+    for (const type of ["assess", "route", "scenario"]) assert.equal(assignedActor(team, { type }), team.lead);
+    assert.equal(assignedActor(team, sign("Quality")), team.quality);
+    assert.equal(assignedActor(team, sign("Technical")), team.lab);
+    assert.equal(assignedActor(team, sign("Regulatory")), team.regulatory);
+  }
+});
+
+test("a failed re-check leaves no routable plan or signable evidence", () => {
+  const previous = caseWith(["Technical", "Quality", "Regulatory"]);
+  const pending = invalidateAssessment({ ...previous, routed: { by: "Peter", at: "", to: "Purchasing" } });
+  assert.equal(pending.routed, null);
+  assert.deepEqual(Object.values(pending.signOffs), [null, null, null]);
+  assert.match(rejectionFor(pending, route) ?? "", /completed impact check/);
+  assert.match(rejectionFor(pending, sign("Technical")) ?? "", /before the impact check/);
+  assert.ok(previous.signOffs.Regulatory);
+});
+
+test("commands from a previous assessment or reset cannot approve the current plan", () => {
+  const state = caseWith(["Technical", "Quality", "Regulatory"]);
+  for (const command of [sign("Regulatory"), route]) {
+    assert.match(rejectionFor(state, { ...command, runId: state.runId, version: 0 }) ?? "", /case changed/);
+    assert.match(rejectionFor(state, { ...command, runId: "old-run", version: state.version }) ?? "", /case changed/);
+  }
 });
