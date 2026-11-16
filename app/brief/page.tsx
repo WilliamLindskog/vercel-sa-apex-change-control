@@ -23,7 +23,6 @@ const sections = [
   ["success", "Success"],
   ["risks", "Risks"],
   ["validation", "AI checks"],
-  ["feedback", "Feedback"],
 ] as const;
 
 export default function Brief() {
@@ -103,19 +102,16 @@ export default function Brief() {
       <section id="choices" className="brief-section">
         <h2>3 | Why Vercel, and the trade-offs</h2>
         <table className="brief-table">
-          <thead><tr><th>Choice</th><th>Why</th><th>Trade-off</th></tr></thead>
+          <thead><tr><th>What Apex needs</th><th>What Vercel provides</th><th>Trade-off</th></tr></thead>
           <tbody>
-            <tr><td>AI SDK + Gateway</td><td>Any model, automatic fallback, cost per run, hard budget.</td><td>The model is checked by policy, not trusted.</td></tr>
-            <tr><td>Workflows</td><td>Cases wait days for people; runs survive crashes and deploys.</td><td>Open runs keep the code they started on.</td></tr>
-            <tr><td>Cache Components</td><td>Pages paint a static shell at once; reference data is cached and tagged.</td><td>The live case is never cached, so sign-offs are never stale.</td></tr>
-            <tr><td>Fluid Compute</td><td>CPU billing pauses during I/O waits. Memory and invocations also contribute to cost.</td><td>Long work moves into the workflow.</td></tr>
-            <tr><td>Rolling Releases</td><td>Every release goes to 10%, then 50%, then everyone, with approval.</td><td>Needs the Git release path.</td></tr>
-            <tr><td>Runtime Cache</td><td>Mango's per-person limit, shared by all instances.</td><td>Best effort; the Gateway budget is the hard cap.</td></tr>
-            <tr><td>Vercel Connect (phase 2)</td><td>Per-person access to Outlook, Teams and Salesforce, through connectors IT approves.</td><td>Each person consents once per tool.</td></tr>
-            <tr><td>Secure Compute</td><td>Private link into Apex's network.</td><td>Production only; mocked in the demo.</td></tr>
-            <tr><td>Open source core</td><td>Next.js, the AI SDK and the Workflow SDK are open source; the app is plain TypeScript in Apex's repo.</td><td>Moving to another host would require equivalent workflow storage, routing and release controls.</td></tr>
+            <tr><td>Wait days for approvals</td><td><strong>Workflows</strong> saves each step and resumes when the assigned reviewer signs.</td><td>Open cases finish on the workflow version they started with.</td></tr>
+            <tr><td>Research a change across three systems</td><td><strong>AI SDK + AI Gateway</strong> gives the model read-only tools and routes requests to backup models.</td><td>Models can misread a qualification. Policy checks each product’s status before a person signs.</td></tr>
+            <tr><td>Open cases quickly while SAP is slow</td><td><strong>Cache Components</strong> reuses the shared product catalog and streams current case state.</td><td>Apex must invalidate cached catalog data when a source record changes.</td></tr>
+            <tr><td>Handle requests that spend time waiting</td><td><strong>Fluid Compute</strong> shares compute across requests and pauses CPU billing during I/O waits.</td><td>Memory and invocations still contribute to cost.</td></tr>
+            <tr><td>Release safely to a working team</td><td><strong>Preview Deployments + Rolling Releases</strong> provides a review link, then rolls out to 10%, 50% and 100% of traffic.</td><td>Someone must check the pilot gates and approve each increase.</td></tr>
           </tbody>
         </table>
+        <p className="note"><strong>Open-source core.</strong> Apex owns the TypeScript application and its business rules. Next.js, the AI SDK and the Workflow SDK are open source. Moving hosts would require equivalent workflow storage, model routing and release controls.</p>
       </section>
 
       <section id="demo" className="brief-section">
@@ -221,19 +217,7 @@ export default function Brief() {
         <p className="note">{evals.runs} real runs across three scenarios (<code>npm run eval</code>), scoring final dispositions against hand-written expectations. Reviewers assess the relevance of citations and explanations separately. Policy and approval tests run without a model (<code>npm test</code>). Last run {new Date(evals.ranAt).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}. Built with Claude Code, Codex and the Vercel CLI.</p>
       </section>
 
-      <section id="feedback" className="brief-section">
-        <h2>9 | Feedback on Vercel</h2>
-        <div className="cols">
-          <ul className="ticks">
-            <li><strong>Good:</strong> OIDC for AI Gateway, so no API keys.</li>
-            <li><strong>Good:</strong> Workflow hooks made sign-off a few lines.</li>
-          </ul>
-          <ul className="ticks">
-            <li><strong>Better:</strong> free-tier rate limit reads like a model ban.</li>
-            <li><strong>Better:</strong> <code>modelId</code> hides which model served after fallback.</li>
-          </ul>
-        </div>
-      </section>
+
     </main>
 
     <footer className="brief-foot">Apex is a fictional company created for a Vercel Solutions Architect take-home.</footer>
