@@ -1,6 +1,6 @@
 # Apex Change Control
 
-A supplier-change workspace for Apex Additives, a fictional specialty-additives maker. Built on Vercel for a Solutions Architect take-home.
+A supplier-change workspace for Apex Additives, a fictional specialty-additives maker. Built on Vercel.
 
 When a supplier changes or discontinues a raw material (an ingredient Apex buys), Apex must find every final product (what Apex sells) that contains it, decide what testing each needs, and notify customers on time. Today that takes 1 to 3 weeks of SAP exports, Veeva look-ups, spreadsheets and email. This workspace reads across those systems, has AI draft an impact check with a citation for every finding, and holds the case while three assessments are signed off in order: technical (lab), quality (production trial and QC) and regulatory.
 
